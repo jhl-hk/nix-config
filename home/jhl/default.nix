@@ -19,6 +19,9 @@
     homeDirectory = "/Users/jhl";
     stateVersion = "24.05";
 
+    # Disable version mismatch check (we're using unstable nixpkgs with stable darwin)
+    enableNixpkgsReleaseCheck = false;
+
     # User-specific packages
     packages = with pkgs; [
       # Add user-specific packages here

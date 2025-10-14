@@ -26,7 +26,7 @@
       path = "$HOME/.zsh_history";
     };
 
-    initExtra = ''
+    initContent = ''
       # Additional zsh configuration
     '';
   };
