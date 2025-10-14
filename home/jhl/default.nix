@@ -24,7 +24,6 @@
 
     # User-specific packages
     packages = with pkgs; [
-      neofetch
       # Add more user-specific packages here
     ];
 
