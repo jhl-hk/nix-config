@@ -9,8 +9,8 @@
 {
   programs.git = {
     enable = true;
-    userName = "jhl";
-    userEmail = "jhl@example.com";  # Change this to your email
+    userName = "jhl-hk";
+    userEmail = "valor@jianyuelab.org";
 
     extraConfig = {
       init.defaultBranch = "main";
