@@ -18,10 +18,9 @@
     # Dock settings
     dock = {
       autohide = true;
-      show-recents = false;
+      show-recents = true;
       launchanim = true;
       orientation = "bottom";
-      tilesize = 48;
     };
 
     # Finder settings
