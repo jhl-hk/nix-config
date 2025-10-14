@@ -27,6 +27,9 @@
     };
 
     initContent = ''
+      # Add Homebrew to PATH
+      export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+
       # Add Home Manager binaries to PATH
       export PATH="/etc/profiles/per-user/$USER/bin:$PATH"
 
