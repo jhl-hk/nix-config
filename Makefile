@@ -1,7 +1,7 @@
 .PHONY: switch update clean build info help
 
-# Default host (change this to your hostname)
-HOSTNAME := jhlsMacBookAir
+# Auto-detect hostname, or use override if provided
+HOSTNAME ?= $(shell hostname | cut -d. -f1)
 
 help: ## Show this help message
 	@echo "Nix Configuration Makefile"

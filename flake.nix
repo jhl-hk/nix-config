@@ -109,6 +109,13 @@
   in {
     # Darwin configurations
     darwinConfigurations = {
+      # MacBook Pro
+      jhlsMacBookPro = mkDarwin {
+        hostname = "jhlsMacBookPro";
+        system = "aarch64-darwin";
+        username = "jhl";
+      };
+
       # MacBook Air
       jhlsMacBookAir = mkDarwin {
         hostname = "jhlsMacBookAir";
