@@ -1,4 +1,4 @@
 result/
-.DS_Store
-temp/
 result
+.DS_Store
+.temp/
