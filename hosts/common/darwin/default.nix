@@ -31,8 +31,10 @@
     '';
   };
 
-  # Add Homebrew's OpenSSH to PATH
+  # Add Homebrew paths to system PATH
   environment.systemPath = [
+    "/opt/homebrew/bin"
+    "/opt/homebrew/sbin"
     "/opt/homebrew/opt/openssh/bin"
   ];
 

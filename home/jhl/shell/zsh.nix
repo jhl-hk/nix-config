@@ -27,6 +27,9 @@
     };
 
     initContent = ''
+      # Add Home Manager binaries to PATH
+      export PATH="/etc/profiles/per-user/$USER/bin:$PATH"
+
       # Additional zsh configuration
     '';
   };

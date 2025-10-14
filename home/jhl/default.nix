@@ -24,7 +24,8 @@
 
     # User-specific packages
     packages = with pkgs; [
-      # Add user-specific packages here
+      neofetch
+      # Add more user-specific packages here
     ];
 
     # Environment variables
