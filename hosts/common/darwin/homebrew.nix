@@ -29,6 +29,8 @@
       "rust"
       "tree"
       "git"
+      "pnpm"
+      "node"
 
       # Tools
       "tw93/tap/mole" # Disk Cleaner
