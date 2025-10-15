@@ -26,6 +26,9 @@
       "openssh"
       "gcc" # Fortran
       "go" # Golang
+      "rust"
+      "tree"
+      "git"
 
       # Tools
       "tw93/tap/mole"  # Disk Cleaner
