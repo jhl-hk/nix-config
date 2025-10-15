@@ -11,36 +11,72 @@
 #############################################################
 
 {
-  system.defaults = {
-    # Menu bar
-    menuExtraClock.Show24Hour = true;  # Show 24 hour clock
+  system = {
+    startup.chime = false;
 
-    # Dock settings
-    dock = {
-      autohide = true;
-      show-recents = true;
-      launchanim = true;
-      orientation = "bottom";
-    };
+    # Set desktop wallpaper on system activation
+    activationScripts.postActivation.text = ''
+      # Set wallpaper for all desktops and spaces (run as user)
+      sudo -u jhl /usr/bin/osascript -e 'tell application "System Events" to tell every desktop to set picture to "/Users/jhl/Documents/nix-config/assets/HNDT3.jpg"'
+    '';
 
-    # Finder settings
-    finder = {
-      AppleShowAllExtensions = true;
-      ShowPathbar = true;
-      FXEnableExtensionChangeWarning = false;
-    };
+    defaults = {
+      # Menu bar
+      menuExtraClock.Show24Hour = true;  # Show 24 hour clock
 
-    # Trackpad settings
-    trackpad = {
-      Clicking = true;  # Enable tap to click
-      TrackpadRightClick = true;
-    };
+      # Dock settings
+      dock = {
+        autohide = true;
+        show-recents = true;
+        launchanim = true;
+        orientation = "bottom";
+      };
 
-    # NSGlobalDomain settings
-    NSGlobalDomain = {
-      AppleICUForce24HourTime = true;
-      AppleInterfaceStyle = "Dark";  # Dark mode
-      KeyRepeat = 2;
+      # Finder settings
+      finder = {
+        AppleShowAllExtensions = true;
+        ShowPathbar = true;
+        FXEnableExtensionChangeWarning = false;
+      };
+
+      # Trackpad settings
+      trackpad = {
+        Clicking = true;  # Enable tap to click
+        TrackpadRightClick = true;
+      };
+
+      # NSGlobalDomain settings
+      NSGlobalDomain = {
+        AppleICUForce24HourTime = true;
+        AppleInterfaceStyle = "Dark";  # Dark mode
+        KeyRepeat = 2;
+      };
+
+      # Calendar settings
+      iCal = {
+        "first day of week" = "Sunday";
+        "TimeZone support enabled" = true;
+        CalendarSidebarShown = true;
+      };
+
+      # Login Window settings
+      loginwindow = {
+        GuestEnabled = false;
+      };
+
+      SoftwareUpdate.AutomaticallyInstallMacOSUpdates = true;
     };
+  };
+
+  networking = {
+    knownNetworkServices = [
+      "Wi-Fi"
+      "Ethernet"
+    ];
+
+    dns = [
+      "1.1.1.1"
+      "8.8.8.8"
+    ];
   };
 }
