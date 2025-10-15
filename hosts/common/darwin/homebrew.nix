@@ -25,6 +25,7 @@
       "tw93/tap/mole"  # Disk Cleaner
       "neofetch"       # System Info
       "openssh"
+      "mas"            # Mac App Store CLI
     ];
 
     # GUI Applications
@@ -33,8 +34,10 @@
     ];
 
     # Mac App Store apps
+    # Requires: Apple ID login (run: mas signin your@email.com)
     masApps = {
-      # Example: "Xcode" = 497799835;
+      "Yubico Authenticator" = 1497506650; # YubiKey Auth App
+      "Infuse" = 1136220934; # Video Player
     };
   };
 }
