@@ -22,22 +22,31 @@
 
     # Command-line packages
     brews = [
+      # Language & Neccessary
+      "openssh"
+      "gcc" # Fortran
+      "go" # Golang
+
+      # Tools
       "tw93/tap/mole"  # Disk Cleaner
       "neofetch"       # System Info
-      "openssh"
-      "mas"            # Mac App Store CLI
+      # "mas"            # Mac App Store CLI
     ];
 
     # GUI Applications
     casks = [
       "stats"  # System Status Monitor
+      "jordanbaird-ice" # Menubar Management
+      "yubico-authenticator" # YubiKey Authenticator
+      "typora" # Markdown Editor
     ];
 
     # Mac App Store apps
     # Requires: Apple ID login (run: mas signin your@email.com)
+    # Not Capatiable with Beta system
     masApps = {
-      "Yubico Authenticator" = 1497506650; # YubiKey Auth App
-      "Infuse" = 1136220934; # Video Player
+      # "Yubico Authenticator" = 1497506650; # YubiKey Auth App
+      # "Infuse" = 1136220934; # Video Player
     };
   };
 }
