@@ -35,10 +35,24 @@
 
     # GUI Applications
     casks = [
+      # Tools
       "stats"  # System Status Monitor
       "jordanbaird-ice" # Menubar Management
       "yubico-authenticator" # YubiKey Authenticator
+      "alt-tab" # Tab Management
+
+      # Editors
       "typora" # Markdown Editor
+      "zed" # Code Editor
+
+      # SNS Applications
+      "wechat"
+      "qq"
+      "telegram"
+
+      # Fonts
+      "font-maple-mono" # Maple Mono Font
+      "font-source-han-sans-vf"
     ];
 
     # Mac App Store apps
