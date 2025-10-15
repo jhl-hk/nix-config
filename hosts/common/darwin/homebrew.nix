@@ -31,9 +31,10 @@
       "git"
 
       # Tools
-      "tw93/tap/mole"  # Disk Cleaner
-      "neofetch"       # System Info
-      # "mas"            # Mac App Store CLI
+      "tw93/tap/mole" # Disk Cleaner
+      "neofetch" # System Info
+      # "mas" # Mac App Store CLI
+      "tailscale" # VPN
     ];
 
     # GUI Applications
@@ -43,6 +44,7 @@
       "jordanbaird-ice" # Menubar Management
       "yubico-authenticator" # YubiKey Authenticator
       "alt-tab" # Tab Management
+      "clash-verge-rev" # Clash
 
       # Editors
       "typora" # Markdown Editor
