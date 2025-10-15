@@ -25,6 +25,9 @@
   # Create /etc/zshrc that loads the nix-darwin environment
   programs.zsh = {
     enable = true;
+    enableCompletion = true;
+    # Skip insecure directory check for Nix store paths
+    enableGlobalCompInit = false;  # Disable default compinit, we'll handle it in user config
     # Initialize Starship prompt
     promptInit = ''
       eval "$(${pkgs.starship}/bin/starship init zsh)"

@@ -13,6 +13,11 @@
     autosuggestion.enable = true;
     syntaxHighlighting.enable = true;
 
+    # Skip insecure directory check for Nix store paths
+    completionInit = ''
+      autoload -U compinit && compinit -u
+    '';
+
     shellAliases = {
       ll = "ls -lah";
       la = "ls -A";
