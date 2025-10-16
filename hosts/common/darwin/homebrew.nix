@@ -30,6 +30,7 @@
       "tree"
       "git"
       "pnpm"
+      "npm"
       "node"
 
       # Tools
@@ -45,7 +46,6 @@
       "stats"  # System Status Monitor
       "jordanbaird-ice" # Menubar Management
       "yubico-authenticator" # YubiKey Authenticator
-      "alt-tab" # Tab Management
       "clash-verge-rev" # Clash
 
       # Editors
