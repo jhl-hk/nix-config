@@ -32,6 +32,7 @@
       "pnpm"
       "npm"
       "node"
+      "openjdk"
 
       # Tools
       "tw93/tap/mole" # Disk Cleaner

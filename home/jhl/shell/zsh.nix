@@ -38,6 +38,10 @@
       # Add Home Manager binaries to PATH
       export PATH="/etc/profiles/per-user/$USER/bin:$PATH"
 
+      # Java (OpenJDK via Homebrew)
+      export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
+      export JAVA_HOME="/opt/homebrew/opt/openjdk"
+
       # Additional zsh configuration
     '';
   };
