@@ -19,4 +19,10 @@
 
   # Host-specific settings
   # Add any machine-specific configuration here
+  # Homebrew
+  homebrew = {
+    casks = [
+      "google-drive"
+    ];
+  };
 }

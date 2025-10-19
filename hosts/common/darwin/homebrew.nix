@@ -48,11 +48,14 @@
       "jordanbaird-ice" # Menubar Management
       "yubico-authenticator" # YubiKey Authenticator
       "clash-verge-rev" # Clash
+      "termius" # SSH Client
+      "winbox" # Router Management
+      "sublime-text" # Text Editor
 
       # Editors
       "typora" # Markdown Editor
       "zed" # Code Editor
-      "termius" # SSH Client
+      "notion" # Documentation
 
       # SNS Applications
       "wechat"
