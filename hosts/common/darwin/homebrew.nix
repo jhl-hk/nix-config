@@ -52,6 +52,7 @@
       # Editors
       "typora" # Markdown Editor
       "zed" # Code Editor
+      "termius" # SSH Client
 
       # SNS Applications
       "wechat"
