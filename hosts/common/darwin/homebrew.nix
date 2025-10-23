@@ -51,6 +51,7 @@
       "termius" # SSH Client
       "winbox" # Router Management
       "sublime-text" # Text Editor
+      "claude" # AI Tool
 
       # Editors
       "typora" # Markdown Editor
@@ -61,6 +62,10 @@
       "wechat"
       "qq"
       "telegram"
+
+      # Browser
+      "google-chrome"
+      "firefox"
 
       # Fonts
       "font-maple-mono" # Maple Mono Font
