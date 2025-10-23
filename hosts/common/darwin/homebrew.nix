@@ -18,6 +18,7 @@
 
     taps = [
       "tw93/tap"
+      "oven-sh/bun"
     ];
 
     # Command-line packages
@@ -29,8 +30,7 @@
       "rust"
       "tree"
       "git"
-      "pnpm"
-      "npm"
+      "bun" # Package Manager
       "node"
       "openjdk"
 
