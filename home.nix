@@ -36,7 +36,7 @@
 
     # Programing Languages
     bun # Nodejs Package manager
-    java
+    jdk # Java
     go
 
 
