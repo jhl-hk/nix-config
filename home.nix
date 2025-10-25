@@ -33,6 +33,7 @@
     # Tools
     neofetch
     openssh
+    termius
 
     # Programing Languages
     bun # Nodejs Package manager
@@ -44,10 +45,10 @@
     winbox
     # IDE
     zed-editor
+    typora
 
     # SNS
     discord
-    wechat
     qq
 
     # Entertainment

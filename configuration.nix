@@ -114,6 +114,16 @@
     ];
   };
 
+  programs.bash = {
+    shellInit = ''
+      if [ -z "$SSH_AUTH_SOCK" ]; then
+        export SSH_AUTH_SOCK="$XDG_RUNTIME_DIR/ssh-agent"
+      fi
+    '';
+  };
+
+  programs.ssh.startAgent = true;
+
   # Some programs need SUID wrappers, can be configured further or are
   # started in user sessions.
   # programs.mtr.enable = true;
