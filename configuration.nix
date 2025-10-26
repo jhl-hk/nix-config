@@ -169,6 +169,12 @@
 
   # List services that you want to enable:
 
+  # Disable sleep and hibernation
+  systemd.targets.sleep.enable = false;
+  systemd.targets.suspend.enable = false;
+  systemd.targets.hibernate.enable = false;
+  systemd.targets.hybrid-sleep.enable = false;
+
   # Enable the OpenSSH daemon.
   # services.openssh.enable = true;
 

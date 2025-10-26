@@ -42,6 +42,8 @@
     bun # Nodejs Package manager
     jdk # Java
     go
+    python314
+    gfortran
 
     claude-code
     winbox
