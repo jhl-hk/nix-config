@@ -14,12 +14,6 @@
   system = {
     startup.chime = false;
 
-    # Set desktop wallpaper on system activation
-    activationScripts.postActivation.text = ''
-      # Set wallpaper for all desktops and spaces (run as user)
-      sudo -u jhl /usr/bin/osascript -e 'tell application "System Events" to tell every desktop to set picture to "/Users/jhl/Documents/nix-config/assets/HNDT3.jpg"'
-    '';
-
     defaults = {
       # Menu bar
       menuExtraClock.Show24Hour = true;  # Show 24 hour clock

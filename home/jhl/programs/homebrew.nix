@@ -9,13 +9,6 @@
 
 {
   homebrew = {
-    enable = true;
-
-    onActivation = {
-      autoUpdate = true;
-      cleanup = "zap";  # Uninstall all programs not declared
-    };
-
     taps = [
       "tw93/tap"
       "oven-sh/bun"
@@ -23,27 +16,34 @@
 
     # Command-line packages
     brews = [
-      # Language & Neccessary
-      "openssh"
-      "gcc" # Fortran
-      "go" # Golang
-      "rust"
-      "tree"
-      "git"
-      "bun" # Package Manager
-      "node"
-      "openjdk"
-
-      # Tools
-      "tw93/tap/mole" # Disk Cleaner
-      "neofetch" # System Info
+      "tailscale" # VPN
     ];
 
     # GUI Applications
     casks = [
-      # Fonts
-      "font-maple-mono" # Maple Mono Font
-      "font-source-han-sans-vf"
+      # Tools
+      "stats"  # System Status Monitor
+      "jordanbaird-ice" # Menubar Management
+      "yubico-authenticator" # YubiKey Authenticator
+      "clash-verge-rev" # Clash
+      "termius" # SSH Client
+      "winbox" # Router Management
+      "sublime-text" # Text Editor
+      "claude" # AI Tool
+
+      # Editors
+      "typora" # Markdown Editor
+      "zed" # Code Editor
+      "notion" # Documentation
+
+      # SNS Applications
+      "wechat"
+      "qq"
+      "telegram"
+
+      # Browser
+      "google-chrome"
+      "firefox"
     ];
 
     # Mac App Store apps

@@ -2,13 +2,13 @@
 
 #############################################################
 #
-#  Program configurations for user jhl
+#  Shell configurations for user jhl
 #
 #############################################################
 
 {
   imports = [
-    ./git.nix
-    ./homebrew.nix
+    ./zsh.nix
+    ./starship.nix
   ];
 }
