@@ -31,16 +31,21 @@
       path = "$HOME/.zsh_history";
     };
 
-    initContent = ''
-      # Add Homebrew to PATH
-      export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
+    initExtra = ''
+      # Add Homebrew to PATH (Intel Mac uses /usr/local, Apple Silicon uses /opt/homebrew)
+      if [[ $(uname -m) == "x86_64" ]]; then
+        export HOMEBREW_PREFIX="/usr/local"
+      else
+        export HOMEBREW_PREFIX="/opt/homebrew"
+      fi
+      export PATH="$HOMEBREW_PREFIX/bin:$HOMEBREW_PREFIX/sbin:$PATH"
 
       # Add Home Manager binaries to PATH
       export PATH="/etc/profiles/per-user/$USER/bin:$PATH"
 
       # Java (OpenJDK via Homebrew)
-      export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
-      export JAVA_HOME="/opt/homebrew/opt/openjdk"
+      export PATH="$HOMEBREW_PREFIX/opt/openjdk/bin:$PATH"
+      export JAVA_HOME="$HOMEBREW_PREFIX/opt/openjdk"
 
       # Additional zsh configuration
     '';

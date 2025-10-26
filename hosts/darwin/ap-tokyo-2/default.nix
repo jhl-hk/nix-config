@@ -17,6 +17,13 @@
   networking.computerName = "ap-tokyo-2";
   system.defaults.smb.NetBIOSName = "ap-tokyo-2";
 
+  # Intel Mac uses different Homebrew paths than Apple Silicon
+  environment.systemPath = [
+    "/usr/local/bin"
+    "/usr/local/sbin"
+    "/usr/local/opt/openssh/bin"
+  ];
+
   # Disable desktop applications for this host (server use only)
   # Override the common homebrew casks configuration
   homebrew = {
