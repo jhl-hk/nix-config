@@ -25,12 +25,31 @@
   ];
 
   # Disable desktop applications for this host (server use only)
-  # Override the common homebrew casks configuration
+  # Override the common homebrew casks and brews configuration
   homebrew = {
-    casks = [
-      # No desktop applications for this server host
-      # Only CLI tools from brews are installed (defined in common/darwin/homebrew.nix)
+    # Disable all casks (no desktop applications)
+    casks = [];
+
+    # Override brews list - remove bun and mole which have issues on Intel Mac
+    brews = [
+      # Language & Necessary
+      "openssh"
+      "gcc"
+      "go"
+      "rust"
+      "tree"
+      "git"
+      "node"
+      "openjdk"
+
+      # Tools
+      "neofetch"
+      # Removed: "bun" - has permission issues on Intel Mac
+      # Removed: "tw93/tap/mole" - not needed on server
     ];
+
+    # Disable taps that are not needed
+    taps = [];
   };
 
   # Host-specific settings
