@@ -31,7 +31,7 @@
       path = "$HOME/.zsh_history";
     };
 
-    initExtra = ''
+    initContent = ''
       # Add Homebrew to PATH (Intel Mac uses /usr/local, Apple Silicon uses /opt/homebrew)
       if [[ $(uname -m) == "x86_64" ]]; then
         export HOMEBREW_PREFIX="/usr/local"
