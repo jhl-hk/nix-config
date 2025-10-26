@@ -70,9 +70,20 @@
   # 启用 starship，这是一个漂亮的 shell 提示符
   programs.starship = {
     enable = true;
-    # 自定义配置
+    enableZshIntegration = true;
+
     settings = {
       add_newline = true;
+
+      character = {
+        success_symbol = "[➜](bold green)";
+        error_symbol = "[➜](bold red)";
+      };
+
+      directory = {
+        truncation_length = 3;
+        truncate_to_repo = true;
+      };
     };
   };
 
