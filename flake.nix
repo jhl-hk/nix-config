@@ -123,12 +123,12 @@
         username = "jhl";
       };
 
-      # Add more Darwin hosts here following the same pattern:
-      # anotherMac = mkDarwin {
-      #   hostname = "anotherMac";
-      #   system = "aarch64-darwin";  # or "x86_64-darwin" for Intel
-      #   username = "username";
-      # };
+      # Intel Mac Server in Tokyo
+      ap-tokyo-2 = mkDarwin {
+        hostname = "ap-tokyo-2";
+        system = "x86_64-darwin";  # Intel Mac
+        username = "valor";
+      };
     };
 
     # NixOS configurations (for future use)
