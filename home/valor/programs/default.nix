@@ -9,5 +9,6 @@
 {
   imports = [
     ./git.nix
+    ./homebrew.nix
   ];
 }
