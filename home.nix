@@ -60,6 +60,7 @@
 
     # Entertainment
     spotify
+    teamspeak3
   ];
 
   # git 相关配置
