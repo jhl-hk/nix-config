@@ -34,6 +34,9 @@
       "node"
       "openjdk"
 
+      # Cyber Security
+      sleuthkit
+
       # Tools
       "tw93/tap/mole" # Disk Cleaner
       "neofetch" # System Info
