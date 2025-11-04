@@ -23,38 +23,65 @@
 
     # Command-line packages
     brews = [
-      # Language & Neccessary
+      # Language & Necessary
       "openssh"
-      "gcc" # Fortran
-      "go" # Golang
+      "gcc"        # Fortran
+      "go"         # Golang
       "rust"
       "tree"
       "git"
-      "bun" # Package Manager
+      "bun"        # Package Manager
       "node"
       "openjdk"
 
       # Cyber Security
-      sleuthkit
+      "sleuthkit"
 
       # Tools
-      "tw93/tap/mole" # Disk Cleaner
-      "neofetch" # System Info
+      "tw93/tap/mole"  # Disk Cleaner
+      "neofetch"       # System Info
+      "tailscale"      # VPN
+      "ykman"
     ];
 
     # GUI Applications
     casks = [
       # Fonts
-      "font-maple-mono" # Maple Mono Font
+      "font-maple-mono"          # Maple Mono Font
       "font-source-han-sans-vf"
+
+      # Development Tools
+      "stats"                    # System Status Monitor
+      "jordanbaird-ice"          # Menubar Management
+      "yubico-authenticator"     # YubiKey Authenticator
+      "clash-verge-rev"          # Clash VPN
+      "termius"                  # SSH Client
+      "winbox"                   # Router Management
+      "sublime-text"             # Text Editor
+      "claude"                   # AI Tool
+
+      # Editors
+      "typora"                   # Markdown Editor
+      "zed"                      # Code Editor
+      "notion"                   # Documentation
+
+      # Communication
+      "wechat"
+      "qq"
+      "telegram"
+      "discord"
+
+      # Browsers
+      "google-chrome"
+      "firefox"
     ];
 
     # Mac App Store apps
     # Requires: Apple ID login (run: mas signin your@email.com)
-    # Not Capatiable with Beta system
+    # Not Compatible with Beta system
     masApps = {
-      # "Yubico Authenticator" = 1497506650; # YubiKey Auth App
-      # "Infuse" = 1136220934; # Video Player
+      # "Yubico Authenticator" = 1497506650;  # YubiKey Auth App
+      # "Infuse" = 1136220934;                # Video Player
     };
   };
 }
