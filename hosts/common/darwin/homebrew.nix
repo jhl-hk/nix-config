@@ -36,6 +36,7 @@
 
       # Cyber Security
       "sleuthkit"
+      "claude-code"
 
       # Tools
       "tw93/tap/mole"  # Disk Cleaner
@@ -70,6 +71,7 @@
       "qq"
       "telegram"
       "discord"
+      "voov-meeting"
 
       # Browsers
       "google-chrome"
