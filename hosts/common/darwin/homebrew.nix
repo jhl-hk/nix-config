@@ -60,6 +60,7 @@
       "winbox"                   # Router Management
       "sublime-text"             # Text Editor
       "claude"                   # AI Tool
+      "intellij-idea"
 
       # Editors
       "typora"                   # Markdown Editor
