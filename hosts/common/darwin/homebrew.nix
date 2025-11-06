@@ -36,13 +36,13 @@
 
       # Cyber Security
       "sleuthkit"
-      "claude-code"
 
       # Tools
       "tw93/tap/mole"  # Disk Cleaner
       "neofetch"       # System Info
       "tailscale"      # VPN
       "ykman"
+      "claude-cmd"     # AI
     ];
 
     # GUI Applications
