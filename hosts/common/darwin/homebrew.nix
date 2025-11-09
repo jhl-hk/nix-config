@@ -42,6 +42,7 @@
       "neofetch"       # System Info
       "tailscale"      # VPN
       "ykman"
+      "iperf3"
       "claude-cmd"     # AI
     ];
 
@@ -73,6 +74,7 @@
       "telegram"
       "discord"
       "voov-meeting"
+      "lark"
 
       # Browsers
       "google-chrome"
