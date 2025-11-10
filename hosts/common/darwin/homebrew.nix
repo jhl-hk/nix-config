@@ -62,6 +62,7 @@
       "sublime-text"             # Text Editor
       "claude"                   # AI Tool
       "intellij-idea"
+      "rustdesk"
 
       # Editors
       "typora"                   # Markdown Editor
