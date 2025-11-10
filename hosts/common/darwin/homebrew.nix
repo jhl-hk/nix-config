@@ -67,6 +67,7 @@
       "typora"                   # Markdown Editor
       "zed"                      # Code Editor
       "notion"                   # Documentation
+      "microsoft-office"
 
       # Communication
       "wechat"
