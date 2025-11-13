@@ -50,3 +50,36 @@ history: ## Show system generations
 
 diff: ## Show what would change
 	darwin-rebuild build --flake .#$(HOSTNAME) && nix store diff-closures /run/current-system ./result
+
+sha: ## Get SHA256 hash for GitHub repo (usage: make sha owner/repo)
+	@if [ -z "$(filter-out $@,$(MAKECMDGOALS))" ]; then \
+		echo "Error: Repository path is required"; \
+		echo "Usage: make sha <owner/repo> [BRANCH=branch_name]"; \
+		echo ""; \
+		echo "Examples:"; \
+		echo "  make sha jhl-hk/typora-themes"; \
+		echo "  make sha owner/repo BRANCH=main"; \
+		echo "  make sha owner/repo BRANCH=develop"; \
+		exit 1; \
+	fi
+	@REPO_PATH="$(filter-out $@,$(MAKECMDGOALS))"; \
+	BRANCH=$${BRANCH:-main}; \
+	REPO_URL="https://github.com/$$REPO_PATH"; \
+	ARCHIVE_URL="$${REPO_URL}/archive/refs/heads/$${BRANCH}.tar.gz"; \
+	echo "Fetching hash for: $$REPO_URL (branch: $$BRANCH)"; \
+	echo ""; \
+	OLD_HASH=$$(nix-prefetch-url --unpack "$$ARCHIVE_URL" 2>/dev/null | tail -1); \
+	if [ -z "$$OLD_HASH" ]; then \
+		echo "Error: Failed to fetch repository"; \
+		exit 1; \
+	fi; \
+	SRI_HASH=$$(nix hash to-sri sha256:$$OLD_HASH 2>&1 | grep "sha256-"); \
+	echo "Repository: $$REPO_URL"; \
+	echo "Branch:     $$BRANCH"; \
+	echo ""; \
+	echo "Use in your .nix file:"; \
+	echo "  sha256 = \"$$SRI_HASH\";"
+
+# Prevent make from treating repo path as a target
+%:
+	@:

@@ -63,6 +63,7 @@
       "claude"                   # AI Tool
       "intellij-idea"
       "rustdesk"
+      "wireshark"
 
       # Editors
       "typora"                   # Markdown Editor
