@@ -33,6 +33,7 @@
       "bun"        # Package Manager
       "node"
       "openjdk"
+      "docker-compose"
 
       # Cyber Security
       "sleuthkit"
@@ -64,6 +65,7 @@
       "rustdesk"
       "wireshark-app"
       "tailscale-app"            # VPN
+      "docker"
 
       # Editors
       "typora"                   # Markdown Editor
