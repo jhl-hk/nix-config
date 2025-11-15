@@ -40,7 +40,6 @@
       # Tools
       "tw93/tap/mole"  # Disk Cleaner
       "neofetch"       # System Info
-      "tailscale"      # VPN
       "ykman"
       "iperf3"
       "claude-cmd"     # AI
@@ -63,7 +62,8 @@
       "claude"                   # AI Tool
       "intellij-idea"
       "rustdesk"
-      "wireshark"
+      "wireshark-app"
+      "tailscale-app"            # VPN
 
       # Editors
       "typora"                   # Markdown Editor
@@ -78,6 +78,7 @@
       "discord"
       "voov-meeting"
       "lark"
+      "zoom"
 
       # Browsers
       "google-chrome"
