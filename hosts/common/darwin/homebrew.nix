@@ -64,6 +64,7 @@
       "intellij-idea"
       "rustdesk"
       "wireshark"
+      "1password"
 
       # Editors
       "typora"                   # Markdown Editor
