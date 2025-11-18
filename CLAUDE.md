@@ -20,6 +20,7 @@ make build
 # Or manually specify hostname:
 darwin-rebuild switch --flake .#jhlsMacBookAir
 darwin-rebuild build --flake .#jhlsMacBookPro
+sudo nix --extra-experimental-features 'nix-command flakes' run nix-darwin -- switch --flake
 ```
 
 ### Updating and Maintenance
