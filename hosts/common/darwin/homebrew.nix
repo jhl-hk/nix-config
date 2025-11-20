@@ -43,7 +43,6 @@
       "neofetch"       # System Info
       "ykman"
       "iperf3"
-      "claude-cmd"     # AI
     ];
 
     # GUI Applications
@@ -60,13 +59,13 @@
       "termius"                  # SSH Client
       "winbox"                   # Router Management
       "sublime-text"             # Text Editor
-      "claude"                   # AI Tool
+      "claude-code"              # AI Tool
       "intellij-idea"
       "webstorm"
       "rustdesk"
       "wireshark-app"
       "tailscale-app"            # VPN
-      "docker"
+      "docker-desktop"
       "1password"
 
       # Editors
