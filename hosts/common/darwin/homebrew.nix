@@ -67,6 +67,7 @@
       "wireshark-app"
       "tailscale-app"            # VPN
       "docker"
+      "1password"
 
       # Editors
       "typora"                   # Markdown Editor
