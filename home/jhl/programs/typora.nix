@@ -16,7 +16,7 @@ let
     owner = "jhl-hk";
     repo = "typora-themes";
     rev = "main";  # 或者使用特定的 commit hash
-    sha256 = "sha256-IDK9GzZroCUjlACVi6MNafmtDR1wwKBWBSHIThz2KNg=";
+    sha256 = "sha256-8dLDxbvFvCxI7li6HyYHywPJArdvrhofoJOe0xhzez0=";
   };
 in
 {
