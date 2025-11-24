@@ -83,6 +83,7 @@
       "voov-meeting"
       "lark"
       "zoom"
+      "teamspeak-client"
 
       # Browsers
       "google-chrome"
