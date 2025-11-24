@@ -67,6 +67,7 @@
       "tailscale-app"            # VPN
       "docker-desktop"
       "1password"
+      "arduino-ide"
 
       # Editors
       "typora"                   # Markdown Editor
