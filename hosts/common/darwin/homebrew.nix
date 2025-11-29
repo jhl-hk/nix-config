@@ -34,6 +34,7 @@
       "node"
       "openjdk"
       "docker-compose"
+      "nexttrace"
 
       # Cyber Security
       "sleuthkit"
@@ -68,6 +69,7 @@
       "docker-desktop"
       "1password"
       "arduino-ide"
+      "gns3"
 
       # Editors
       "typora"                   # Markdown Editor
