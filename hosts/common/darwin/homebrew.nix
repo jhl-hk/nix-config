@@ -34,6 +34,7 @@
       "node"
       "openjdk"
       "docker-compose"
+      "nexttrace"
 
       # Cyber Security
       "sleuthkit"
