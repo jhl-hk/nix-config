@@ -90,6 +90,8 @@
       # Browsers
       "google-chrome"
       "firefox"
+
+      "spotify"
     ];
 
     # Mac App Store apps
