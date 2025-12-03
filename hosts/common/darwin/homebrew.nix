@@ -70,6 +70,7 @@
       "1password"
       "arduino-ide"
       "gns3"
+      "syncthing-app"
 
       # Editors
       "typora"                   # Markdown Editor
