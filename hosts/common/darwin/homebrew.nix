@@ -19,6 +19,7 @@
     taps = [
       "tw93/tap"
       "oven-sh/bun"
+      "theseal/ssh-askpass"
     ];
 
     # Command-line packages
@@ -44,6 +45,7 @@
       "neofetch"       # System Info
       "ykman"
       "iperf3"
+      "ssh-askpass"
     ];
 
     # GUI Applications

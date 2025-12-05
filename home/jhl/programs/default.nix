@@ -9,6 +9,7 @@
 {
   imports = [
     ./git.nix
+    ./ssh.nix
     ./typora.nix
   ];
 }
