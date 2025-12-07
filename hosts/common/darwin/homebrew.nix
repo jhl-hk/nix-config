@@ -73,6 +73,7 @@
       "arduino-ide"
       "gns3"
       "syncthing-app"
+      "visual-studio-code"
 
       # Editors
       "typora"                   # Markdown Editor

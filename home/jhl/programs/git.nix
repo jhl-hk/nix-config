@@ -9,10 +9,12 @@
 {
   programs.git = {
     enable = true;
-    userName = "jhl-hk";
-    userEmail = "valor@jianyuelab.org";
 
-    extraConfig = {
+    settings = {
+      user = {
+        name = "jhl-hk";
+        email = "valor@jianyuelab.org";
+      };
       init.defaultBranch = "main";
       pull.rebase = false;
       core.editor = "vim";
