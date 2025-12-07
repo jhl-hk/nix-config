@@ -16,7 +16,7 @@
     fi
 
     # Set FIDO2 security key provider for YubiKey support
-    export SSH_SK_PROVIDER=/usr/lib/libsk-libfido2.dylib
+    export SSH_SK_PROVIDER=/opt/homebrew/opt/libfido2/lib/libfido2.dylib
   '';
 
   programs.ssh = {
