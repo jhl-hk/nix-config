@@ -36,6 +36,7 @@
       "openjdk"
       "docker-compose"
       "nexttrace"
+      "just"
 
       # Cyber Security
       "sleuthkit"
@@ -62,7 +63,6 @@
       "termius"                  # SSH Client
       "winbox"                   # Router Management
       "sublime-text"             # Text Editor
-      "claude-code"              # AI Tool
       "intellij-idea"
       "webstorm"
       "rustdesk"

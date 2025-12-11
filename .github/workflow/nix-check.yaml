@@ -1,0 +1,13 @@
+name: Nix Check
+
+on:
+  push:
+    branches: [darwin]
+
+jobs:
+  build:
+    runs-on:
+
+    steps:
+      - uses: extractions/setup-just@v1
+        run: just check
