@@ -14,6 +14,9 @@
     if [[ "$SSH_AUTH_SOCK" == *"launchd"* ]]; then
       unset SSH_AUTH_SOCK
     fi
+
+    # Set FIDO2 security key provider for YubiKey support
+    export SSH_SK_PROVIDER=/opt/homebrew/opt/libfido2/lib/libfido2.dylib
   '';
 
   programs.ssh = {
