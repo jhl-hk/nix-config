@@ -22,20 +22,32 @@
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
+    matchBlocks = {
+      "*" = {
+        identityFile = "~/.ssh/id_ed25519_sk_rk";
+        forwardAgent = true;
+        serverAliveInterval = 60;
+        serverAliveCountMax = 3;
 
-    matchBlocks."*" = {
-      identityFile = "~/.ssh/id_ed25519_sk_rk";
-      forwardAgent = true;
-      serverAliveInterval = 60;
-      serverAliveCountMax = 3;
+        # Default values from Home Manager
+        extraOptions = {
+          AddKeysToAgent = "yes";
+          Compression = "yes";
+          ControlMaster = "auto";
+          ControlPath = "~/.ssh/master-%r@%n:%p";
+          ControlPersist = "10m";
+        };
+      };
 
-      # Default values from Home Manager
-      extraOptions = {
-        AddKeysToAgent = "yes";
-        Compression = "yes";
-        ControlMaster = "auto";
-        ControlPath = "~/.ssh/master-%r@%n:%p";
-        ControlPersist = "10m";
+      # Tokyo Internet Exchange Point
+      "tyix" = {
+        hostname = "10.100.11.254";
+        user = "root";
+      };
+
+      "vultr-ty" = {
+        hostname = "202.182.105.203";
+        user = "root";
       };
     };
   };

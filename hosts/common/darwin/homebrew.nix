@@ -74,6 +74,8 @@
       "gns3"
       "syncthing-app"
       "visual-studio-code"
+      "claude-code"
+      "balenaetcher"
 
       # Editors
       "typora"                   # Markdown Editor
