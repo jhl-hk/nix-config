@@ -32,17 +32,6 @@
           ControlPersist = "10m";
         };
       };
-
-      # Tokyo Internet Exchange Point
-      "tyix" = {
-        hostname = "10.100.11.254";
-        user = "root";
-      };
-
-      "vultr-ty" = {
-        hostname = "202.182.105.203";
-        user = "root";
-      };
     };
   };
 
