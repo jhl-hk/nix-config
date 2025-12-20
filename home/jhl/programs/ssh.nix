@@ -19,10 +19,13 @@
     enableDefaultConfig = false;
     matchBlocks = {
       "*" = {
-        identityFile = "~/.ssh/id_ed25519_sk_rk";
         forwardAgent = true;
-        serverAliveInterval = 60;
         serverAliveCountMax = 3;
+        serverAliveInterval = 60;
+        identityFile = [
+          "~/.ssh/id_yk5c"
+          "~/.ssh/id_ed25519_sk_rk"
+        ];
 
         extraOptions = {
           AddKeysToAgent = "yes";
