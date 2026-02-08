@@ -13,7 +13,7 @@
     settings = {
       user = {
         name = "jhl-hk";
-        email = "valor@jianyuelab.org";
+        email = "ja@jhl.hk";
       };
       init.defaultBranch = "main";
       pull.rebase = false;

@@ -46,6 +46,8 @@
 
   # SSH agent configuration with single-instance guarantee
   programs.zsh.initContent = lib.mkAfter ''
+    export PATH="$HOME/.local/bin:$PATH"
+
     # ===== SSH Agent Management - Performance Optimized =====
 
     # Use Homebrew-provided SSH tools (OpenSSH with YubiKey support)

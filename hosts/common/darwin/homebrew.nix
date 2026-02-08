@@ -34,7 +34,6 @@
       "bun"        # Package Manager
       "node"
       "openjdk"
-      "docker-compose"
       "nexttrace"
       "just"
 
@@ -68,20 +67,20 @@
       "rustdesk"
       "wireshark-app"
       "tailscale-app"            # VPN
-      "docker-desktop"
       "1password"
       "arduino-ide"
-      "gns3"
       "syncthing-app"
       "visual-studio-code"
-      "claude-code"
       "balenaetcher"
+      "claude-code"
+      "dockdoor"
 
       # Editors
       "typora"                   # Markdown Editor
       "zed"                      # Code Editor
       "notion"                   # Documentation
       "microsoft-office"
+      "cursor"
 
       # Communication
       "wechat"
@@ -98,6 +97,7 @@
       "firefox"
 
       "spotify"
+      "steam"
     ];
 
     # Mac App Store apps
