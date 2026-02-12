@@ -1,5 +1,5 @@
 {
-  description = "JHL's Nix Configuration";
+  description = "JHL's Nix Config";
 
   nixConfig = {
     substituters = [
@@ -13,10 +13,10 @@
 
   inputs = {
     nixpkgs.url = "github:nixos/nixpkgs/nixpkgs-unstable";
-    nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-25.05-darwin";
+    nixpkgs-darwin.url = "github:nixos/nixpkgs/nixpkgs-25.11-darwin";
 
     darwin = {
-      url = "github:lnl7/nix-darwin/nix-darwin-25.05";
+      url = "github:lnl7/nix-darwin/nix-darwin-25.11";
       inputs.nixpkgs.follows = "nixpkgs-darwin";
     };
 
@@ -54,9 +54,6 @@
         # Host-specific configuration
         ./hosts/darwin/${hostname}
 
-        # User configuration
-        ./users/${username}
-
         # Home Manager integration
         home-manager.darwinModules.home-manager
         {
@@ -65,47 +62,11 @@
             useUserPackages = true;
             backupFileExtension = "backup";
             extraSpecialArgs = { inherit inputs outputs hostname username; };
-            users.${username} = import ./home/${username};
+            users.jhl = import ./home;
           };
         }
       ] ++ modules;
     };
-
-    # Helper function to create NixOS systems
-    mkNixOS = {
-      hostname,
-      system ? "x86_64-linux",
-      username,
-      modules ? []
-    }: nixpkgs.lib.nixosSystem {
-      inherit system;
-      specialArgs = {
-        inherit inputs outputs hostname username;
-      };
-      modules = [
-        # Core configurations
-        ./hosts/common/core
-
-        # Host-specific configuration
-        ./hosts/nixos/${hostname}
-
-        # User configuration
-        ./users/${username}
-
-        # Home Manager integration
-        home-manager.nixosModules.home-manager
-        {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            backupFileExtension = "backup";
-            extraSpecialArgs = { inherit inputs outputs hostname username; };
-            users.${username} = import ./home/${username};
-          };
-        }
-      ] ++ modules;
-    };
-
   in {
     # Darwin configurations
     darwinConfigurations = {
@@ -121,13 +82,6 @@
         hostname = "jhlsMacBookAir";
         system = "aarch64-darwin";
         username = "jhl";
-      };
-
-      # Intel Mac Server in Tokyo
-      ap-tokyo-2 = mkDarwin {
-        hostname = "ap-tokyo-2";
-        system = "x86_64-darwin";  # Intel Mac
-        username = "valor";
       };
     };
 

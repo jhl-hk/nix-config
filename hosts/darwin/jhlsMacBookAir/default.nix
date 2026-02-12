@@ -22,13 +22,4 @@
     # Set wallpaper for user jhl
     sudo -u jhl /usr/bin/osascript -e 'tell application "System Events" to tell every desktop to set picture to "/Users/jhl/Documents/nix-config/assets/HNDT3.jpg"' || true
   '';
-
-  # Host-specific settings
-  # Add any machine-specific configuration here
-  # Homebrew
-  homebrew = {
-    casks = [
-      "google-drive"
-    ];
-  };
 }
