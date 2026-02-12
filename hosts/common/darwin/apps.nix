@@ -74,6 +74,7 @@
       "wireshark-app"
       "winbox"                   # Router management
       "yubico-authenticator"     # YubiKey authenticator
+      "wakatime"
 
       # Editors
       "cursor"
