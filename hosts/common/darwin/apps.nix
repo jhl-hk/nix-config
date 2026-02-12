@@ -17,35 +17,37 @@
     };
 
     taps = [
-      "tw93/tap"
       "oven-sh/bun"
       "theseal/ssh-askpass"
+      "tw93/tap"
     ];
 
     # Command-line packages
     brews = [
-      # Language & Necessary
-      "openssh"
+      # Languages & build tooling
+      "bun"        # Package manager
       "gcc"        # Fortran
       "go"         # Golang
-      "rust"
-      "tree"
-      "git"
-      "bun"        # Package Manager
       "node"
       "openjdk"
-      "nexttrace"
+      "rust"
+
+      # Core tools
+      "git"
       "just"
+      "openssh"
+      "tree"
 
-      # Cyber Security
-      "sleuthkit"
-
-      # Tools
-      "tw93/tap/mole"  # Disk Cleaner
-      "neofetch"       # System Info
-      "ykman"
+      # Networking & security
       "iperf3"
+      "nexttrace"
+      "sleuthkit"
       "ssh-askpass"
+      "ykman"
+
+      # Utilities
+      "neofetch"       # System info
+      "tw93/tap/mole"  # Disk cleaner
     ];
 
     # GUI Applications
@@ -55,47 +57,46 @@
       "font-source-han-sans-vf"
 
       # Development Tools
-      "stats"                    # System Status Monitor
-      "jordanbaird-ice"          # Menubar Management
-      "yubico-authenticator"     # YubiKey Authenticator
-      "clash-verge-rev"          # Clash VPN
-      "termius"                  # SSH Client
-      "winbox"                   # Router Management
-      "sublime-text"             # Text Editor
-      "intellij-idea"
-      "webstorm"
-      "rustdesk"
-      "wireshark-app"
-      "tailscale-app"            # VPN
       "1password"
       "arduino-ide"
-      "syncthing-app"
-      "visual-studio-code"
       "balenaetcher"
-      "claude-code"
-      "dockdoor"
+      "bartender"
+      "clash-verge-rev"          # Clash VPN
+      "intellij-idea"
+      "rustdesk"
+      "stats"                    # System status monitor
+      "sublime-text"             # Text editor
+      "syncthing-app"
+      "tailscale-app"            # VPN
+      "termius"                  # SSH client
+      "visual-studio-code"
+      "webstorm"
+      "wireshark-app"
+      "winbox"                   # Router management
+      "yubico-authenticator"     # YubiKey authenticator
 
       # Editors
-      "typora"                   # Markdown Editor
-      "zed"                      # Code Editor
-      "notion"                   # Documentation
-      "microsoft-office"
       "cursor"
+      "microsoft-office"
+      "notion"                   # Documentation
+      "typora"                   # Markdown editor
+      "zed"                      # Code editor
 
       # Communication
-      "wechat"
-      "qq"
-      "telegram"
       "discord"
-      "voov-meeting"
       "lark"
-      "zoom"
+      "qq"
       "teamspeak-client"
+      "telegram"
+      "voov-meeting"
+      "wechat"
+      "zoom"
 
       # Browsers
-      "google-chrome"
       "firefox"
+      "google-chrome"
 
+      # Media & games
       "spotify"
       "steam"
     ];
@@ -105,7 +106,7 @@
     # Not Compatible with Beta system
     masApps = {
       # "Yubico Authenticator" = 1497506650;  # YubiKey Auth App
-      # "Infuse" = 1136220934;                # Video Player
+      "Infuse" = 1136220934;                # Video Player
     };
   };
 }

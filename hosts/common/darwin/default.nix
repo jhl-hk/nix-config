@@ -1,4 +1,4 @@
-{ pkgs, ... }:
+{ pkgs, username, ... }:
 
 #############################################################
 #
@@ -10,11 +10,20 @@
 {
   imports = [
     ./system-defaults.nix
-    ./homebrew.nix
+    ./apps.nix
   ];
 
   # System state version
   system.stateVersion = 6;
+
+  # Primary user and trusted user for nix-darwin
+  users.users.${username} = {
+    home = "/Users/${username}";
+    description = username;
+    shell = pkgs.zsh;
+  };
+  system.primaryUser = username;
+  nix.settings.trusted-users = [ username ];
 
   # Nix store optimization (use this instead of auto-optimise-store on Darwin)
   nix.optimise.automatic = true;
