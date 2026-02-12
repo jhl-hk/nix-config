@@ -98,7 +98,6 @@
 
       # Media & games
       "spotify"
-      "steam"
     ];
 
     # Mac App Store apps
