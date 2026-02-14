@@ -64,7 +64,6 @@
       "arduino-ide"
       "balenaetcher"
       "bartender"
-      "clash-verge-rev"          # Clash VPN
       "intellij-idea"
       "rustdesk"
       "stats"                    # System status monitor

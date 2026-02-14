@@ -9,8 +9,7 @@
 
 {
   imports = [
-    # Uncomment optional modules as needed:
-    # ../../common/optional/development.nix
+    ../../optional/flclash.nix
   ];
 
   # Host identification
