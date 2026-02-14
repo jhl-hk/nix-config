@@ -14,12 +14,14 @@ in
         url = "https://github.com/chen08209/FlClash/releases/download/v${version}/FlClash-${version}-macos-arm64.dmg";
         inherit sha256;
       };
-      nativeBuildInputs = [ pkgs.hfsplus-tools ];
+      nativeBuildInputs = [ pkgs.undmg ];
+      sourceRoot = ".";
+      unpackPhase = ''
+        undmg $src
+      '';
       installPhase = ''
-        hdiutil attach $src -mountpoint ./flclash-dmg
         mkdir -p $out/Applications
-        cp -r ./flclash-dmg/FlClash.app $out/Applications/
-        hdiutil detach ./flclash-dmg
+        cp -r *.app $out/Applications/
       '';
       meta = with lib; {
         description = "A Clash GUI that works on multiple platforms.";
