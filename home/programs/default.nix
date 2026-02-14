@@ -11,6 +11,5 @@
     ./git.nix
     ./ssh.nix
     ./typora.nix
-    ./flclash.nix
   ];
 }
