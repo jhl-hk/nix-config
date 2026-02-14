@@ -48,6 +48,9 @@
       # Utilities
       "neofetch"       # System info
       "tw93/tap/mole"  # Disk cleaner
+
+      # AI
+      "gemini-cli"
     ];
 
     # GUI Applications
@@ -99,6 +102,10 @@
 
       # Media & games
       "spotify"
+
+      # AI
+      "claude-code"
+      "codex"
     ];
 
     # Mac App Store apps
