@@ -14,7 +14,7 @@ in
         url = "https://github.com/chen08209/FlClash/releases/download/v${version}/FlClash-${version}-macos-arm64.dmg";
         inherit sha256;
       };
-      nativeBuildInputs = [ pkgs.hfsplus ];
+      nativeBuildInputs = [ pkgs.hfsplus-tools ];
       installPhase = ''
         hdiutil attach $src -mountpoint ./flclash-dmg
         mkdir -p $out/Applications
