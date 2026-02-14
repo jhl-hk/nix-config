@@ -9,7 +9,6 @@
 
 {
   imports = [
-    ../../optional/flclash.nix
   ];
 
   # Host identification
