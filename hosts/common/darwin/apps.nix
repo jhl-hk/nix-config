@@ -77,6 +77,7 @@
       "winbox"                   # Router management
       "yubico-authenticator"     # YubiKey authenticator
       "wakatime"
+      "clash-verge-rev"
 
       # Editors
       "cursor"

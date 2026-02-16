@@ -15,8 +15,8 @@ let
   myTyporaThemes = pkgs.fetchFromGitHub {
     owner = "jhl-hk";
     repo = "typora-themes";
-    rev = "main";  # 或者使用特定的 commit hash
-    sha256 = "sha256-RIMRLLGwcPbq/xUN5SDVlcOFCWOoyhO6Obal+NzUj7Y=";
+    rev = "86de879d2765a2ca09253b0edef677fb28271459";  # 或者使用特定的 commit hash
+    sha256 = "sha256-sIguntwaIv3y7TT1Bw8n6Ld67j8c2vjjuzKK68d6caA=";
   };
 in
 {
