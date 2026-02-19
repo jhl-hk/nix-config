@@ -9,6 +9,7 @@
 
 {
   imports = [
+    ../../optional/steam.nix
   ];
 
   # Host identification

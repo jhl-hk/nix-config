@@ -31,6 +31,7 @@
       "node"
       "openjdk"
       "rust"
+      "wails"
 
       # Core tools
       "git"
