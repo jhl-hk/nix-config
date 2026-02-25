@@ -38,6 +38,7 @@
       "just"
       "openssh"
       "tree"
+      "telnet"
 
       # Networking & security
       "iperf3"
@@ -79,6 +80,7 @@
       "yubico-authenticator"     # YubiKey authenticator
       "wakatime"
       "clash-verge-rev"
+      "datagrip"
 
       # Editors
       "cursor"
@@ -107,6 +109,7 @@
       # AI
       "claude-code"
       "codex"
+      "grammarly-desktop"
     ];
 
     # Mac App Store apps
@@ -115,6 +118,8 @@
     masApps = {
       # "Yubico Authenticator" = 1497506650;  # YubiKey Auth App
       "Infuse" = 1136220934;                # Video Player
+      "Apple Configurator" = 1037126344;
+      "Line" = 539883307;
     };
   };
 }
