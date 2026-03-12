@@ -65,26 +65,23 @@ make info
 - **`flake.nix`**: Main entry point defining all system configurations
 - **`hosts/`**: Host-specific configurations
   - `common/core/`: Required configs for ALL hosts (Nix settings, core packages)
-  - `common/darwin/`: Common macOS-specific configs (system defaults, Homebrew)
-  - `common/optional/`: Optional modules hosts can import
+  - `common/darwin/`: Common macOS-specific configs (system defaults, Homebrew via `apps.nix`)
+  - `optional/`: Optional modules hosts can selectively import (e.g. `steam.nix`)
   - `darwin/<hostname>/`: macOS host definitions
   - `nixos/<hostname>/`: NixOS host definitions (future)
-- **`users/<username>/`**: System-level user configurations (user accounts, shell, trusted users)
-- **`home/<username>/`**: Home Manager user environments (dotfiles, user packages, programs)
-  - `common/optional/`: Optional home modules
-  - `<username>/programs/`: Program-specific configs (git, zsh, etc.)
-  - `<username>/shell/`: Shell configurations
+- **`home/`**: Home Manager configuration (single user, flat structure)
+  - `programs/`: Program-specific configs (git, ssh, typora, etc.)
+  - `shell/`: Shell configurations (zsh, starship)
 
 ### Configuration Flow
 
 1. **`flake.nix`** calls `mkDarwin` or `mkNixOS` helper functions
 2. Helpers automatically import in order:
    - `hosts/common/core/` (always loaded)
-   - `hosts/common/darwin/` or NixOS equivalent
+   - `hosts/common/darwin/` (user account, shell, TouchID, Homebrew paths)
    - Host-specific config from `hosts/darwin/<hostname>/`
-   - User config from `users/<username>/`
-   - Home Manager with `home/<username>/`
-3. Optional modules are imported explicitly in host configs
+   - Home Manager wired to `./home` (hardcoded to user `jhl`)
+3. Optional modules from `hosts/optional/` are imported explicitly in host configs
 
 ### Helper Functions in flake.nix
 
@@ -134,26 +131,18 @@ All modules receive these special args:
 
 ## Adding New Users
 
-1. Copy templates:
-   ```bash
-   cp -r users/_template users/newuser
-   cp -r home/_template home/newuser
-   ```
-2. Edit `users/newuser/default.nix`:
-   - Set `users.users.newuser.home` (path differs: `/Users/` on macOS, `/home/` on Linux)
-   - Set `system.primaryUser` (Darwin only)
-   - Add to `nix.settings.trusted-users`
-3. Edit `home/newuser/default.nix`:
-   - Update `home.username` and `home.homeDirectory`
-   - Customize packages and settings
-4. Assign to host in `flake.nix` by changing `username` parameter
-5. Rebuild system
+Currently the config is single-user (`jhl`). User account setup lives in `hosts/common/darwin/default.nix` (sets `users.users.${username}`, `system.primaryUser`, `nix.settings.trusted-users`). Home Manager is hardcoded to `users.jhl = import ./home` in `flake.nix`.
+
+To add a new user:
+1. Update `hosts/common/darwin/default.nix` for the new username
+2. Create a new `home/` equivalent directory
+3. Update `flake.nix` `mkDarwin` call with new `username` and point Home Manager to the new home directory
 
 ## Key Configuration Files
 
 ### Homebrew Packages
 
-Edit `hosts/common/darwin/homebrew.nix`:
+Edit `hosts/common/darwin/apps.nix`:
 - `brews`: CLI tools from Homebrew
 - `casks`: GUI applications
 - `masApps`: Mac App Store apps (requires `mas signin`)
@@ -174,10 +163,10 @@ Edit `hosts/common/core/nix-settings.nix`:
 
 ## Home Manager Configuration
 
-User-specific configs in `home/<username>/`:
-- **Programs**: `programs/<program>.nix` - Individual program configs (git, zsh, etc.)
-- **Shell**: `shell/<shell>.nix` - Shell configurations and prompts
-- Import structure in `home/<username>/default.nix`
+User configs in `home/`:
+- **Programs**: `home/programs/<program>.nix` - git, ssh, typora, etc.
+- **Shell**: `home/shell/<shell>.nix` - zsh and starship configs
+- Import structure in `home/default.nix`
 
 Common patterns:
 ```nix
@@ -202,7 +191,8 @@ home.sessionVariables = {
 ### Nixpkgs Versions
 
 - Uses `nixpkgs-unstable` for most packages (latest)
-- Uses `nixpkgs-25.05-darwin` for darwin system (stable)
+- Uses `nixpkgs-25.11-darwin` for darwin system (stable)
+- nix-darwin channel: `nix-darwin-25.11`
 - Home Manager state version: 24.05
 - Darwin state version: 6
 

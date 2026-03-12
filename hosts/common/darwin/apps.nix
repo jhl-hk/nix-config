@@ -39,6 +39,7 @@
       "openssh"
       "tree"
       "telnet"
+      "mas"
 
       # Networking & security
       "iperf3"
@@ -120,6 +121,7 @@
       "Infuse" = 1136220934;                # Video Player
       "Apple Configurator" = 1037126344;
       "Line" = 539883307;
+      "Xcode" = 497799835;
     };
   };
 }
