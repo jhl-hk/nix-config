@@ -26,6 +26,11 @@
     sessionVariables = {
       EDITOR = "vim";
     };
+
+    # SSH allowed signers for git commit verification
+    file.".ssh/allowed_signers".text = ''
+      ja@jhl.hk sk-ssh-ed25519@openssh.com AAAAGnNrLXNzaC1lZDI1NTE5QG9wZW5zc2guY29tAAAAINVMH54ZAP0MSMznsT7Ld7qoamfK4YAC09kzrXfQmJLDAAAABHNzaDo=
+    '';
   };
 
   # Let Home Manager manage itself

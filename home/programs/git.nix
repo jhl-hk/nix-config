@@ -20,7 +20,10 @@
       pull.rebase = false;
       core.editor = "vim";
       commit.gpgSign = true;
-      gpg.format = "ssh";
+      gpg = {
+        format = "ssh";
+        ssh.allowedSignersFile = "~/.ssh/allowed_signers";
+      };
     };
   };
 }
