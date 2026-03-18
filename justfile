@@ -21,9 +21,10 @@ build:
 check:
     nix flake check --all-systems
 
-# Update flake inputs
+# Update flake inputs and brew packages
 update:
     nix flake update
+    brew update && brew upgrade
 
 # Clean old generations
 clean:

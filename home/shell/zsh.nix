@@ -21,9 +21,9 @@
     shellAliases = {
       ll = "ls -lah";
       la = "ls -A";
-      # Nix-specific aliases
-      rebuild = "darwin-rebuild switch --flake ~/.config/nix-config";
-      update = "nix flake update ~/.config/nix-config";
+      sysnew = "cd ~/Documents/nix-config/ && just rebuild";
+      sysupdate = "cd ~/Documents/nix-config/ && just update";
+      sysclean = "cd ~/Documents/nix-config/ && just clean";
     };
 
     history = {
