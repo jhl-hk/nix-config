@@ -17,7 +17,7 @@
   home = {
     username = "jhl";
     homeDirectory = "/Users/jhl";
-    stateVersion = "25.11";
+    stateVersion = "26.05";
 
     # Disable version mismatch check (we're using unstable nixpkgs with stable darwin)
     enableNixpkgsReleaseCheck = false;

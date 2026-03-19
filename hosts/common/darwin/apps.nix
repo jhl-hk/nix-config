@@ -100,8 +100,9 @@
       "zoom"
 
       # Browsers
-      "firefox"
       "google-chrome"
+
+      "google-drive"
 
       # Media & games
       "spotify"

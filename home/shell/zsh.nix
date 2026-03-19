@@ -21,7 +21,7 @@
     shellAliases = {
       ll = "ls -lah";
       la = "ls -A";
-      sysnew = "cd ~/Documents/nix-config/ && just rebuild";
+      sysnew = "cd ~/Documents/nix-config/ && just switch";
       sysupdate = "cd ~/Documents/nix-config/ && just update";
       sysclean = "cd ~/Documents/nix-config/ && just clean";
     };
