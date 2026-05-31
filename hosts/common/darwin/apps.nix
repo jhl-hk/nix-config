@@ -20,6 +20,7 @@
       "oven-sh/bun"
       "theseal/ssh-askpass"
       "tw93/tap"
+      "siderolabs/tap"
     ];
 
     # Command-line packages
@@ -40,6 +41,7 @@
       "tree"
       "telnet"
       "mas"
+      "talosctl"
 
       # Networking & security
       "iperf3"
@@ -51,6 +53,8 @@
       # Utilities
       "neofetch"       # System info
       "tw93/tap/mole"  # Disk cleaner
+      "awscli"         # AWS CLI
+      "rclone"
 
       # AI
       "gemini-cli"
@@ -61,6 +65,10 @@
       # Fonts
       "font-maple-mono"          # Maple Mono Font
       "font-source-han-sans-vf"
+
+      "notchnook"
+      "alt-tab"
+      "claude"
 
       # Development Tools
       "1password"
@@ -75,7 +83,6 @@
       "tailscale-app"            # VPN
       "termius"                  # SSH client
       "visual-studio-code"
-      "webstorm"
       "wireshark-app"
       "winbox"                   # Router management
       "yubico-authenticator"     # YubiKey authenticator
@@ -88,6 +95,10 @@
       "notion"                   # Documentation
       "typora"                   # Markdown editor
       "zed"                      # Code editor
+      "webstorm"
+      "goland"
+      "mactex"
+      "dbeaver-community"
 
       # Communication
       "discord"
@@ -122,6 +133,7 @@
       "Apple Configurator" = 1037126344;
       "Line" = 539883307;
       "Xcode" = 497799835;
+      "Texifier - LaTeX Editor" = 458866234;
     };
   };
 }

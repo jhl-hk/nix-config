@@ -17,24 +17,19 @@
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;
-    matchBlocks = {
-      "*" = {
-        forwardAgent = true;
-        serverAliveCountMax = 3;
-        serverAliveInterval = 60;
-        identityFile = [
-          "~/.ssh/id_yk5c"
-          "~/.ssh/id_ed25519_sk_rk"
-        ];
-
-        extraOptions = {
-          AddKeysToAgent = "yes";
-          Compression = "yes";
-          ControlMaster = "auto";
-          ControlPath = "~/.ssh/master-%r@%n:%p";
-          ControlPersist = "10m";
-        };
-      };
+    settings."*" = {
+      ForwardAgent = true;
+      ServerAliveCountMax = 3;
+      ServerAliveInterval = 60;
+      IdentityFile = [
+        "~/.ssh/id_yk5c"
+        "~/.ssh/id_ed25519_sk_rk"
+      ];
+      AddKeysToAgent = "yes";
+      Compression = "yes";
+      ControlMaster = "auto";
+      ControlPath = "~/.ssh/master-%r@%n:%p";
+      ControlPersist = "10m";
     };
   };
 
