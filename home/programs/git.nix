@@ -14,7 +14,7 @@
       user = {
         name = "jhl-hk";
         email = "ja@jhl.hk";
-        signingKey = "~/.ssh/id_ed25519_sk_rk.pub";
+        signingKey = "~/.ssh/id_ykmini.pub";
       };
       init.defaultBranch = "main";
       pull.rebase = false;

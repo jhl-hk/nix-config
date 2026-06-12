@@ -14,6 +14,7 @@
     onActivation = {
       autoUpdate = true;
       cleanup = "zap";  # Uninstall all programs not declared
+      extraFlags = [ "--force-cleanup" ];
     };
 
     taps = [
@@ -42,6 +43,8 @@
       "telnet"
       "mas"
       "talosctl"
+      "kubernetes-cli"
+      "helm"
 
       # Networking & security
       "iperf3"
@@ -58,6 +61,7 @@
 
       # AI
       "gemini-cli"
+      "opencode"
     ];
 
     # GUI Applications
@@ -114,6 +118,7 @@
       "google-chrome"
 
       "google-drive"
+      "windows-app"
 
       # Media & games
       "spotify"
@@ -127,13 +132,14 @@
     # Mac App Store apps
     # Requires: Apple ID login (run: mas signin your@email.com)
     # Not Compatible with Beta system
-    masApps = {
+   masApps = {
       # "Yubico Authenticator" = 1497506650;  # YubiKey Auth App
       "Infuse" = 1136220934;                # Video Player
       "Apple Configurator" = 1037126344;
       "Line" = 539883307;
       "Xcode" = 497799835;
       "Texifier - LaTeX Editor" = 458866234;
+      "MoneyWiz 2026 Personal Finance" = 1511185140;
     };
   };
 }

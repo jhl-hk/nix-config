@@ -22,8 +22,9 @@
       ServerAliveCountMax = 3;
       ServerAliveInterval = 60;
       IdentityFile = [
-        "~/.ssh/id_yk5c"
+        "~/.ssh/id_ykmini"
         "~/.ssh/id_ed25519_sk_rk"
+        "~/.ssh/id_yk5c"
       ];
       AddKeysToAgent = "yes";
       Compression = "yes";
