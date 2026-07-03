@@ -22,8 +22,8 @@
       ll = "ls -lah";
       la = "ls -A";
       sysnew = "cd ~/Documents/nix-config/ && just switch";
-      sysupdate = "cd ~/Documents/nix-config/ && just update";
-      sysclean = "cd ~/Documents/nix-config/ && just clean";
+      sysup = "cd ~/Documents/nix-config/ && just update";
+      syscl = "cd ~/Documents/nix-config/ && just clean";
     };
 
     history = {

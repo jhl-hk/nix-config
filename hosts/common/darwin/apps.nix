@@ -45,6 +45,7 @@
       "talosctl"
       "kubernetes-cli"
       "helm"
+      "gh"
 
       # Networking & security
       "iperf3"
@@ -55,7 +56,7 @@
 
       # Utilities
       "neofetch"       # System info
-      "tw93/tap/mole"  # Disk cleaner
+      "mole"  # Disk cleaner
       "awscli"         # AWS CLI
       "rclone"
 
@@ -96,7 +97,6 @@
       # Editors
       "cursor"
       "microsoft-office"
-      "notion"                   # Documentation
       "typora"                   # Markdown editor
       "zed"                      # Code editor
       "webstorm"
@@ -127,19 +127,23 @@
       "claude-code"
       "codex"
       "grammarly-desktop"
+
+      "notion"                   # Documentation
+      "notion-calendar"
+      "clash-verge-rev"
     ];
 
     # Mac App Store apps
     # Requires: Apple ID login (run: mas signin your@email.com)
     # Not Compatible with Beta system
-   masApps = {
-      # "Yubico Authenticator" = 1497506650;  # YubiKey Auth App
-      "Infuse" = 1136220934;                # Video Player
-      "Apple Configurator" = 1037126344;
-      "Line" = 539883307;
-      "Xcode" = 497799835;
-      "Texifier - LaTeX Editor" = 458866234;
-      "MoneyWiz 2026 Personal Finance" = 1511185140;
-    };
+    # masApps = {
+    #  # "Yubico Authenticator" = 1497506650;  # YubiKey Auth App
+    #  "Infuse" = 1136220934;                # Video Player
+    #  "Apple Configurator" = 1037126344;
+    #  "Line" = 539883307;
+    #  "Xcode" = 497799835;
+    #  "Texifier - LaTeX Editor" = 458866234;
+    #  "MoneyWiz 2026 Personal Finance" = 1511185140;
+    #};
   };
 }
