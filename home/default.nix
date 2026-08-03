@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, hostname, ... }:
 
 #############################################################
 #
@@ -12,6 +12,12 @@
     ./programs
     ./shell
   ];
+
+  # Primary SSH key for this host, consumed by ./programs/ssh.nix and
+  # ./programs/git.nix. Only the MacBook Pro carries the YubiKey 5C Nano
+  # ("ykmini"); every other host authenticates with the resident sk key.
+  _module.args.sshPrimaryKey =
+    if hostname == "jhlsMacBookPro" then "id_ykmini" else "id_ed25519_sk_rk";
 
   # Home Manager settings
   home = {

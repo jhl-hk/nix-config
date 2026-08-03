@@ -1,4 +1,4 @@
-{ ... }:
+{ sshPrimaryKey, ... }:
 
 #############################################################
 #
@@ -14,7 +14,7 @@
       user = {
         name = "jhl-hk";
         email = "ja@jhl.hk";
-        signingKey = "~/.ssh/id_ykmini.pub";
+        signingKey = "~/.ssh/${sshPrimaryKey}.pub";
       };
       init.defaultBranch = "main";
       pull.rebase = false;
