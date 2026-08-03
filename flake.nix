@@ -83,6 +83,13 @@
         system = "aarch64-darwin";
         username = "jhl";
       };
+
+      # Taizhou
+      SeandeMac-Studio = mkDarwin {
+        hostname = "SeandeMac-Studio";
+        system = "aarch64-darwin";
+        username = "jhl";
+      };
     };
 
     # NixOS configurations (for future use)

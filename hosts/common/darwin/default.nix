@@ -9,6 +9,7 @@
 
 {
   imports = [
+    ./options.nix
     ./system-defaults.nix
     ./apps.nix
   ];

@@ -1,4 +1,4 @@
-{ ... }:
+{ config, lib, ... }:
 
 #############################################################
 #
@@ -17,11 +17,15 @@
       extraFlags = [ "--force-cleanup" ];
     };
 
+    # Homebrew 6.0 turned on HOMEBREW_REQUIRE_TAP_TRUST, so a non-official tap
+    # has to be trusted before activation may load its formulae/casks. `trusted`
+    # emits `trusted: true` into the Brewfile, which brew bundle applies before
+    # the fetch phase -- no need to run `brew trust` by hand on a new machine.
     taps = [
-      "oven-sh/bun"
-      "theseal/ssh-askpass"
-      "tw93/tap"
-      "siderolabs/tap"
+      { name = "oven-sh/bun"; trusted = true; }
+      { name = "theseal/ssh-askpass"; trusted = true; }
+      { name = "tw93/tap"; trusted = true; }
+      { name = "siderolabs/tap"; trusted = true; }
     ];
 
     # Command-line packages
@@ -57,7 +61,6 @@
       "ykman"
 
       # Utilities
-      "neofetch"       # System info
       "mole"  # Disk cleaner
       "awscli"         # AWS CLI
       "rclone"
@@ -138,15 +141,16 @@
 
     # Mac App Store apps
     # Requires: Apple ID login (run: mas signin your@email.com)
-    # Not Compatible with Beta system
-    # masApps = {
-    #  # "Yubico Authenticator" = 1497506650;  # YubiKey Auth App
-    #  "Infuse" = 1136220934;                # Video Player
-    #  "Apple Configurator" = 1037126344;
-    #  "Line" = 539883307;
-    #  "Xcode" = 497799835;
-    #  "Texifier - LaTeX Editor" = 458866234;
-    #  "MoneyWiz 2026 Personal Finance" = 1511185140;
-    #};
+    # Skipped on seed builds, where mas cannot install: set `local.macosBeta` in
+    # the host's configuration (`just check-beta` reports which kind it is).
+    masApps = lib.optionalAttrs (!config.local.macosBeta) {
+      # "Yubico Authenticator" = 1497506650;  # YubiKey Auth App
+      "Infuse" = 1136220934;                # Video Player
+      "Apple Configurator" = 1037126344;
+      "Line" = 539883307;
+      "Xcode" = 497799835;
+      "Texifier - LaTeX Editor" = 458866234;
+      "MoneyWiz 2026 Personal Finance" = 1511185140;
+    };
   };
 }

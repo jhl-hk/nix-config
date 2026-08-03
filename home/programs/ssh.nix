@@ -58,8 +58,12 @@
     _ssh_agent_start() {
       # Check if socket exists and agent is responsive
       if [ -S "$SSH_AUTH_SOCK" ]; then
-        # Quick check: can we list keys? (agent is alive)
-        if $NIX_SSH_ADD -l >/dev/null 2>&1; then
+        # `ssh-add -l` exits 2 only when the agent cannot be contacted; it exits
+        # 1 when the agent is alive but holds no keys. Testing for success alone
+        # would treat an empty-but-healthy agent as dead, kill its socket and
+        # start a replacement on every new shell, so test for "not 2" instead.
+        $NIX_SSH_ADD -l >/dev/null 2>&1
+        if [ $? -ne 2 ]; then
           return 0
         fi
       fi
