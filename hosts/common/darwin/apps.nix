@@ -46,6 +46,8 @@
       "kubernetes-cli"
       "helm"
       "gh"
+      "tokei"
+      "tmux"
 
       # Networking & security
       "iperf3"
@@ -113,6 +115,7 @@
       "voov-meeting"
       "wechat"
       "zoom"
+      "whatsapp"
 
       # Browsers
       "google-chrome"

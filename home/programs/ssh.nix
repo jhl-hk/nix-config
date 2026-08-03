@@ -82,7 +82,9 @@
 
       # Keys not loaded yet, load them now
       local keys=(
+        "$HOME/.ssh/id_ykmini"
         "$HOME/.ssh/id_ed25519_sk_rk"
+        "$HOME/.ssh/id_yk5c"
       )
 
       for key in "''${keys[@]}"; do
