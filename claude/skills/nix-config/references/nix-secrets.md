@@ -211,7 +211,18 @@ Once `sops.secrets` and `sops.templates` are both empty, the sops-nix module dro
 - `/run/secrets` → `/run/secrets.d/N` — the last generation, still holding rendered files
 - `/run/secrets.d/age-keys.txt` — **a plaintext copy of the age private key**, root-owned `0600`
 
-Clean up by hand: `rm ~/<template path>` and `sudo rm -rf /run/secrets /run/secrets.d`. macOS clears `/run` (`→ private/var/run`) on boot, but do not rely on that — the key copy should not sit around waiting for a reboot.
+Clean up by hand:
+
+```bash
+rm ~/<template path>
+sudo rm -rf /run/secrets /run/secrets.d      # empties the contents, incl. age-keys.txt
+sudo hdiutil detach /dev/diskN               # N from: mount | grep secrets.d
+sudo rmdir /run/secrets.d
+```
+
+`/run/secrets.d` is a **64 MiB HFS RAM disk** (`diskutil info` reports `Virtual: Yes`), not a plain directory, so `rm -rf` empties it but then fails with `Resource busy` on the mount point itself. That is fine — the contents, including the key copy, are already gone at that point; the remaining steps just release the RAM. macOS clears `/run` (`→ private/var/run`) on boot, but do not rely on that for key material.
+
+Re-enabling a secret later re-creates the RAM disk normally; detaching it does not break anything.
 
 This only bites when going from "some secrets" to "none". Removing one secret among several is fine; the module stays and rebuilds the generation correctly.
 
