@@ -65,6 +65,11 @@
 
   environment.systemPackages = with pkgs; [
     starship
+
+    # Omni CLI。不走 Homebrew：siderolabs/tap 的 omnictl 没有 bottle，
+    # brew 会当成 build-from-source，在 macOS seed 版上撞 Xcode 版本检查。
+    # unstable 里是 1.9.3，跟 tap 同版本。
+    unstable.omnictl
   ];
 
   # 壁纸。host 文件里普通赋值即可覆盖（modules/hosts/darwin/wallpaper）。
