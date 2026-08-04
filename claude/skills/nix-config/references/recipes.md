@@ -283,7 +283,7 @@ Full worked example with the user-side steps: `hosts/common/optional/darwin/npmr
 
 Then hand off: tell the user the exact YAML key path and which file (`shared.yaml` unless it's genuinely machine-specific), and that they need `just sops-edit shared`, a commit+push in `../nix-secrets`, and `just update-nix-secrets`.
 
-**Verify manually after the first rebuild.** On Darwin a failed decryption is silent — `just check-sops` can only tell you whether a directory exists. Grep the rendered file for a leftover placeholder.
+**Verify after the first rebuild.** A decryption failure at switch time is loud — the install script is inlined into `activate`, which runs under `set -e`, so the switch aborts. The boot-time path (`launchd.daemons.sops-install-secrets`) is quieter. `just check-sops` asserts every declared secret actually landed in `/run/secrets`; `just verify-sops` with `hosts/common/optional/darwin/sops-canary.nix` proves the whole pipeline including templates and the launchd path.
 
 ## Recipe 9: add a user
 

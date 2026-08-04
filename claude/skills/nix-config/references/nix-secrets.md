@@ -179,9 +179,20 @@ sops.templates."name" = {
 };
 ```
 
-### Verify manually the first time
+### Failure visibility
 
-On Darwin a failed decryption is **silent**. `just check-sops` can only report whether `/run/secrets` or `~/.config/sops` exists — it always exits 0. After the first rebuild that introduces a secret, grep the rendered file for a leftover placeholder rather than trusting the exit code.
+`sops-install-secrets` runs on two paths, and they are **not** equally visible:
+
+| Path | When | Visibility |
+|---|---|---|
+| `system.activationScripts.postActivation` | `darwin-rebuild switch` | **Loud.** `/run/current-system/activate` starts with `set -e` and the install script is inlined into it, so a decryption failure aborts the switch with an error. |
+| `launchd.daemons.sops-install-secrets` (`RunAtLoad = true`) | boot | Quiet — output goes to launchd logs, not a terminal. `/run` is volatile, so this is what re-creates secrets after a reboot. |
+
+So a failure at switch time will not be missed. What *can* be missed is a boot-time failure, and a config that declares a secret which silently never materialises.
+
+`just check-sops` (run automatically by `rebuild-post`) reads the host's declared `sops.secrets` attribute names and asserts each `/run/secrets/<name>` exists and is non-empty; it exits 0 with a "skipped" message when nothing is declared, so it never fakes a pass.
+
+For end-to-end proof of a new pipeline, use the canary: `hosts/common/optional/darwin/sops-canary.nix` plus `just verify-sops`. It exercises both `sops.secrets` (raw) and `sops.templates` (placeholder substitution), checks permissions, and kickstarts the launchd daemon to prove the boot path too.
 
 Also: `~/.config/sops/age/keys.txt` must exist **before** the first rebuild that declares a secret, or activation fails.
 

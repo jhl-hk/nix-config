@@ -62,17 +62,17 @@ These touch `../nix-secrets`. **Agents must not run any of them.**
 | `just age-key` | `nix run nixpkgs#age -- age-keygen`. Prints a fresh key to stdout; does not write a file. |
 | `just sops-edit FILE` | Opens `../nix-secrets/secrets/<FILE>.yaml` in `sops`, e.g. `just sops-edit shared`. Sets `SOPS_AGE_KEY_FILE` if unset. |
 | `just rekey` | Runs `sops updatekeys -y` over every `secrets/*.yaml` so each is re-encrypted to the current recipient list. Run **after** editing `.sops.yaml`. No-ops cleanly when no secrets exist yet. Reminds you to commit+push. |
-| `just check-sops` | Reports whether `/run/secrets` or `~/.config/sops` exists. |
+| `just check-sops` | Reads the host's declared `sops.secrets` names and asserts each `/run/secrets/<name>` exists and is non-empty. Exits 0 with "skipped" when nothing is declared. Runs automatically as `rebuild-post`. |
+| `just verify-sops [EXPECT]` | End-to-end canary check. Requires `hosts/common/optional/darwin/sops-canary.nix` imported and `canary/value` present in `shared.yaml`. |
 
-### check-sops is weak on Darwin — read this
+### Where sops failures show up
 
-It always exits 0 and can only see whether a directory exists. It cannot tell you whether an individual secret decrypted. When introducing a new secret, verify by hand:
+Two paths, unequal visibility:
 
-```bash
-grep -q 'placeholder' ~/.npmrc && echo "FAILED — placeholder not substituted"
-```
+- **Switch time** — `system.activationScripts.postActivation`. `/run/current-system/activate` starts with `set -e` and the install script is inlined into it, so a decryption failure **aborts the switch with an error**. This is loud; you will not miss it.
+- **Boot time** — `launchd.daemons.sops-install-secrets` (`RunAtLoad = true`), which re-creates secrets because `/run` is volatile. Output goes to launchd logs, not a terminal.
 
-A silent decryption failure looks exactly like a successful switch.
+`just verify-sops` covers both: it checks the raw secret, the template substitution, permissions, and then `launchctl kickstart -k system/org.nixos.sops-install-secrets` to exercise the boot path.
 
 ## Dev shell
 

@@ -18,8 +18,13 @@
 #  用户目录下的文件，所以没问题。
 #
 #  ⚠️ 这个文件必须在第一次 rebuild **之前**就存在，否则 activation 失败。
-#  ⚠️ Darwin 上 sops 解密失败是**静默**的（just check-sops 在 macOS 只
-#     检查目录存在与否）。接第一个 secret 时手工验证一次真读到了明文。
+#
+#  失败可见性：sops-install-secrets 走两条路 ——
+#    switch 时  system.activationScripts.postActivation（activate 带 set -e，
+#               解密失败会直接中止 switch 并报错，不是静默的）
+#    开机时     launchd.daemons.sops-install-secrets（输出进 launchd 日志，
+#               终端上看不到）
+#  端到端自检见 hosts/common/optional/darwin/sops-canary.nix 和 just verify-sops。
 #
 #############################################################
 {

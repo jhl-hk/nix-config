@@ -81,7 +81,7 @@ Secrets 相关：`just sops-edit shared` 编辑密文，`just rekey` 改完 `.so
 - **`lib.custom.relativeToRoot` 吃字符串，不吃路径字面量**。`relativeToRoot "hosts/common/core"` 对，`relativeToRoot ./hosts/common/core` 错。
 - **`environment.systemPath` 用 `lib.mkOrder 1100`**。nix-darwin 把 nix 路径定义在默认序 1000、`/usr/bin` 那批在 1200，普通定义会随模块顺序漂移，Homebrew 的路径就可能跑到 nix 前面或 `/usr/bin` 后面。
 - **home-manager 的 `extraSpecialArgs` 里不能传 `lib`**。会顶掉 HM 自己的 lib，`lib.hm` 消失，一堆模块炸。`lib.custom` 走 overlays 的 `customLib` 层挂进 `pkgs.lib`。
-- **Darwin 上 sops 解密失败是静默的**。`just check-sops` 在 macOS 只能看目录在不在。接新 secret 时必须手工确认渲染出来的文件里没有残留 placeholder。
+- **sops 的两条落地路径可见性不同**。`switch` 时走 `postActivation`（`activate` 带 `set -e`，解密失败会中止 switch 并报错）；开机时走 `launchd.daemons.sops-install-secrets`，输出只进 launchd 日志。端到端自检用 `just verify-sops` 配合 `hosts/common/optional/darwin/sops-canary.nix`。
 - **`onActivation.cleanup = "zap"`**：没在 `apps.nix` 里声明过的 Homebrew 包会在下次 switch 时被卸载。手动 `brew install` 的东西是临时的。
 - **改了 nix-secrets 一定要 push**。它是 locked remote input，本地改动对 flake 不可见。`just rebuild` 会自动跑 `update-nix-secrets`，但 push 得自己来。
 
