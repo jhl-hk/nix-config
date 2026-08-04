@@ -111,6 +111,7 @@ git show "$(git rev-list -n1 HEAD -- "$p")^:$p" > "$p"
 - **sops 的两条落地路径可见性不同**。`switch` 时走 `postActivation`（`activate` 带 `set -e`，解密失败会**中止 switch 并报错**）；开机时走 `launchd.daemons.sops-install-secrets`，输出只进 launchd 日志。
 - **`sops.templates.<x>.path` 落地的是软链**，指向 `/run/secrets/rendered/<name>`，而 `/run/secrets` 本身又是 `→ /run/secrets.d/N`（带代际编号，activation 原子切换）。三个后果：`owner`/`mode` 作用在**目标**上（查权限要 `stat -L`）；`/run` 易失，重启后靠 launchd 重建，重建完成前是悬空链；**任何写这个路径的命令**（`npm login`、`npm config set`）会写穿软链改到 `/run/secrets/rendered/`，下次 activation 直接冲掉 —— 改值要改源头 YAML。
 - **加 secret 的顺序不能反**：先在 `nix-secrets` 里建好密文并 push，再在 host 里 import 消费模块。反过来会在求值期就挂（`opening file ... No such file or directory`），因为 `validateSopsFiles` 在求值时就检查文件存在。
+- **移除最后一个 secret 会留下孤儿**。`sops.secrets` 和 `sops.templates` 都空掉之后，sops-nix 模块整个从系统里消失 —— 连同它的清理代码。于是这些没人管了，得手工删：`~/<模板的 path>` 那条软链、`/run/secrets` → `/run/secrets.d/N`、以及 **`/run/secrets.d/age-keys.txt`（sops-nix 复制的 age 私钥明文副本）**。`sudo rm -rf /run/secrets /run/secrets.d`。macOS 重启会清 `/run`，但别指望它。
 - **`onActivation.cleanup = "zap"`**：没在 `apps.nix` 里声明过的 Homebrew 包会在下次 switch 时被卸载。手动 `brew install` 的东西是临时的。
 - **改了 nix-secrets 一定要 push**。它是 locked remote input，本地改动对 flake 不可见。`just rebuild` 会自动跑 `update-nix-secrets`，但 push 得自己来。
 

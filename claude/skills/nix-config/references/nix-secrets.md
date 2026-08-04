@@ -203,6 +203,18 @@ For end-to-end proof of a new pipeline, use the canary: `hosts/common/optional/d
 
 Also: `~/.config/sops/age/keys.txt` must exist **before** the first rebuild that declares a secret, or activation fails.
 
+### Removing the last secret orphans sops-nix's artifacts
+
+Once `sops.secrets` and `sops.templates` are both empty, the sops-nix module drops out of the built system entirely — `/run/current-system/activate` contains no `sops` at all and `/Library/LaunchDaemons/` has no `sops-install-secrets`. **Its cleanup code goes with it**, so whatever it created on the previous generation is left behind with nothing managing it. Observed after retiring the canary:
+
+- `~/<template path>` — the symlink sops-nix planted in the home directory
+- `/run/secrets` → `/run/secrets.d/N` — the last generation, still holding rendered files
+- `/run/secrets.d/age-keys.txt` — **a plaintext copy of the age private key**, root-owned `0600`
+
+Clean up by hand: `rm ~/<template path>` and `sudo rm -rf /run/secrets /run/secrets.d`. macOS clears `/run` (`→ private/var/run`) on boot, but do not rely on that — the key copy should not sit around waiting for a reboot.
+
+This only bites when going from "some secrets" to "none". Removing one secret among several is fine; the module stays and rebuilds the generation correctly.
+
 ## What agents must not do
 
 - Do not run `sops` in any form. The age key lives only on the user's machine.
