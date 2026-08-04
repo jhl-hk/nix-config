@@ -1,27 +1,19 @@
-{ pkgs, ... }:
-
+{lib, ...}:
 #############################################################
 #
-#  HOSTNAME - DESCRIPTION
-#  macOS Darwin Configuration
+#  jhlsMacBookPro -- MacBook Pro
+#
+#  这台机器插着 YubiKey 5C Nano（"ykmini"），主 SSH 密钥因此不同 ——
+#  见 home/jhl/jhlsMacBookPro.nix 里的 sshKeys.primary。
 #
 #############################################################
-
 {
-  imports = [
-    ../../optional/steam.nix
+  imports = map lib.custom.relativeToRoot [
+    "hosts/common/optional/darwin/steam.nix"
   ];
 
-  # Host identification
-  networking.hostName = "jhlsMacBookPro";
-  networking.computerName = "jhlsMacBookPro";
-  system.defaults.smb.NetBIOSName = "jhlsMacBookPro";
-
-  # Host-specific packages
-  environment.systemPackages = with pkgs; [
-    # Add host-specific packages here
-  ];
-
-  # Host-specific settings
-  # Add any machine-specific configuration here
+  hostSpec = {
+    hostName = "jhlsMacBookPro";
+    isMobile = true;
+  };
 }

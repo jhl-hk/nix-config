@@ -1,226 +1,173 @@
 ---
 name: nix-config
-description: Operates jhl's nix-darwin monorepo at /Users/jhl/Documents/nix-config. Use when adding or editing a Darwin host, a system module, a home-manager program or dotfile, a shell config, a Homebrew brew/cask/masApp, or a per-host optional module; when touching files under hosts/, home/, claude/, assets/, flake.nix, or justfile; when running just (switch, build, check, check-beta, update, clean), darwin-rebuild, or nix flake check; when debugging import lists that did not take effect, system.stateVersion type errors (int on Darwin, string for home), hostname/flake-attribute mismatches, Homebrew zap cleanup removing apps, or masApps failing on a macOS seed build; whenever a .nix file in this repo is the target, even when the user just says "add module", "add app", or "rebuild".
+description: Operates jhl's nix-darwin monorepo at /Users/jhl/Documents/nix-src/{nix-config,nix-secrets}. Use when adding or editing a Darwin host, a system module, a home-manager program or dotfile, a shell config, a Homebrew brew/cask/masApp, a custom package, an overlay, or a sops secret; when wiring hostSpec from nix-secrets; when touching files under hosts/, home/, modules/, lib/, pkgs/, overlays/, claude/, assets/, flake.nix, or justfile; when running just (rebuild, build, check, check-beta, update, clean, sops-edit, rekey), darwin-rebuild, nix flake check, or sops; when debugging hostSpec assertions, scanPaths auto-imports that did not fire, imports that did not take effect, system.stateVersion type errors (int on Darwin, string on NixOS), environment.systemPath ordering, lib.hm missing in home-manager, Homebrew zap cleanup removing apps, masApps failing on a macOS seed build, or silent sops decryption failures; whenever a .nix file in this repo is the target, even when the user just says "add module", "add app", or "rebuild".
 ---
 
 # nix-config
 
-Operating manual for `/Users/jhl/Documents/nix-config` — a **Darwin-only** nix-darwin + home-manager flake managing three Macs for the single user `jhl`. `nixosConfigurations` exists but is empty and commented out.
-
-This repo is deliberately small and explicit. There is **no** `lib/`, `modules/`, `pkgs/`, `overlays/`, `lib.custom`, `scanPaths`, `relativeToRoot`, sops, or secrets tree. Do not invent them. Every wiring step is a literal path in an `imports` list.
+Operating manual for `/Users/jhl/Documents/nix-src/nix-config` (public logic) and `/Users/jhl/Documents/nix-src/nix-secrets` (private data, separate flake input). Currently **Darwin-only**: three Macs — `jhlsMacBookPro`, `jhlsMacBookAir`, `SeandeMac-Studio` — one user, `jhl`. The NixOS lane exists as an empty skeleton (`hosts/nixos/`, `modules/hosts/nixos/`, `hosts/common/core/nixos.nix`, `hosts/common/users/jhl/nixos.nix`) so a Linux box drops in without restructuring.
 
 ## Core mental model
 
-One composition lane, assembled by the `mkDarwin` helper in `flake.nix`:
+Three composition lanes, all wired through one data bus.
 
-```
-mkDarwin { hostname, system ? "aarch64-darwin", username, modules ? [] }
-  ├─ ./hosts/common/core        # cross-platform baseline (nix settings, base pkgs)
-  ├─ ./hosts/common/darwin      # everything macOS-wide
-  ├─ ./hosts/darwin/${hostname} # this machine only
-  └─ home-manager.darwinModules.home-manager
-       └─ users.jhl = import ./home
-```
+**Lane 1 — Hosts.** Each host is `hosts/darwin/<HostName>/default.nix`, a thin file: it sets `hostSpec.hostName` plus this machine's overrides, then cherry-picks from `hosts/common/optional/`. `flake.nix` discovers hosts by `readDir ./hosts/darwin`, filtered to directories — **dropping a directory there creates a machine, no flake edit**. `hosts/common/core` is mandatory and is where platform dispatch and hostSpec population happen.
 
-`specialArgs` passes `inputs outputs hostname username` to system modules; `extraSpecialArgs` passes the same four to home-manager modules. So any file in the tree can take `{ username, hostname, ... }` directly.
+**Lane 2 — Home.** Each `(user, host)` pair is `home/jhl/<HostName>.nix`, importing `common/core` plus selected `common/optional/<cat>`. `home/jhl/common/core/default.nix` picks the platform variant via `./${platform}.nix` where `platform = if hostSpec.isDarwin then "darwin" else "nixos"` — a normal Nix import, not magic.
 
-**Nothing is auto-imported.** Creating a `.nix` file does nothing until you add it to a parent `default.nix` `imports` list. The four aggregation points:
+**Lane 3 — Modules.** Reusable options-providing modules live under `modules/hosts/{common,nixos,darwin}/` and `modules/home/`, auto-imported by `lib.custom.scanPaths` from the sibling `default.nix`. Dropping a `.nix` file (or a directory containing `default.nix`) wires it in. The module exposes `options.<name>`; a host turns it on by setting that option, not by importing the file.
 
-| New file | Add its path to |
-|---|---|
-| `hosts/common/darwin/<name>.nix` | `hosts/common/darwin/default.nix` |
-| `hosts/common/core/<name>.nix` | `hosts/common/core/default.nix` |
-| `home/programs/<name>.nix` | `home/programs/default.nix` |
-| `home/shell/<name>.nix` | `home/shell/default.nix` |
-
-`hosts/optional/<name>.nix` is the exception — it has no aggregator. Each host opts in individually with `../../optional/<name>.nix` in its own `imports`.
-
-**Two nixpkgs channels.** `nixpkgs` is unstable (drives home-manager and `pkgs`); `nixpkgs-darwin` is `nixpkgs-26.05-darwin` and is what `darwin` follows. Because they are mixed, `home.enableNixpkgsReleaseCheck = false` in `home/default.nix`. Leave it false.
-
-**Homebrew is the application layer.** Nix manages CLI baseline and dotfiles; GUI apps and most language toolchains come from `hosts/common/darwin/apps.nix`. `onActivation.cleanup = "zap"` means **any Homebrew package not declared there is uninstalled on the next switch**. Adding an app by hand with `brew install` is temporary — declare it or lose it.
-
-**Nix tracks only git-tracked files.** A brand-new `.nix` file (or skill file) is invisible to `nix eval` / `just build` until it is `git add`-ed — the failure reads `Path '…' in the repository … is not tracked by Git`. Stage new files before building.
-
-## Quick recipes
-
-Pick the first match.
-
-### Recipe 1 — a setting that should apply to every Mac
-
-Add to the relevant existing file in `hosts/common/darwin/`: `system-defaults.nix` for `system.defaults.*` (macOS preference domains) and `networking.*`, `apps.nix` for Homebrew, `default.nix` for user/shell/PAM/system packages. Only create a new file if the topic is genuinely new:
+**The data bus.** `modules/common/host-spec.nix` declares the `hostSpec` option tree. `hosts/common/core/default.nix` populates it once:
 
 ```nix
-{ pkgs, ... }:
-
-#############################################################
-#
-#  <Title>
-#  <One-line purpose>
-#
-#############################################################
-
-{
-  # ...
-}
-```
-
-Then add `./<name>.nix` to the `imports` list in `hosts/common/darwin/default.nix`.
-
-### Recipe 2 — a feature only some Macs should get
-
-Create `hosts/optional/<name>.nix` as a plain config-only module (see `hosts/optional/steam.nix`, which just appends a Homebrew cask). Then in each host that wants it:
-
-```nix
-# hosts/darwin/<HostName>/default.nix
-imports = [
-  ../../optional/<name>.nix
-];
-```
-
-The relative path is `../../optional/…` because host files sit two levels down at `hosts/darwin/<HostName>/`. This is the audit point — reading a host file tells you what that machine adds beyond the common baseline.
-
-### Recipe 3 — a one-off for a single machine
-
-Put it directly in `hosts/darwin/<HostName>/default.nix`. Reserve this for things that are inherently machine-bound: `local.macosBeta`, wallpaper activation scripts, host-specific packages. Anything reusable belongs in Recipe 2.
-
-### Recipe 4 — a home-manager program or dotfile
-
-Create `home/programs/<name>.nix`, then add `./<name>.nix` to `home/programs/default.nix`. Shape:
-
-```nix
-{ config, pkgs, ... }:
-
-#############################################################
-#
-#  <Program> Configuration
-#
-#############################################################
-
-{
-  programs.<name> = {
-    enable = true;
-    # ...
-  };
-}
-```
-
-For a program whose binary comes from a Homebrew cask or brew rather than nixpkgs, set `package = null` and let home-manager manage only the config files — see `home/programs/zed.nix` (Zed is a cask; it also relies on the default `mutableUserSettings = true` so Zed's own writes to `settings.json` survive activation) and `home/programs/tmux.nix` (tmux is a brew; home-manager writes only `~/.config/tmux/tmux.conf`).
-
-`package = null` only works where the module declares the option with `mkPackageOption … { nullable = true; }`. Check the module source before assuming it; a non-nullable `package` fails with a type error.
-
-Shell-related config (`zsh`, `starship`) goes in `home/shell/` with the same pattern against `home/shell/default.nix`.
-
-### Recipe 5 — install an application
-
-Edit `hosts/common/darwin/apps.nix`:
-
-- CLI tool → `brews`
-- GUI app or font → `casks`
-- Mac App Store → `masApps` as `"Name" = <numeric id>;` (requires `mas signin`)
-- Third-party tap → `taps`, and it **must** carry `trusted = true`. Homebrew 6.0 enabled `HOMEBREW_REQUIRE_TAP_TRUST`, so an untrusted tap fails during activation before its formulae are fetched.
-
-Prefer nixpkgs (`environment.systemPackages` in `hosts/common/core/default.nix`, or `home.packages`) for anything that works well there; use Homebrew for GUI apps, casks with macOS integration, and toolchains that are painful under Nix on Darwin.
-
-### Recipe 6 — add a new Mac
-
-Two edits, both required:
-
-1. `flake.nix` — add an attribute to `darwinConfigurations`. **The attribute name must exactly equal what `hostname` prints on that machine**, because `just switch` builds `.#{{hostname}}`:
-
-```nix
-<HostName> = mkDarwin {
-  hostname = "<HostName>";
-  system = "aarch64-darwin";   # or "x86_64-darwin" on Intel
+hostSpec = {
   username = "jhl";
+  handle   = "jhl-hk";
+  inherit isDarwin;
+  inherit (inputs.nix-secrets)
+    domain email userFullName sshAllowedSigners
+    networking networkInfo serviceInfo;
 };
 ```
 
-2. `hosts/darwin/<HostName>/default.nix` — set all three identity fields:
+After that, every host, module, and home file reads `config.hostSpec.<x>`. Home modules receive it as a **function argument** via `extraSpecialArgs` — destructure `{ hostSpec, ... }` at the function head rather than reaching into `config`. Module code must never touch `inputs.nix-secrets` directly; that indirection is why secrets can be swapped, audited, or stubbed in one place.
+
+**Two distinct uses of `default.nix + darwin.nix + nixos.nix`.** Confusing them is the most common modeling error:
+
+- In `modules/hosts/{common,nixos,darwin}/`, the *directory* is the platform filter — `modules/hosts/darwin/foo/` is only loaded on Macs because `hosts/common/core/default.nix` imports `modules/hosts/${platform}`.
+- In `home/jhl/common/core/`, all three coexist and `default.nix` imports `./${platform}.nix` itself.
+- In `hosts/common/core/` and `hosts/common/users/jhl/`, the platform sibling is selected by an **outer** file — `hosts/common/core/default.nix` lists both `"hosts/common/users/jhl"` and `"hosts/common/users/jhl/${platform}.nix"` as separate entries.
+
+## Quick recipes
+
+Recipe numbers match `references/recipes.md` 1-to-1. Pick the first match:
+
+1. System feature only some Macs want, no options needed → Recipe 1 (drop-in optional).
+2. System feature with configurable options → Recipe 2 (reusable module).
+3. Package not in nixpkgs → Recipe 3.
+4. Override a nixpkgs package → Recipe 4.
+5. Home-manager dotfile or program → Recipe 5.
+6. Homebrew brew / cask / masApp → Recipe 6.
+7. New host → Recipe 7.
+8. Something that needs a secret → Recipe 8.
+
+### Recipe 1 — drop-in optional system feature
+
+Create `hosts/common/optional/darwin/<name>.nix` as a config-only module, then add the path to the host's imports:
 
 ```nix
-{ pkgs, ... }:
+# hosts/darwin/<HostName>/default.nix
+imports = map lib.custom.relativeToRoot [
+  "hosts/common/optional/darwin/<name>.nix"
+];
+```
 
-{
-  networking.hostName = "<HostName>";
-  networking.computerName = "<HostName>";
-  system.defaults.smb.NetBIOSName = "<HostName>";
+Why: `hosts/common/optional/` is deliberately **not** auto-scanned. The host file is the single audit point that tells you what a machine actually runs. Real example: `hosts/common/optional/darwin/steam.nix` (two lines — it just appends to `darwinHomebrew.casks`).
+
+### Recipe 2 — reusable module with options (preferred for anything configurable)
+
+Place at `modules/hosts/darwin/<name>/default.nix` (or `common/` for cross-platform). Standard shape:
+
+```nix
+{ config, lib, ... }:
+let cfg = config.<name>;
+in {
+  options.<name> = {
+    enable = lib.mkEnableOption "<name>";
+    # ... typed options
+  };
+  config = lib.mkIf cfg.enable { /* ... */ };
 }
 ```
 
-Then run `just switch` on that Mac. Add `local.macosBeta = true;` if it is on a seed build (`just check-beta` reports).
+Auto-imported by `scanPaths`. The host enables it with `<name>.enable = true;` — no import line. Live examples: `modules/hosts/darwin/homebrew/` (the whole Homebrew surface) and `modules/hosts/darwin/wallpaper/`.
 
-### Recipe 7 — cross-platform / future NixOS
+Use this over Recipe 1 whenever the feature has parameters, or whenever more than one machine needs it with different inputs.
 
-`hosts/common/core/` is the only tree imported by both platforms. Put genuinely OS-agnostic settings there (nix daemon settings, GC, `allowUnfree`, base packages). Anything referencing `homebrew`, `system.defaults`, or `security.pam` is Darwin-only and belongs under `hosts/common/darwin/`.
+### Recipe 3 — add a custom package
 
-### Recipe 8 — add or edit a Claude Code skill
+Create `pkgs/common/<name>/package.nix` with a derivation. Auto-discovered by `packagesFromDirectoryRecursive` in both `flake.nix` (`packages` output) and `overlays/default.nix` (`additions` layer). Available as `pkgs.<name>` everywhere and as `nix build .#packages.aarch64-darwin.<name>`. Dropping the file is the only step.
 
-Skill sources live in this repo at `claude/skills/<name>/SKILL.md` and are deployed by `home/programs/claude.nix`, which symlinks each one to `~/.claude/skills/<name>` (user scope — available in every project, not just this repo).
+### Recipe 4 — override a nixpkgs package
 
-To add a skill:
+Edit `overlays/default.nix`. Slots: `modifications` (all platforms), `linuxModifications` (Linux only, uses `lib.optionalAttrs` so the attribute is literally absent elsewhere). To just get a newer version, prefer `pkgs.unstable.<x>` over an override — the `unstable-packages` layer already exposes it.
 
-1. Write `claude/skills/<name>/SKILL.md` with YAML frontmatter (`name`, `description`). The `description` is the *only* thing Claude sees when deciding whether to load the skill, so it must enumerate concrete triggers — file paths, command names, error messages.
-2. Add `<name>` to the `skills` list in `home/programs/claude.nix`.
-3. `git add` the new files, then `just switch`.
+Do **not** touch the `customLib` layer unless you know why it exists — see Critical conventions.
 
-The directory is `claude/`, **not** `.claude/`. A `.claude/skills/` at the repo root would register the same skill a second time at project scope, so the same name would resolve twice. Only `skills` is nix-managed; `~/.claude/settings.json`, `CLAUDE.md`, and memory stay mutable and owned by Claude Code, because `home.file` produces read-only store symlinks that the app cannot write back to.
+### Recipe 5 — add a home-manager program or dotfile
+
+Three placements, by reach:
+
+1. *Cross-platform, always on* → `home/jhl/common/core/<name>.nix`, then add `./<name>.nix` to `home/jhl/common/core/default.nix` imports. Example: `git.nix`.
+2. *macOS-only, always on* → `home/jhl/common/core/darwin/<name>.nix`, then add it to `home/jhl/common/core/darwin.nix` imports. Examples: `keyboard.nix`, `stats.nix`, `ssh-agent.nix`.
+3. *Opt-in per host* → `home/jhl/common/optional/<cat>/<name>.nix`, then add the import to `home/jhl/<HostName>.nix`. Example: `common/optional/editors/zed.nix`.
+
+Core is the always-on baseline; optional gives per-host granularity. The `<HostName>.nix` file is the order ticket.
+
+### Recipe 6 — add a Homebrew package
+
+Fleet-wide → append to the right list in `hosts/common/core/darwin/apps.nix` (`darwinHomebrew.brews` / `.casks` / `.taps` / `.masApps`). One machine only → make a `hosts/common/optional/darwin/<name>.nix` that appends to `darwinHomebrew.casks` and import it from that host.
+
+`taps`/`brews`/`casks` are `listOf`, so definitions from any number of modules concatenate. `masApps` is `attrsOf int` and merges by attribute.
+
+**`onActivation.cleanup = "zap"`** — anything not declared gets uninstalled on the next switch. A manual `brew install` is temporary.
+
+### Recipe 7 — add a host
+
+Create `hosts/darwin/<Name>/default.nix` (just `hostSpec.hostName` plus overrides) and `home/jhl/<Name>.nix`. No `flake.nix` edit — `readDir` finds it. Then run `just rebuild` on that Mac.
+
+### Recipe 8 — wire something that needs a secret
+
+`hosts/common/core/sops.nix` does the plumbing only (module import + `sops.age.keyFile`); it declares **no** secrets, so a machine never fails to evaluate over a YAML key that isn't filled in yet. Declare the secret in its consumer:
+
+```nix
+sops.secrets."<path/in/yaml>" = {
+  sopsFile = "${inputs.nix-secrets}/secrets/shared.yaml";
+  owner = config.hostSpec.username;
+  mode  = "0400";
+};
+```
+
+For rendered files where the secret is one substring of a larger format (netrc, `.npmrc`, env files), use `sops.templates` with `config.sops.placeholder."<path>"`. Pattern source: `hosts/common/optional/darwin/npmrc.nix`.
+
+The YAML itself is user-operated — tell the user the exact key path and file, then stop. See "What NOT to do" in `references/nix-secrets.md`.
 
 ## Critical conventions
 
-- **`system.stateVersion = 6` is an integer on Darwin.** Home-manager's `home.stateVersion = "26.05"` is a string. They are different options with different types; swapping them is an eval error. Neither tracks the running OS version — they pin migration behavior from the original install. Do not bump either without reading the corresponding release notes.
-- **`local.macosBeta` is a declared option, not a detection.** Defined in `hosts/common/darwin/options.nix`, consumed in `apps.nix` as `masApps = lib.optionalAttrs (!config.local.macosBeta) { … }`. Nix evaluates purely and cannot see the OS build, so a seed-build Mac must set it by hand — `mas` cannot install on seed builds and activation fails otherwise. `SeandeMac-Studio` currently sets it.
-- **The shell `hostname` must match the flake attribute.** The justfile captures `hostname` into a variable and builds `.#{{ hostname }}`. If they diverge, `just switch` fails with a missing-attribute error rather than anything descriptive.
-- **`cleanup = "zap"` is destructive by design.** Undeclared Homebrew packages are removed on activation. When a user reports "my app disappeared", check `apps.nix` first.
-- **Match the banner comment style.** Nearly every file opens with the `####…` block shown above. Comments are freely bilingual (Chinese/English) — mirror whatever the surrounding file uses.
-- **The formatter is declared as `alejandra`** in `flake.nix`, but the existing tree is not alejandra-formatted (it uses `{ x, y, ... }:` spacing that alejandra rewrites). Do not run `nix fmt` across the repo as a drive-by — it produces a huge unrelated diff. Match the local file's existing style instead.
-- **`username` is a `specialArgs` parameter, but home-manager's user is hardcoded** as `users.jhl = import ./home` in `flake.nix`, and `home/default.nix` hardcodes `username`/`homeDirectory` again. Adding a second user means changing all three places; the `username` argument alone is not enough.
-- **Do not add secrets to this repo.** There is no sops/age setup. The SSH allowed-signers public key in `home/default.nix` is public key material and fine; private material is not managed here.
+- **`system.stateVersion` types differ by platform.** nix-darwin wants an integer (`6`); NixOS wants a string (`"25.05"`). Mixing them throws a type error. The value tracks the *initial* install and pins migrations, not the running version — never bump it without reading release notes.
+- **`lib.custom.relativeToRoot` takes a string, not a Path literal.** `relativeToRoot "hosts/common/core"` works; `relativeToRoot ./hosts/common/core` fails. The repo always wraps it as `map lib.custom.relativeToRoot [ "a" "b" ]`.
+- **`scanPaths` auto-imports, `optional/` does not.** `modules/**` lights up the moment a file lands. `hosts/common/optional/**` is inert until a host names it. Modules define capabilities; optionals describe one machine's choices.
+- **`environment.systemPath` must use `lib.mkOrder 1100`.** nix-darwin defines the Nix profile paths at default order 1000 and `/usr/local/bin:/usr/bin:...` at `mkOrder 1200` (`modules/environment/default.nix:139`). A plain definition is also 1000, so it sorts by module position and drifts when imports are reordered — putting Homebrew ahead of Nix. `mkAfter` (1500) overshoots and puts it behind `/usr/bin`, where Xcode's `/usr/bin/git` wins. 1100 is the only correct answer.
+- **Never pass `lib` in `home-manager.extraSpecialArgs`.** HM's `lib` is `pkgs.lib.extend hmExtension`; overriding it drops `lib.hm` and every HM module using `lib.hm.*` dies with `attribute 'hm' missing`. `lib.custom` reaches HM through the `customLib` overlay layer, which adds `custom` to `pkgs.lib` so both survive. The system scope gets it separately via `specialArgs.lib`.
+- **The system `lib` must be extended per platform.** `flake.nix` builds `darwinLib = mkLib nixpkgs-darwin.lib` separately from `lib = mkLib nixpkgs.lib`. Feeding the unstable lib to `darwinSystem` makes nix-darwin read `lib.trivial.release = 26.11` and abort with a version-mismatch error against its own 26.05.
+- **Don't interpolate multi-line strings at column 0 inside `''`.** Nix de-indents by the minimum indentation across lines; a line starting with `${...}` at column 0 makes that minimum 0, so nothing is stripped and the generated file keeps its source indentation. Build a single-line value instead — see `home/jhl/common/core/darwin/ssh-agent.nix`.
+- **Darwin users have no `group` attribute.** Gate Linux-only attrs with `lib.optionalAttrs pkgs.stdenv.isLinux { group = "wheel"; }` — see `hosts/common/users/jhl/default.nix`.
+- **`lib.mkDefault` in base layers, plain assignment in host files.** `hosts/common/core/darwin.nix` sets `darwinWallpaper` with `mkDefault` so a host can override with a bare assignment.
+- **Home modules take `hostSpec` as an argument, not from `config`.** It arrives via `extraSpecialArgs`; `modules/common/host-spec.nix` is deliberately *not* imported into the HM scope.
+- **Secrets are user-operated.** This skill writes Nix that references `sops.secrets."<path>"` and names the YAML key. It does not run `sops`, edit `.sops.yaml`, generate age keys, or rekey.
 
-## macOS settings Nix cannot manage
-
-Some macOS state is outside nix-darwin's reach. When a request lands here, say so rather than writing a `system.defaults` key that will silently do nothing:
-
-- **Privacy & Security permissions (TCC)** — Local Network, Full Disk Access, Screen Recording, Accessibility, Camera/Mic. These live in SIP-protected databases with no writable `defaults` domain. `tccutil` cannot even reset `LocalNetwork` on macOS 27. They are per-machine manual steps, or MDM-profile territory. A denied Local Network grant surfaces as `EHOSTUNREACH` / "No route to host" to a LAN address, *not* as a permission error.
-- **Keychain entries** — e.g. API keys for Zed's `openai_compatible` providers. `settings.json` declares the provider; the credential is entered in the app UI and stored in the Keychain.
-- **Login items requiring user approval**, and anything gated behind a one-time system dialog.
-
-## Commands
+## Commands cheat sheet
 
 ```
-just switch      # runs `check` first, then: sudo darwin-rebuild switch --flake .#$(hostname)
-just build       # build without activating
-just check       # nix flake check --all-systems
-just check-beta  # report whether this Mac is on a seed catalog -> whether to set local.macosBeta
-just update      # nix flake update && brew update && brew upgrade
-just clean       # sudo nix-collect-garbage -d && mo clean
+just rebuild        # switch current host; auto-runs update-nix-secrets before and check-sops after
+just build          # build without activating
+just check          # nix flake check --all-systems (the checks output really builds every Mac)
+just diff           # git diff minus flake.lock
+just update         # nix flake update + brew update/upgrade
+just check-beta     # is this Mac on a seed build? (drives darwinHomebrew.macosBeta)
+just sops-edit shared   # edit ../nix-secrets/secrets/shared.yaml
+just rekey          # re-encrypt every secrets/*.yaml after editing .sops.yaml
+nix develop         # shell with sops, age, ssh-to-age, just, gum, alejandra, deadnix
 ```
 
-`just switch` depends on `check`, so a flake error blocks activation before anything is applied. There is no deploy/remote path — every Mac is rebuilt locally on itself.
+Full catalog: `references/commands.md`.
 
-## Repository map
+## References
 
-```
-flake.nix                        mkDarwin helper, 3 darwinConfigurations, alejandra formatter
-justfile                         switch build check check-beta update clean
-hosts/
-  common/
-    core/default.nix             base packages; imports nix-settings.nix
-    core/nix-settings.nix        flakes, allowUnfree, gc (mkDefault)
-    darwin/default.nix           stateVersion 6, user, zsh, TouchID sudo, systemPath;
-                                 imports options.nix system-defaults.nix apps.nix
-    darwin/options.nix           declares local.macosBeta
-    darwin/system-defaults.nix   system.defaults.* + networking.*  (126 lines)
-    darwin/apps.nix              homebrew: taps brews casks masApps
-  darwin/
-    jhlsMacBookPro/default.nix   imports optional/steam.nix
-    jhlsMacBookAir/default.nix   imports optional/steam.nix; wallpaper activation script
-    SeandeMac-Studio/default.nix local.macosBeta = true
-  optional/steam.nix             opt-in; no aggregator, hosts import it directly
-home/
-  default.nix                    username/homeDirectory/stateVersion; imports ./programs ./shell
-  programs/default.nix           claude git ssh keyboard stats tmux typora zed
-  programs/claude.nix            symlinks ../../claude/skills/* into ~/.claude/skills/
-  shell/default.nix              zsh starship
-claude/skills/<name>/SKILL.md    Claude Code skill sources, deployed by home/programs/claude.nix
-assets/                          wallpapers referenced by activation scripts
-```
+Read on demand; each is self-contained.
+
+- `references/recipes.md` — **the main reference.** Decision tree plus full file templates for every "add X" task, and the edge cases. Read before touching files.
+- `references/architecture.md` — `flake.nix` outputs, `lib.custom` semantics, auto-import vs cherry-pick mechanics, the inheritance chain, and why the two `lib` plumbing paths exist. Read when something imports unexpectedly or a module fails to load.
+- `references/hostspec.md` — complete `hostSpec` option enumeration with types, defaults, and which file populates which field.
+- `references/nix-secrets.md` — the `nix-secrets` schemas, `.sops.yaml` structure, and the consumption patterns. Reference-only; the user edits these files.
+- `references/commands.md` — full `justfile` catalog and the rebuild flow.

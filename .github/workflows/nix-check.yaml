@@ -1,0 +1,35 @@
+name: Nix Check
+
+# 原来这个文件在 .github/workflow/（少一个 s），GitHub 根本不会读，
+# 而且 runs-on 是空的、uses 和 run 挤在同一个 step。等于从来没跑过。
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  check:
+    # 求值 darwinConfigurations 需要 aarch64-darwin 的 pkgs，
+    # 所以必须在 macOS runner 上跑。
+    runs-on: macos-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # nix-secrets 是私有仓库，flake input 走 git+ssh。
+      # 需要在仓库 Settings > Secrets 里加一个 NIX_SECRETS_DEPLOY_KEY，
+      # 值是一把对 jhl-hk/nix-secrets 有读权限的 SSH 私钥
+      # （在那个仓库的 Settings > Deploy keys 里配对应的公钥）。
+      - uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.NIX_SECRETS_DEPLOY_KEY }}
+
+      - uses: DeterminateSystems/nix-installer-action@main
+      - uses: DeterminateSystems/magic-nix-cache-action@main
+
+      # checks 输出会真的构建每台 darwin 机器，见 flake.nix
+      - name: nix flake check
+        run: nix flake check --all-systems --show-trace

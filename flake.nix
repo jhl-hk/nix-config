@@ -24,89 +24,130 @@
       url = "github:nix-community/home-manager/release-26.05";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    sops-nix = {
+      url = "github:Mic92/sops-nix";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
+    # 私有仓库。身份、拓扑、服务数据的明文半区经
+    # hosts/common/core/default.nix 灌进 hostSpec；
+    # 加密半区是 secrets/*.yaml，由 sops-nix 在 activation 时解密。
+    nix-secrets = {
+      url = "git+ssh://git@github.com/jhl-hk/nix-secrets.git?ref=main&shallow=1";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
   };
 
   outputs = inputs @ {
     self,
     nixpkgs,
+    nixpkgs-darwin,
     darwin,
     home-manager,
     ...
   }: let
     inherit (self) outputs;
 
-    # Helper function to create Darwin systems
-    mkDarwin = {
-      hostname,
-      system ? "aarch64-darwin",
-      username,
-      modules ? []
-    }: darwin.lib.darwinSystem {
-      inherit system;
-      specialArgs = {
-        inherit inputs outputs hostname username;
-      };
-      modules = [
-        # Core configurations
-        ./hosts/common/core
-        ./hosts/common/darwin
-
-        # Host-specific configuration
-        ./hosts/darwin/${hostname}
-
-        # Home Manager integration
-        home-manager.darwinModules.home-manager
-        {
-          home-manager = {
-            useGlobalPkgs = true;
-            useUserPackages = true;
-            backupFileExtension = "backup";
-            extraSpecialArgs = { inherit inputs outputs hostname username; };
-            users.jhl = import ./home;
-          };
+    # 把 lib.custom 挂上去。
+    #
+    # 必须按平台各自 extend：nix-darwin 会拿模块系统的 lib.trivial.release
+    # 和自己的版本对比，如果这里统一用 unstable 的 nixpkgs.lib，Darwin 主机
+    # 就会报 "nix-darwin 26.05 with Nixpkgs 26.11"。
+    #
+    # 这条路只覆盖**系统作用域**。home-manager 作用域走 overlays 里的
+    # customLib 层 —— 见那里的注释，用 extraSpecialArgs 传 lib 会打掉 lib.hm。
+    mkLib = base:
+      base.extend (
+        self': _super': {
+          custom = import ./lib {lib = self';};
         }
-      ] ++ modules;
-    };
-  in {
-    # Darwin configurations
-    darwinConfigurations = {
-      # MacBook Pro
-      jhlsMacBookPro = mkDarwin {
-        hostname = "jhlsMacBookPro";
-        system = "aarch64-darwin";
-        username = "jhl";
-      };
+      );
 
-      # MacBook Air
-      jhlsMacBookAir = mkDarwin {
-        hostname = "jhlsMacBookAir";
-        system = "aarch64-darwin";
-        username = "jhl";
-      };
+    lib = mkLib nixpkgs.lib;
+    darwinLib = mkLib nixpkgs-darwin.lib;
 
-      # Taizhou
-      SeandeMac-Studio = mkDarwin {
-        hostname = "SeandeMac-Studio";
-        system = "aarch64-darwin";
-        username = "jhl";
-      };
-    };
-
-    # NixOS configurations (for future use)
-    nixosConfigurations = {
-      # Example NixOS host (uncomment when needed):
-      # nixos-desktop = mkNixOS {
-      #   hostname = "nixos-desktop";
-      #   system = "x86_64-linux";
-      #   username = "jhl";
-      # };
-    };
-
-    # Formatter for nix files
-    formatter = nixpkgs.lib.genAttrs [
-      "x86_64-linux"
-      "aarch64-linux"
+    forAllSystems = lib.genAttrs [
       "aarch64-darwin"
-    ] (system: nixpkgs.legacyPackages.${system}.alejandra);
+      "x86_64-linux"
+    ];
+
+    # 主机自动发现：hosts/<platform>/ 下的每个**子目录**就是一台机器。
+    # 只认目录，所以 .gitkeep 之类的占位文件不会被当成 host。
+    hostsIn = dir:
+      if builtins.pathExists dir
+      then lib.attrNames (lib.filterAttrs (_: type: type == "directory") (builtins.readDir dir))
+      else [];
+
+    mkDarwinHost = hostName:
+      darwin.lib.darwinSystem {
+        system = "aarch64-darwin";
+        specialArgs = {
+          inherit inputs outputs;
+          lib = darwinLib;
+          isDarwin = true;
+        };
+        modules = [
+          # core 必须排在 host 前面。option 的定义顺序会影响 listOf 类型的
+          # 合并结果 —— environment.systemPath 就靠这个顺序落在
+          # nix 路径和 /usr/bin 中间（见 hosts/common/core/darwin.nix）。
+          ./hosts/common/core
+          ./hosts/darwin/${hostName}
+
+          home-manager.darwinModules.home-manager
+        ];
+      };
+
+    mkNixosHost = hostName:
+      nixpkgs.lib.nixosSystem {
+        system = "x86_64-linux";
+        specialArgs = {
+          inherit inputs outputs lib;
+          isDarwin = false;
+        };
+        modules = [
+          ./hosts/common/core
+          ./hosts/nixos/${hostName}
+
+          home-manager.nixosModules.home-manager
+        ];
+      };
+  in {
+    overlays = import ./overlays {inherit inputs;};
+
+    darwinConfigurations = lib.genAttrs (hostsIn ./hosts/darwin) mkDarwinHost;
+
+    # 现在是空的。往 hosts/nixos/<Name>/ 放一个目录就会自动出现。
+    nixosConfigurations = lib.genAttrs (hostsIn ./hosts/nixos) mkNixosHost;
+
+    # pkgs/common/<name>/package.nix -> nix build .#packages.<system>.<name>
+    # 和 overlays 的 additions 层用的是同一份目录扫描。
+    packages = forAllSystems (
+      system:
+        nixpkgs.lib.packagesFromDirectoryRecursive {
+          inherit (nixpkgs.legacyPackages.${system}) callPackage;
+          directory = ./pkgs/common;
+        }
+    );
+
+    formatter = forAllSystems (system: nixpkgs.legacyPackages.${system}.alejandra);
+
+    devShells = forAllSystems (
+      system: {
+        default = import ./shell.nix {pkgs = nixpkgs.legacyPackages.${system};};
+      }
+    );
+
+    # `nix flake check` 默认不碰 darwinConfigurations，挂在这里它才会真的
+    # 构建每台机器。CI 靠这个。
+    checks = forAllSystems (
+      system:
+        lib.optionalAttrs (system == "aarch64-darwin") (
+          lib.mapAttrs' (
+            name: cfg: lib.nameValuePair "darwin-${name}" cfg.system
+          )
+          self.darwinConfigurations
+        )
+    );
   };
 }
