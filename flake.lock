@@ -42,6 +42,28 @@
         "type": "github"
       }
     },
+    "nix-secrets": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1785838673,
+        "narHash": "sha256-q0BYMbS/Zgazo8NjhL6+ohKqhhqJMv7X0gAOxNZYmzY=",
+        "ref": "main",
+        "rev": "d3801196d9c4bb1264db8bbc281f526cb0b219c0",
+        "shallow": true,
+        "type": "git",
+        "url": "ssh://git@github.com/jhl-hk/nix-secrets.git"
+      },
+      "original": {
+        "ref": "main",
+        "shallow": true,
+        "type": "git",
+        "url": "ssh://git@github.com/jhl-hk/nix-secrets.git"
+      }
+    },
     "nixpkgs": {
       "locked": {
         "lastModified": 1785301185,
@@ -78,8 +100,30 @@
       "inputs": {
         "darwin": "darwin",
         "home-manager": "home-manager",
+        "nix-secrets": "nix-secrets",
         "nixpkgs": "nixpkgs",
-        "nixpkgs-darwin": "nixpkgs-darwin"
+        "nixpkgs-darwin": "nixpkgs-darwin",
+        "sops-nix": "sops-nix"
+      }
+    },
+    "sops-nix": {
+      "inputs": {
+        "nixpkgs": [
+          "nixpkgs"
+        ]
+      },
+      "locked": {
+        "lastModified": 1783174389,
+        "narHash": "sha256-aCWC8ngycU7OdJrU2+Je3qf+1a2ykuBvpPhZT/9tXMc=",
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "rev": "f1406619a3884cd5c47992a70b8b35c9c0fcb4c9",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Mic92",
+        "repo": "sops-nix",
+        "type": "github"
       }
     }
   },
