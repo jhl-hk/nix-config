@@ -54,6 +54,7 @@
       "gh"
       "tokei"
       "tmux"
+      "kubelogin"
 
       # Networking & security
       "iperf3"
@@ -80,6 +81,7 @@
       "notchnook"
       "alt-tab"
       "claude"
+      "ghostty"
 
       # Development Tools
       "1password"
