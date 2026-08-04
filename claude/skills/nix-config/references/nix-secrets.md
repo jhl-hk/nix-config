@@ -168,6 +168,13 @@ Naming convention for future keys: `<area>/<name>`, e.g. `npm/jianyuelab_token`,
 
 When the secret is one substring of a larger file format, use a template — `.path` only gives the raw value:
 
+**A template's `path` lands as a symlink, not a regular file.** Verified on Darwin: `~/.sops-canary` → `/run/secrets/rendered/sops-canary`, and `/run/secrets` is itself a symlink to a generation directory (`/run/secrets.d/N`) so activation swaps atomically. Consequences:
+
+- `owner` and `mode` apply to the **target**, not the link — `stat -L` to check them.
+- `/run` is volatile; the boot-time launchd daemon re-creates it. Until it runs, the link dangles.
+- Anything that *writes* to that path (`npm login`, `npm config set`, `git config -f`) writes through the symlink into `/run/secrets/rendered/` and gets wiped on the next activation. Treat templated files as read-only; change the source YAML instead.
+
+
 ```nix
 sops.templates."name" = {
   content = ''

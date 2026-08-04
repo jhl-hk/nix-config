@@ -139,7 +139,18 @@ sops-edit FILE:
     #!/usr/bin/env bash
     set -euo pipefail
     export SOPS_AGE_KEY_FILE="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}"
-    nix run nixpkgs#sops -- "{{ secrets }}/secrets/{{ FILE }}.yaml"
+    if [ ! -f "$SOPS_AGE_KEY_FILE" ]; then
+        echo "❌ 找不到 age key: $SOPS_AGE_KEY_FILE" >&2
+        exit 1
+    fi
+    # secrets/ 一开始不存在，sops 不会自己建目录
+    mkdir -p "{{ secrets }}/secrets"
+    # 从 nix-secrets 根目录跑，让 .sops.yaml 的 creation_rules 正确匹配
+    cd "{{ secrets }}"
+    nix run nixpkgs#sops -- "secrets/{{ FILE }}.yaml"
+    echo
+    echo "改完记得： cd {{ secrets }} && git add -A && git commit && git push"
+    echo "然后回来： just update-nix-secrets"
 
 # rebuild 之后的轻量检查：本机声明的每个 secret 是否都真的落地了
 #
@@ -181,6 +192,40 @@ check-sops:
 verify-sops EXPECT="sops-pipeline-ok":
     #!/usr/bin/env bash
     set -uo pipefail
+
+    # 先查前置条件。少了任何一步，下面四项一定全红，
+    # 但那是「没配好」不是「管道坏了」—— 分清楚这两件事。
+    missing=0
+    if [ ! -f "{{ secrets }}/secrets/shared.yaml" ]; then
+        echo "❌ 前置条件：{{ secrets }}/secrets/shared.yaml 不存在"
+        echo "   跑： just sops-edit shared      然后写入："
+        echo "        canary:"
+        echo "            value: {{ EXPECT }}"
+        echo "   再在 {{ secrets }} 里 commit + push"
+        missing=1
+    fi
+    canary_mod="hosts/common/optional/darwin/sops-canary.nix"
+    if [ ! -f "$canary_mod" ]; then
+        echo "❌ 前置条件：$canary_mod 不存在（验完就删掉了）"
+        echo "   从 git 历史取回："
+        echo "     p=$canary_mod"
+        echo '     git show "$(git rev-list -n1 HEAD -- "$p")^:$p" > "$p"'
+        missing=1
+    elif ! nix eval --raw ".#darwinConfigurations.$(hostname).config.sops.secrets" \
+           --apply 's: builtins.concatStringsSep " " (builtins.attrNames s)' 2>/dev/null \
+           | grep -q 'canary/value'; then
+        echo "❌ 前置条件：本机没有声明 canary/value"
+        echo "   在 hosts/darwin/$(hostname)/default.nix 的 imports 里加一行："
+        echo "        \"$canary_mod\""
+        echo "   再跑 just rebuild"
+        missing=1
+    fi
+    if [ $missing -ne 0 ]; then
+        echo
+        echo "前置条件没满足，跳过检查（这不代表 sops 管道有问题）"
+        exit 1
+    fi
+
     rc=0
 
     echo "1) 裸密文 /run/secrets/canary/value"
@@ -206,8 +251,16 @@ verify-sops EXPECT="sops-pipeline-ok":
     fi
 
     echo "3) 权限"
-    perm=$(stat -f '%Sp %Su' "$HOME/.sops-canary" 2>/dev/null || echo "?")
-    echo "   $perm  (期望 -rw------- $USER)"
+    # sops.templates 落地的是软链 -> /run/secrets/rendered/<name>，
+    # owner/mode 作用在**目标**上，所以要 stat -L 跟过去。
+    echo "   $HOME/.sops-canary -> $(readlink "$HOME/.sops-canary" 2>/dev/null || echo '(不是软链)')"
+    perm=$(sudo stat -L -f '%Sp %Su' "$HOME/.sops-canary" 2>/dev/null || echo "? ?")
+    if [ "$perm" = "-rw------- $USER" ]; then
+        echo "   ✅ 目标权限 $perm"
+    else
+        echo "   ❌ 目标权限 $perm，期望 -rw------- $USER"
+        rc=1
+    fi
 
     echo "4) 开机路径（launchd daemon，和 switch 时那条不是同一条）"
     sudo launchctl kickstart -k system/org.nixos.sops-install-secrets 2>&1 | sed 's/^/   /'

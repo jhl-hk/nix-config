@@ -62,7 +62,7 @@ Everything else (platform core, users, home-manager wiring) hangs off `hosts/com
 
 **`packages`.** `forAllSystems` over `aarch64-darwin` and `x86_64-linux`, using the same `packagesFromDirectoryRecursive ./pkgs/common` scan as the `additions` overlay. The overlay is for internal refs (`pkgs.foo`); `packages` is for `nix build .#packages.<system>.foo`.
 
-**`checks`.** `nix flake check` does not look at `darwinConfigurations`, so `checks.aarch64-darwin.darwin-<host>` maps each host's `.system` derivation in. This is what makes `just check` and CI actually build every machine rather than only type-check the flake.
+**`checks`.** `nix flake check` does not look at `darwinConfigurations`, so `checks.aarch64-darwin.darwin-<host>` maps each host's `.system` derivation in. This is what makes `just check` actually build every machine rather than only type-check the flake. It is a local pre-push gate — there is no CI (see `commands.md` § What is deliberately absent).
 
 **`devShells` / `formatter`.** `shell.nix` provides the dev shell (sops, age, ssh-to-age, just, gum, alejandra, deadnix, jq, yq-go). `alejandra` is the formatter.
 

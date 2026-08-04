@@ -138,8 +138,8 @@
       }
     );
 
-    # `nix flake check` 默认不碰 darwinConfigurations，挂在这里它才会真的
-    # 构建每台机器。CI 靠这个。
+    # `nix flake check` 默认不碰 darwinConfigurations，挂在这里 just check
+    # 才会真的构建每台机器，而不是只做类型检查。push 之前的关卡。
     checks = forAllSystems (
       system:
         lib.optionalAttrs (system == "aarch64-darwin") (

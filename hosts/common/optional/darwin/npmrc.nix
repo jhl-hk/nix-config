@@ -13,6 +13,15 @@
 #  token 只是 .npmrc 这个格式里的一个子串，templates 会在 activation
 #  时把 placeholder 替换掉再落盘，secrets.path 只能给出裸值。
 #
+#  ⚠️ path 落地的是一个**软链** -> /run/secrets/rendered/npmrc，
+#     不是就地写的文件（实测确认）。三个后果：
+#       - 读没问题，npm 会跟软链；owner/mode 作用在目标上（0600 jhl）
+#       - /run 是易失的，重启后靠 launchd daemon 重建；重建完成前
+#         这是一条悬空软链
+#       - **不要再用 `npm login` / `npm config set`** —— 那会写穿软链，
+#         改动落进 /run/secrets/rendered/，下次 activation 直接被冲掉。
+#         token 要改就改 shared.yaml。
+#
 #  ── 打开它需要三步 ────────────────────────────────────────
 #  1) 在 nix-secrets 里创建密文（这一步只能你自己做）：
 #

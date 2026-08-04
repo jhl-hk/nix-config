@@ -86,4 +86,6 @@ The `shellHook` exports `SOPS_AGE_KEY_FILE=$HOME/.config/sops/age/keys.txt`, war
 
 This repo has no NixOS machines yet, so there is **no** `spawn.sh`, `provision-nixos.sh`, `rebuild.sh`, `deploy.nix`, deploy-rs, disko, `nixos-anywhere`, ISO builder, or attic push recipe. Do not reference them or invent them. If a Linux host is added later, those become real work items, not existing infrastructure.
 
+**There is no CI.** No `.github/` directory, no GitHub Actions workflow, no deploy key on `jhl-hk/nix-secrets`. A workflow existed briefly and was removed by choice — building three full Darwin closures on a hosted macOS runner was not worth the minutes, and it needed an SSH deploy key just to resolve the private `nix-secrets` input. `just check` is the pre-push gate and it runs locally. Do not add a workflow back without being asked.
+
 There is also no `checks.nix` / pre-commit-hooks wiring — the `checks` flake output is built inline in `flake.nix` from `darwinConfigurations`.
