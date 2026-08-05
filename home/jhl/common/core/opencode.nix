@@ -8,7 +8,8 @@
 #
 #  opencode
 #
-#  Manages ~/.config/opencode/opencode.json only.
+#  Manages ~/.config/opencode/opencode.json, plus wakatime-cli, which the
+#  WakaTime plugin declared below shells out to.
 #  The binary itself is not nix-managed; it comes from the "opencode" brew in
 #  apps.nix.
 #
@@ -106,6 +107,20 @@ let
       # (sharing on demand via /share); this tightens it to fully off. Set it
       # back to "manual" if you want to share sessions.
       share = "disabled";
+
+      # opencode-wakatime reports opencode activity as WakaTime heartbeats,
+      # the same account the Zed extension and the wakatime cask feed.
+      #
+      # The version is pinned on purpose. opencode parses each entry with
+      # npm-package-arg (parsePluginSpecifier, packages/opencode/src/plugin/
+      # shared.ts) and a bare name becomes "latest", so an unpinned plugin
+      # would silently move on every startup -- the same thing autoupdate =
+      # false above refuses for the binary. Bump this by hand.
+      #
+      # Nothing to configure for the key here: the plugin only shells out to
+      # wakatime-cli, which reads ~/.wakatime.cfg from wakatime.nix and pulls
+      # the key out of sops via hosts/common/optional/darwin/wakatime.nix.
+      plugin = ["opencode-wakatime@1.3.9"];
     }
     // lib.optionalAttrs (active != {}) {
       provider = lib.mapAttrs toProvider active;
@@ -121,4 +136,11 @@ let
 in {
   xdg.configFile."opencode/opencode.json".source =
     (pkgs.formats.json {}).generate "opencode.json" settings;
+
+  # The plugin resolves the CLI with `which wakatime-cli` and only downloads
+  # its own copy into ~/.wakatime when that misses ("Using global wakatime-cli,
+  # skipping installation check", dist/bundle.js in opencode-wakatime 1.3.9).
+  # Providing it from nixpkgs keeps that binary on the flake lock instead of
+  # self-updating out of GitHub releases behind our back.
+  home.packages = [pkgs.wakatime-cli];
 }

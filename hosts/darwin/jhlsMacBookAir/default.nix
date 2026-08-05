@@ -8,6 +8,7 @@
   imports = map lib.custom.relativeToRoot [
     "hosts/common/optional/darwin/steam.nix"
     "hosts/common/optional/darwin/llm.nix"
+    "hosts/common/optional/darwin/wakatime.nix"
   ];
 
   hostSpec = {

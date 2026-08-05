@@ -11,6 +11,16 @@
 #  home.file produces read-only symlinks into the nix store, and Claude Code
 #  writes those files back itself, which it could not do once managed.
 #
+#  Plugins land in that same unmanaged half -- `claude plugin i` records the
+#  marketplace and the enabled flag in settings.json. Installed here:
+#
+#    claude plugin marketplace add https://github.com/wakatime/claude-code-wakatime.git
+#    claude plugin i claude-code-wakatime@wakatime
+#
+#  It shells out to wakatime-cli like every other WakaTime consumer, so its
+#  config and API key come from home/jhl/common/core/wakatime.nix -- nothing
+#  extra to set up after installing.
+#
 #############################################################
 let
   # Skills to deploy -- each maps to claude/skills/<name>/SKILL.md

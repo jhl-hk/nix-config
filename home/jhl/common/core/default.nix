@@ -39,6 +39,7 @@ in {
     ./claude.nix
     ./llm.nix
     ./opencode.nix
+    ./wakatime.nix
   ];
 
   home = {
