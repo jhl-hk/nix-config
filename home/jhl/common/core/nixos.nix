@@ -1,11 +1,12 @@
 {...}:
 #############################################################
 #
-#  Home Core -- NixOS 那半
+#  Home Core -- the NixOS half
 #
-#  空骨架。现在没有 NixOS 机器，这个文件不会被求值。
-#  别删也别改名 —— common/core/default.nix 里的 ./${platform}.nix
-#  是按 hostSpec.isDarwin 插值出来的，名字对不上会静默失败。
+#  Empty skeleton. There are no NixOS machines yet, so this file is never
+#  evaluated. Do not delete or rename it -- ./${platform}.nix in
+#  common/core/default.nix is interpolated from hostSpec.isDarwin, and a
+#  mismatched name fails silently.
 #
 #############################################################
 {

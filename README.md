@@ -1,130 +1,130 @@
 # nix-config
 
-jhl 的 nix-darwin + home-manager flake，目前管三台 Mac。NixOS 的骨架已经搭好但还没有机器。
+jhl's nix-darwin + home-manager flake, currently managing three Macs. The NixOS skeleton is in place but no machine uses it yet.
 
-私有数据在同级的 [`../nix-secrets`](https://github.com/jhl-hk/nix-secrets)（private），作为 flake input 引入。
+Private data lives in the sibling [`../nix-secrets`](https://github.com/jhl-hk/nix-secrets) (private) and is pulled in as a flake input.
 
-## 结构
+## Layout
 
 ```
 .
-├── flake.nix              # host 自动发现、overlays、packages、checks、devShells
-├── lib/                   # lib.custom：relativeToRoot / scanPaths
-├── modules/               # 提供 options 的可复用模块，全部 scanPaths 自动导入
-│   ├── common/            #   跨 NixOS/Darwin/HM —— host-spec.nix 在这里
-│   ├── home/              #   home-manager 作用域
+├── flake.nix              # host auto-discovery, overlays, packages, checks, devShells
+├── lib/                   # lib.custom: relativeToRoot / scanPaths
+├── modules/               # reusable option-providing modules, all auto-imported by scanPaths
+│   ├── common/            #   shared across NixOS/Darwin/HM -- host-spec.nix lives here
+│   ├── home/              #   home-manager scope
 │   └── hosts/{common,nixos,darwin}/
 ├── overlays/              # additions / customLib / modifications / unstable
-├── pkgs/common/           # 自制包，packagesFromDirectoryRecursive 自动发现
+├── pkgs/common/           # home-grown packages, auto-discovered by packagesFromDirectoryRecursive
 ├── hosts/
 │   ├── common/
-│   │   ├── core/          # 每台机器都有的，含 hostSpec 灌注点
-│   │   ├── users/jhl/     # 系统级用户 + home-manager 接线
-│   │   └── optional/      # ★ 不会自动导入，host 自己点名
-│   ├── darwin/<HostName>/ # 一台机器一个目录，自动发现
-│   └── nixos/             # 空骨架
+│   │   ├── core/          # what every machine gets, including the hostSpec population point
+│   │   ├── users/jhl/     # system-level user + home-manager wiring
+│   │   └── optional/      # ★ never auto-imported; a host names what it wants
+│   ├── darwin/<HostName>/ # one directory per machine, auto-discovered
+│   └── nixos/             # empty skeleton
 └── home/jhl/
-    ├── common/core/       # 到处都要的基线
-    ├── common/optional/   # 按机器点的菜
-    └── <HostName>.nix     # 每台机器的点菜单
+    ├── common/core/       # the baseline wanted everywhere
+    ├── common/optional/   # picked per machine
+    └── <HostName>.nix     # each machine's order ticket
 ```
 
-## 三条组装通道 + 一条数据总线
+## Three composition lanes + one data bus
 
-**Hosts** — `hosts/darwin/<Name>/` 里放个目录就是一台新机器，`flake.nix` 用 `readDir` 自动发现。host 文件很薄：设 `hostSpec.hostName`，然后从 `hosts/common/optional/` 里点需要的东西。
+**Hosts** — drop a directory in `hosts/darwin/<Name>/` and that is a new machine; `flake.nix` discovers it with `readDir`. Host files are thin: set `hostSpec.hostName`, then pick what you need from `hosts/common/optional/`.
 
-**Home** — 每个 `(用户, 机器)` 组合对应 `home/jhl/<HostName>.nix`，导入 `common/core` 加若干 `common/optional`。
+**Home** — each `(user, machine)` pair maps to `home/jhl/<HostName>.nix`, which imports `common/core` plus a selection of `common/optional`.
 
-**Modules** — `modules/**` 下的文件由 `lib.custom.scanPaths` 自动导入，只提供 `options`，不打开任何功能。打开是 host 的事（`<name>.enable = true`）。
+**Modules** — files under `modules/**` are auto-imported by `lib.custom.scanPaths`. They only provide `options` and enable nothing. Enabling is the host's job (`<name>.enable = true`).
 
-**数据总线** — `modules/common/host-spec.nix` 定义 `hostSpec` 选项树，`hosts/common/core/default.nix` 用一行 `inherit (inputs.nix-secrets) ...` 灌进去。之后所有模块读 `config.hostSpec.<x>`，**不要**直接碰 `inputs.nix-secrets`。
+**The data bus** — `modules/common/host-spec.nix` defines the `hostSpec` option tree, and `hosts/common/core/default.nix` populates it with a single `inherit (inputs.nix-secrets) ...`. After that every module reads `config.hostSpec.<x>` and must **never** touch `inputs.nix-secrets` directly.
 
-### 最关键的一条规则
+### The single most important rule
 
-`modules/**` **会**自动导入，`hosts/common/optional/**` **不会**。前者定义能力，后者描述某一台机器的选择 —— 打开一个 host 文件就能看全这台机器跑什么。
+`modules/**` **is** auto-imported; `hosts/common/optional/**` **is not**. The former defines capabilities, the latter describes one machine's choices — so opening a host file shows you everything that machine runs.
 
-## 常用命令
+## Common commands
 
 ```bash
-just                # 列出全部 recipe
-just rebuild        # 重建并切换当前机器（前后自动跑 update-nix-secrets 和 check-sops）
-just build          # 只构建不切换
-just check          # nix flake check --all-systems，会真的构建每台机器
-just diff           # git diff，忽略 flake.lock
-just update         # 更新 flake input + brew
-just fmt            # alejandra 格式化
-just check-beta     # 报告这台机器是不是 macOS seed 版本
-just clean          # 清理旧 generation
+just                # list every recipe
+just rebuild        # rebuild and switch this machine (runs update-nix-secrets before and check-sops after)
+just build          # build without switching
+just check          # nix flake check --all-systems; really builds every machine
+just diff           # git diff, excluding flake.lock
+just update         # update flake inputs + brew
+just fmt            # format with alejandra
+just check-beta     # report whether this machine is on a macOS seed build
+just clean          # clean up old generations
 
-nix develop         # 进开发 shell：sops / age / ssh-to-age / just / gum / alejandra / deadnix
+nix develop         # dev shell: sops / age / ssh-to-age / just / gum / alejandra / deadnix
 ```
 
-Secrets 相关:
+Secrets:
 
 ```bash
-just sops-edit shared    # 编辑 ../nix-secrets/secrets/shared.yaml（会自动建目录、检查 age key）
-just rekey               # 改完 .sops.yaml 后把每个密文重新加密给当前收件人
-just update-nix-secrets  # 拉取 nix-secrets 并重新锁定
-just check-sops          # 断言本机声明的每个 secret 都落到了 /run/secrets（rebuild 后自动跑）
-just verify-sops         # canary 端到端自检，见下
+just sops-edit shared    # edit ../nix-secrets/secrets/shared.yaml (creates the dir, checks the age key)
+just rekey               # after editing .sops.yaml, re-encrypt every ciphertext for the current recipients
+just update-nix-secrets  # pull nix-secrets and re-lock it
+just check-sops          # assert every secret this machine declares landed in /run/secrets (runs after rebuild)
+just verify-sops         # end-to-end canary self-check, see below
 ```
 
-**没有 CI。** 没有 `.github/`，没有 GitHub Actions。`just check` 就是 push 前的关卡，在本地跑。
+**There is no CI.** No `.github/`, no GitHub Actions. `just check` is the gate before pushing, run locally.
 
-### 验证 sops 管道
+### Verifying the sops pipeline
 
-改了 age key、`.sops.yaml` 收件人、或者升级 macOS 之后，可以用一次性 canary 端到端验一遍。canary 模块验完就删了，从 git 历史取回：
+After changing an age key, the `.sops.yaml` recipients, or upgrading macOS, a one-off canary can verify the whole path end to end. The canary module is deleted once verified; restore it from git history:
 
 ```bash
 p=hosts/common/optional/darwin/sops-canary.nix
 git show "$(git rev-list -n1 HEAD -- "$p")^:$p" > "$p"
 ```
 
-（`rev-list -n1` 找到最后一次动这个文件的提交，也就是删除它的那次；`^` 取它的父提交。直接 `git show HEAD:$p` 是不行的，删除之后 HEAD 里已经没有这个文件了。）
+(`rev-list -n1` finds the last commit that touched the file — the one that deleted it — and `^` takes its parent. Plain `git show HEAD:$p` does not work, because after the deletion HEAD no longer has the file.)
 
-然后按该文件头部的三步走（建密文 → import → rebuild），`just verify-sops` 会检查四项：裸密文的值、`sops.templates` 的占位符是否真替换、目标权限、以及 `launchctl kickstart` 重跑证明**开机那条路**也通。验完把 import、`shared.yaml` 里的 canary、模块本身一起清掉。
+Then follow the three steps at the top of that file (create the ciphertext → import → rebuild). `just verify-sops` checks four things: the raw secret's value, whether the `sops.templates` placeholder was really substituted, the target's permissions, and a `launchctl kickstart` re-run proving the **boot path** works too. When done, remove the import, the canary in `shared.yaml`, and the module itself.
 
-`just verify-sops` 有前置条件检查，缺哪一步会直接说，不会给你一堆红叉。
+`just verify-sops` checks its preconditions first and tells you exactly which step is missing rather than dumping a wall of red crosses at you.
 
-## 加东西放哪儿
+## Where to add things
 
-| 想加什么 | 放哪儿 |
+| What you want to add | Where it goes |
 |---|---|
-| 每台机器都要的系统包 | `hosts/common/core/default.nix` 的 `environment.systemPackages` |
-| 部分机器要的功能，没有参数 | `hosts/common/optional/darwin/<name>.nix`，然后在 host 的 `imports` 里点名 |
-| 有参数、要 `enable` 开关的功能 | `modules/hosts/darwin/<name>/default.nix`（自动导入） |
-| Homebrew 的 brew/cask/masApp | `hosts/common/core/darwin/apps.nix`（全机器）或某个 optional 文件（部分机器） |
-| 到处都要的 dotfile | `home/jhl/common/core/<name>.nix` + 加进同目录 `default.nix` 的 imports |
-| 只在 macOS 成立的 dotfile | `home/jhl/common/core/darwin/<name>.nix` |
-| 按机器开关的 dotfile | `home/jhl/common/optional/<类>/<name>.nix`，在 `home/jhl/<Host>.nix` 里点名 |
-| nixpkgs 里没有的包 | `pkgs/common/<name>/package.nix`（自动发现） |
-| 覆写 nixpkgs 的包 | `overlays/default.nix` 的 `modifications`；要新版本优先用 `pkgs.unstable.<x>` |
+| A system package every machine needs | `environment.systemPackages` in `hosts/common/core/default.nix` |
+| A feature some machines want, with no parameters | `hosts/common/optional/darwin/<name>.nix`, then name it in the host's `imports` |
+| A feature with parameters and an `enable` switch | `modules/hosts/darwin/<name>/default.nix` (auto-imported) |
+| A Homebrew brew/cask/masApp | `hosts/common/core/darwin/apps.nix` (fleet-wide) or an optional file (some machines) |
+| A dotfile wanted everywhere | `home/jhl/common/core/<name>.nix` + add it to the imports in the sibling `default.nix` |
+| A dotfile that only holds on macOS | `home/jhl/common/core/darwin/<name>.nix` |
+| A dotfile switched per machine | `home/jhl/common/optional/<category>/<name>.nix`, named in `home/jhl/<Host>.nix` |
+| A package not in nixpkgs | `pkgs/common/<name>/package.nix` (auto-discovered) |
+| An override of a nixpkgs package | `modifications` in `overlays/default.nix`; for a newer version prefer `pkgs.unstable.<x>` |
 
-详细的模板和边界情况见 `claude/skills/nix-config/references/recipes.md`。
+Full templates and edge cases are in `claude/skills/nix-config/references/recipes.md`.
 
-## 几个必须知道的坑
+## Traps you have to know about
 
-- **`system.stateVersion` 类型按平台不同**：nix-darwin 要整数（`6`），NixOS 要字符串（`"25.05"`）。写混了求值就报类型错误。它钉的是迁移逻辑不是当前版本，不读 release notes 别动。
-- **`lib.custom.relativeToRoot` 吃字符串，不吃路径字面量**。`relativeToRoot "hosts/common/core"` 对，`relativeToRoot ./hosts/common/core` 错。
-- **`environment.systemPath` 用 `lib.mkOrder 1100`**。nix-darwin 把 nix 路径定义在默认序 1000、`/usr/bin` 那批在 1200，普通定义会随模块顺序漂移，Homebrew 的路径就可能跑到 nix 前面或 `/usr/bin` 后面。
-- **home-manager 的 `extraSpecialArgs` 里不能传 `lib`**。会顶掉 HM 自己的 lib，`lib.hm` 消失，一堆模块炸。`lib.custom` 走 overlays 的 `customLib` 层挂进 `pkgs.lib`。
-- **sops 的两条落地路径可见性不同**。`switch` 时走 `postActivation`（`activate` 带 `set -e`，解密失败会**中止 switch 并报错**）；开机时走 `launchd.daemons.sops-install-secrets`，输出只进 launchd 日志。
-- **`sops.templates.<x>.path` 落地的是软链**，指向 `/run/secrets/rendered/<name>`，而 `/run/secrets` 本身又是 `→ /run/secrets.d/N`（带代际编号，activation 原子切换）。三个后果：`owner`/`mode` 作用在**目标**上（查权限要 `stat -L`）；`/run` 易失，重启后靠 launchd 重建，重建完成前是悬空链；**任何写这个路径的命令**（`npm login`、`npm config set`）会写穿软链改到 `/run/secrets/rendered/`，下次 activation 直接冲掉 —— 改值要改源头 YAML。
-- **加 secret 的顺序不能反**：先在 `nix-secrets` 里建好密文并 push，再在 host 里 import 消费模块。反过来会在求值期就挂（`opening file ... No such file or directory`），因为 `validateSopsFiles` 在求值时就检查文件存在。
-- **移除最后一个 secret 会留下孤儿**。`sops.secrets` 和 `sops.templates` 都空掉之后，sops-nix 模块整个从系统里消失 —— 连同它的清理代码。留下三样没人管：`~/<模板的 path>` 那条软链、`/run/secrets` → `/run/secrets.d/N`、以及 **`/run/secrets.d/age-keys.txt`（sops-nix 复制的 age 私钥明文副本）**。清理：
+- **`system.stateVersion` has a different type per platform**: nix-darwin wants an integer (`6`), NixOS wants a string (`"25.05"`). Mixing them up is a type error at evaluation time. It pins migration logic, not the running version — do not touch it without reading the release notes.
+- **`lib.custom.relativeToRoot` takes a string, not a path literal**. `relativeToRoot "hosts/common/core"` is correct; `relativeToRoot ./hosts/common/core` is not.
+- **`environment.systemPath` must use `lib.mkOrder 1100`**. nix-darwin defines the nix paths at default order 1000 and the `/usr/bin` set at 1200; a plain definition drifts with module order, which can put Homebrew's paths ahead of nix or behind `/usr/bin`.
+- **Never pass `lib` in home-manager's `extraSpecialArgs`**. It clobbers HM's own lib, `lib.hm` disappears, and a pile of modules break. `lib.custom` reaches HM through the `customLib` layer in overlays, which attaches it to `pkgs.lib`.
+- **sops's two delivery paths differ in visibility**. On `switch` it goes through `postActivation` (`activate` runs with `set -e`, so a decryption failure **aborts the switch with an error**); at boot it goes through `launchd.daemons.sops-install-secrets`, whose output only reaches the launchd log.
+- **What `sops.templates.<x>.path` lands is a symlink**, pointing at `/run/secrets/rendered/<name>`, while `/run/secrets` is itself `→ /run/secrets.d/N` (generation-numbered, switched atomically at activation). Three consequences: `owner`/`mode` apply to the **target** (use `stat -L` to check permissions); `/run` is volatile and rebuilt by launchd after a reboot, so until that finishes it is a dangling link; and **any command that writes to that path** (`npm login`, `npm config set`) writes through the symlink into `/run/secrets/rendered/`, where the next activation wipes it — to change a value, change the source YAML.
+- **The order of adding a secret cannot be reversed**: create and push the ciphertext in `nix-secrets` first, then import the consuming module on the host. The other way round fails during evaluation (`opening file ... No such file or directory`), because `validateSopsFiles` checks for the file at evaluation time.
+- **Removing the last secret leaves orphans.** Once both `sops.secrets` and `sops.templates` are empty, the sops-nix module disappears from the system entirely — along with its cleanup code. Three things are left unattended: the `~/<template path>` symlink, `/run/secrets` → `/run/secrets.d/N`, and **`/run/secrets.d/age-keys.txt` (the cleartext copy of the age private key that sops-nix made)**. To clean up:
 
   ```bash
-  rm ~/<模板的 path>
+  rm ~/<template path>
   sudo rm -rf /run/secrets /run/secrets.d
   sudo hdiutil detach /dev/diskN
   sudo rmdir /run/secrets.d
   ```
 
-  `/run/secrets.d` 是一个 64 MiB 的 **HFS RAM disk**（`mount | grep secrets.d` 看设备号），所以 `rm -rf` 会清空内容但报 `Resource busy` 删不掉挂载点本身 —— 内容删掉了就够安全了，剩下的是释放内存。macOS 重启会清 `/run`，但别指望它。
-- **`onActivation.cleanup = "zap"`**：没在 `apps.nix` 里声明过的 Homebrew 包会在下次 switch 时被卸载。手动 `brew install` 的东西是临时的。
-- **改了 nix-secrets 一定要 push**。它是 locked remote input，本地改动对 flake 不可见。`just rebuild` 会自动跑 `update-nix-secrets`，但 push 得自己来。
+  `/run/secrets.d` is a 64 MiB **HFS RAM disk** (`mount | grep secrets.d` shows the device number), so `rm -rf` empties it but cannot remove the mount point itself, reporting `Resource busy` — deleting the contents is enough for safety, the rest just reclaims memory. macOS clears `/run` on reboot, but do not rely on that.
+- **`onActivation.cleanup = "zap"`**: any Homebrew package not declared in `apps.nix` is uninstalled on the next switch. Anything from a manual `brew install` is temporary.
+- **Always push changes to nix-secrets.** It is a locked remote input, so local edits are invisible to the flake. `just rebuild` runs `update-nix-secrets` for you, but pushing is on you.
 
-## 参考
+## References
 
-- 设计来源：[EmergentMind/nix-config](https://github.com/EmergentMind/nix-config)
-- [nix-darwin 手册](https://daiderd.com/nix-darwin/manual/index.html) · [home-manager 手册](https://nix-community.github.io/home-manager/) · [NixOS Options](https://search.nixos.org/options)
+- Design lineage: [EmergentMind/nix-config](https://github.com/EmergentMind/nix-config)
+- [nix-darwin manual](https://daiderd.com/nix-darwin/manual/index.html) · [home-manager manual](https://nix-community.github.io/home-manager/) · [NixOS Options](https://search.nixos.org/options)

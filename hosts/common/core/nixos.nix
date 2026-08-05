@@ -3,16 +3,16 @@
 #
 #  NixOS Core
 #
-#  空骨架。现在一台 NixOS 机器都没有，这个文件不会被求值
-#  （hosts/common/core/default.nix 按 isDarwin 挑平台）。
+#  Empty skeleton. There are no NixOS machines yet, so this file is never
+#  evaluated (hosts/common/core/default.nix picks the platform by isDarwin).
 #
-#  加第一台 NixOS 机器时，跨平台的东西放 core/default.nix，
-#  只有 Linux 才有的放这里。
+#  When the first NixOS machine arrives, cross-platform things go in
+#  core/default.nix and Linux-only things go here.
 #
 #############################################################
 {
   networking.hostName = config.hostSpec.hostName;
 
-  # NixOS 要**字符串**，Darwin 要整数。
+  # NixOS wants a **string**; Darwin wants an integer.
   system.stateVersion = "25.05";
 }

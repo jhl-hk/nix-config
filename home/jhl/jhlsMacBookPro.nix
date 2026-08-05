@@ -3,8 +3,8 @@
 #
 #  home: jhl @ jhlsMacBookPro
 #
-#  这台机器的「点菜单」：core 是到处都要的基线，
-#  optional 是这台机器额外要的。
+#  This machine's order ticket: core is the baseline wanted everywhere,
+#  optional is what this machine additionally wants.
 #
 #############################################################
 {
@@ -14,6 +14,7 @@
     ./common/optional/editors/typora.nix
   ];
 
-  # 只有这台插着 YubiKey 5C Nano（"ykmini"），其余机器用常驻 sk 密钥。
+  # Only this machine has a YubiKey 5C Nano plugged in ("ykmini"); the others
+  # use the resident sk key.
   sshKeys.primary = "id_ykmini";
 }

@@ -79,7 +79,7 @@ All `bool`. Defaults are tuned so a new host needs the fewest overrides. Flags w
 
 Both live in the `config` block of `modules/common/host-spec.nix`:
 
-- `!isWork || work != { }` — "hostSpec.isWork = true 时必须同时给出 hostSpec.work"
+- `!isWork || work != { }` — "hostSpec.work must be set whenever hostSpec.isWork = true."
 - `!isImpermanent || persistFolder != ""` — the `isImpermanent` local is guarded by `config ? "system"` so the file still evaluates in scopes without a `system` namespace.
 
 ## Usage patterns

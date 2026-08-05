@@ -6,24 +6,26 @@
 }:
 #############################################################
 #
-#  hostSpec -- 数据总线
+#  hostSpec -- the data bus
 #
-#  整个仓库唯一的跨平台数据通道。NixOS / nix-darwin / home-manager
-#  三个作用域都会导入这个文件，所以同一份数据在哪儿都读得到。
+#  The repo's single cross-platform data channel. All three scopes
+#  (NixOS / nix-darwin / home-manager) import this file, so the same data
+#  reads the same everywhere.
 #
-#  谁往里写：
-#    hosts/common/core/default.nix  -- 身份和拓扑，从 inputs.nix-secrets inherit
-#    hosts/<platform>/<host>/       -- hostName 和这台机器的开关
+#  Who writes to it:
+#    hosts/common/core/default.nix  -- identity and topology, inherited from inputs.nix-secrets
+#    hosts/<platform>/<host>/       -- hostName and this machine's switches
 #
-#  谁读：所有模块，一律走 config.hostSpec.<x>。
-#  模块里**不要**直接引用 inputs.nix-secrets —— 那层间接正是为了让
-#  secrets 可以被替换、审计、或者整个 stub 掉。
+#  Who reads it: every module, always through config.hostSpec.<x>.
+#  Module code must **never** reference inputs.nix-secrets directly -- that
+#  indirection is exactly what makes secrets swappable, auditable, or
+#  stubbable in one place.
 #
 #############################################################
 let
   inherit (lib) mkOption types;
 
-  # 布尔开关的简写，省掉一堆重复的 mkOption 样板。
+  # Shorthand for boolean switches, to skip the repetitive mkOption boilerplate.
   mkBoolOpt = default: description:
     mkOption {
       inherit default description;
@@ -31,42 +33,43 @@ let
     };
 in {
   options.hostSpec = mkOption {
-    description = "本机的身份、拓扑与能力标记。";
+    description = "This machine's identity, topology, and capability flags.";
     type = types.submodule {
-      # 逃生舱：没声明的字符串键也能塞进来。下面每个显式声明的选项
-      # 仍然保留各自更严格的类型，freeform 只兜住未声明的键。
+      # Escape hatch: undeclared string keys are accepted too. Every option
+      # declared explicitly below keeps its own stricter type; freeform only
+      # catches the undeclared ones.
       freeformType = types.attrsOf types.str;
 
       options = {
-        # ---- 身份 ----
+        # ---- Identity ----
         username = mkOption {
           type = types.str;
-          description = "主用户名。驱动 users.users.<u>、home-manager.users.<u> 和 home 的默认值。";
+          description = "Primary username. Drives users.users.<u>, home-manager.users.<u>, and the default for home.";
         };
 
         hostName = mkOption {
           type = types.str;
-          description = "本机主机名。同时是 networkInfo.hosts.<hostName> 的索引键。";
+          description = "This machine's hostname. Also the index key into networkInfo.hosts.<hostName>.";
         };
 
         handle = mkOption {
           type = types.str;
-          description = "线上 handle（GitHub 用户名等），用于 ssh 注释和 dotfile 模板。";
+          description = "Online handle (GitHub username and the like), used in ssh comments and dotfile templates.";
         };
 
         userFullName = mkOption {
           type = types.str;
-          description = "真实姓名，用于 git、GPG uid、邮件 From。";
+          description = "Real name, used for git, GPG uids, and mail From headers.";
         };
 
         domain = mkOption {
           type = types.str;
-          description = "主域名，用于拼 FQDN。";
+          description = "Primary domain, used to build FQDNs.";
         };
 
         email = mkOption {
           type = types.attrsOf types.str;
-          description = "邮箱地址集合。键由 nix-secrets 的 personal.nix 定义（user / gitHub / notifier ...）。";
+          description = "Set of email addresses. Keys are defined by personal.nix in nix-secrets (user / gitHub / notifier ...).";
         };
 
         home = mkOption {
@@ -75,94 +78,100 @@ in {
             if pkgs.stdenv.isLinux
             then "/home/${config.hostSpec.username}"
             else "/Users/${config.hostSpec.username}";
-          description = "用户家目录。默认在 submodule 内部惰性求值，所以这里用 pkgs.stdenv 是安全的。";
+          description = "User home directory. The default is evaluated lazily inside the submodule, so using pkgs.stdenv here is safe.";
         };
 
         sshAllowedSigners = mkOption {
           type = types.listOf types.str;
           default = [];
           description = ''
-            ~/.ssh/allowed_signers 的内容，每个元素一行。
-            用于 git 的 ssh 签名校验。是公钥，不是密文，所以放在 nix-secrets 的明文半区。
+            Contents of ~/.ssh/allowed_signers, one line per element.
+            Used for git ssh signature verification. These are public keys, not
+            ciphertext, so they live in the cleartext half of nix-secrets.
           '';
         };
 
-        # ---- 从 nix-secrets 来的自由形状数据 ----
-        # 一律当成不透明的树，读叶子时用 `.<key> or { }` 兜底。
+        # ---- Free-form data coming from nix-secrets ----
+        # Always treated as an opaque tree; read leaves with `.<key> or { }`
+        # as a fallback.
         work = mkOption {
           type = types.attrsOf types.anything;
           default = {};
-          description = "雇主相关的配置包（代理、CA、内部仓库）。isWork = true 时必须非空。";
+          description = "Employer-specific config bundle (proxies, CAs, internal registries). Must be non-empty when isWork = true.";
         };
 
         networking = mkOption {
           type = types.attrsOf types.anything;
           default = {};
-          description = "通用网络参数（DNS、搜索域、端口表）。被 core 里的 inherit 覆盖。";
+          description = "General networking parameters (DNS, search domains, port tables). Overridden by the inherit in core.";
         };
 
         networkInfo = mkOption {
           type = types.attrsOf types.anything;
           default = {};
-          description = "逐主机的网络事实，形状是 networkInfo.hosts.<HostName> = { ip4; gateway4; ... }。";
+          description = "Per-host network facts, shaped as networkInfo.hosts.<HostName> = { ip4; gateway4; ... }.";
         };
 
         serviceInfo = mkOption {
           type = types.attrsOf types.anything;
           default = {};
           description = ''
-            逐服务的端点数据。两种键混在一起：
-              全局键   serviceInfo.<service>            任何主机都能用
-              逐主机键 serviceInfo.<HostName>.<service> 只对那台机器生效
-            读的时候按「逐主机 -> 全局 -> 空」三级兜底。
+            Per-service endpoint data. Two kinds of key are mixed together:
+              global    serviceInfo.<service>            usable from any host
+              per-host  serviceInfo.<HostName>.<service> only applies to that machine
+            Read them with a three-step fallback: per-host -> global -> empty.
           '';
         };
 
         persistFolder = mkOption {
           type = types.str;
           default = "";
-          description = "impermanence 的持久化根目录。impermanence 关着时才允许为空（有断言）。";
+          description = "Persistence root for impermanence. Only allowed to be empty while impermanence is off (there is an assertion).";
         };
 
-        # ---- 能力标记 ----
-        isMinimal = mkBoolOpt false "最小系统（安装器 / 救援盘），跳过 home-manager。";
-        isMobile = mkBoolOpt false "笔记本形态，用于电源管理、休眠、背光。";
-        isProduction = mkBoolOpt true "日常主力机（相对于实验沙箱），用于关掉吵闹的调试服务。";
-        isServer = mkBoolOpt false "无头服务器，用于关掉桌面、登录管理器、音频。";
-        isWork = mkBoolOpt false "工作机。为 true 时 work 必须非空（有断言）。";
+        # ---- Capability flags ----
+        isMinimal = mkBoolOpt false "Minimal system (installer / rescue media); skips home-manager.";
+        isMobile = mkBoolOpt false "Laptop form factor; drives power management, suspend, backlight.";
+        isProduction = mkBoolOpt true "Daily driver (as opposed to an experimental sandbox); used to silence noisy debug services.";
+        isServer = mkBoolOpt false "Headless server; used to turn off desktop, login manager, audio.";
+        isWork = mkBoolOpt false "Work machine. When true, work must be non-empty (there is an assertion).";
         isDarwin = mkBoolOpt false ''
-          本机是 macOS。
+          This machine is macOS.
 
-          在 pkgs.stdenv.isDarwin 会触发无限递归的地方读这个（典型是 sops、
-          以及 home/<u>/common/core/default.nix 的平台选择）。
+          Read this wherever pkgs.stdenv.isDarwin would trigger infinite
+          recursion (typically sops, and the platform selection in
+          home/<u>/common/core/default.nix).
 
-          注意 flake.nix 还通过 specialArgs 传了一个独立的顶层 isDarwin，
-          那个是 flake 按调用的 builder 自动决定的，和这里的 hostSpec.isDarwin
-          是两个绑定，值应该一致但来源不同。
+          Note that flake.nix also passes a separate top-level isDarwin through
+          specialArgs. That one is decided by the flake from whichever builder
+          was called; it is a different binding from hostSpec.isDarwin here.
+          The values should agree, but the sources differ.
         '';
-        useYubikey = mkBoolOpt false "启用 YubiKey 相关配置（pam-u2f、gpg-agent ssh、udev）。";
-        voiceCoding = mkBoolOpt false "启用语音编程栈（talon / cursorless）。";
-        isAutoStyled = mkBoolOpt false "接入 stylix 统一配色。";
-        useNeovimTerminal = mkBoolOpt false "用内嵌 nvim 终端替换终端启动器绑定。";
-        useWindowManager = mkBoolOpt true "启用窗口管理器。服务器或纯 tty 机器设 false。";
+        useYubikey = mkBoolOpt false "Enable YubiKey-related config (pam-u2f, gpg-agent ssh, udev).";
+        voiceCoding = mkBoolOpt false "Enable the voice-coding stack (talon / cursorless).";
+        isAutoStyled = mkBoolOpt false "Opt into stylix for unified theming.";
+        useNeovimTerminal = mkBoolOpt false "Replace terminal launcher bindings with an embedded nvim terminal.";
+        useWindowManager = mkBoolOpt true "Enable a window manager. Set false on servers or pure-tty machines.";
         useAtticCache = mkBoolOpt true ''
-          启用 attic 二进制缓存。
+          Enable the attic binary cache.
 
-          全新装好的机器在路由通之前会卡在拉缓存上，第一次 rebuild 先设 false，
-          等网络正常再打开。
+          A freshly installed machine stalls on cache fetches until routing
+          works, so set this false for the first rebuild and turn it on once
+          the network is healthy.
         '';
-        hdr = mkBoolOpt false "合成器启用 HDR。";
-        loadUserAgeKey = mkBoolOpt false "除主机密钥外，额外加载用户作用域的 age key。";
+        hdr = mkBoolOpt false "Enable HDR in the compositor.";
+        loadUserAgeKey = mkBoolOpt false "Load a user-scoped age key in addition to the host key.";
 
-        wifi = mkBoolOpt false "本机有无线网卡。";
+        wifi = mkBoolOpt false "This machine has a wireless NIC.";
 
-        # ---- 显示 ----
+        # ---- Display ----
         scaling = mkOption {
           type = types.str;
           default = "1";
           description = ''
-            缩放倍率，存成字符串（例如 "1.25"）而不是浮点数，
-            这样可以原样插进配置文件而不用重新加引号。
+            Scaling factor, stored as a string (e.g. "1.25") rather than a
+            float, so it can be interpolated into config files verbatim without
+            re-quoting.
           '';
         };
       };
@@ -172,17 +181,18 @@ in {
   config = let
     inherit (config.hostSpec) isWork work persistFolder;
 
-    # home-manager 作用域里没有 `system` 命名空间，不 guard 会直接求值失败。
+    # The home-manager scope has no `system` namespace; without this guard
+    # evaluation fails outright.
     isImpermanent = (config ? "system") && (config.system.impermanence.enable or false);
   in {
     assertions = [
       {
         assertion = !isWork || (isWork && work != {});
-        message = "hostSpec.isWork = true 时必须同时给出 hostSpec.work。";
+        message = "hostSpec.work must be set whenever hostSpec.isWork = true.";
       }
       {
         assertion = !isImpermanent || (isImpermanent && persistFolder != "");
-        message = "启用 impermanence 时必须设置 hostSpec.persistFolder。";
+        message = "hostSpec.persistFolder must be set when impermanence is enabled.";
       }
     ];
   };

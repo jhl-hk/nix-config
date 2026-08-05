@@ -7,7 +7,8 @@
 #############################################################
 #
 #  Darwin Core
-#  所有 macOS 机器共享。由 hosts/common/core/default.nix 按平台挑中。
+#  Shared by every macOS machine. Selected by platform in
+#  hosts/common/core/default.nix.
 #
 #############################################################
 {
@@ -16,47 +17,57 @@
     ./darwin/apps.nix
   ];
 
-  # nix-darwin 要**整数**。NixOS 那边的 system.stateVersion 是字符串，
-  # 写混了会在求值期报类型错误。这个值跟的是最初安装时的版本，
-  # 不读 nix-darwin release notes 不要动它 —— 它钉的是迁移逻辑，不是当前版本。
+  # nix-darwin wants an **integer**. NixOS wants a string for
+  # system.stateVersion; mixing them up is a type error at evaluation time.
+  # This value tracks the version at *initial install* -- do not bump it
+  # without reading the nix-darwin release notes. It pins migration logic,
+  # not the running version.
   system.stateVersion = 6;
 
-  # 主机名三件套统一从 hostSpec 来，host 文件只需要写 hostSpec.hostName。
+  # All three hostname settings come from hostSpec; a host file only needs to
+  # set hostSpec.hostName.
   networking = {
     hostName = config.hostSpec.hostName;
     computerName = config.hostSpec.hostName;
   };
   system.defaults.smb.NetBIOSName = config.hostSpec.hostName;
 
-  # Darwin 上用 nix.optimise.automatic，不是 auto-optimise-store
+  # On Darwin this is nix.optimise.automatic, not auto-optimise-store
   nix.optimise.automatic = true;
 
-  # sudo 支持 TouchID
+  # Touch ID for sudo.
+  # This is the **fallback layer** of the auth chain: machines with
+  # darwinYubikey enabled slot a pam_u2f line in front of this one
+  # (see modules/hosts/darwin/yubikey), and fall through to here when the
+  # YubiKey is absent or untouched. Both lines are sufficient, and the
+  # system password still sits below them.
   security.pam.services.sudo_local.touchIdAuth = true;
 
-  # 生成 /etc/zshrc，加载 nix-darwin 环境
+  # Generates /etc/zshrc, which loads the nix-darwin environment
   programs.zsh = {
     enable = true;
     enableCompletion = true;
-    # 关掉默认的 compinit，交给 home-manager 那边处理，
-    # 免得 nix store 路径触发 insecure directory 检查
+    # Turn off the default compinit and let home-manager handle it, so nix
+    # store paths don't trip the insecure-directory check
     enableGlobalCompInit = false;
     promptInit = ''
       eval "$(${pkgs.starship}/bin/starship init zsh)"
     '';
   };
 
-  # Homebrew 的路径要进系统 PATH。
+  # Homebrew's paths need to be on the system PATH.
   #
-  # 位置很讲究，必须夹在 nix 的路径和 /usr/bin 之间：
-  #   排在 nix 前面    -> brew 的 git/openssh 盖掉 nix 的
-  #   排在 /usr/bin 后 -> Xcode 的 /usr/bin/git 盖掉 brew 的
+  # The position matters: it has to sit between the nix paths and /usr/bin.
+  #   ahead of nix       -> brew's git/openssh shadow nix's
+  #   behind /usr/bin    -> Xcode's /usr/bin/git shadows brew's
   #
-  # nix-darwin 在 modules/environment/default.nix:139 分两次定义：
-  #   nix profiles   默认序 1000
-  #   /usr/bin 那批  mkOrder 1200
-  # 普通定义也是 1000，同序之间按模块顺序排 —— 重排 imports 就会翻车
-  # （实测过）。用 mkOrder 1100 钉死在中间，跟模块顺序无关。
+  # nix-darwin defines these in two passes in
+  # modules/environment/default.nix:139:
+  #   nix profiles     default order 1000
+  #   the /usr/bin set mkOrder 1200
+  # A plain definition is also 1000, and same-order definitions sort by module
+  # position -- reordering imports breaks it (observed in practice).
+  # mkOrder 1100 pins it in the middle, independent of module order.
   environment.systemPath = lib.mkOrder 1100 [
     "/opt/homebrew/bin"
     "/opt/homebrew/sbin"
@@ -66,12 +77,13 @@
   environment.systemPackages = with pkgs; [
     starship
 
-    # Omni CLI。不走 Homebrew：siderolabs/tap 的 omnictl 没有 bottle，
-    # brew 会当成 build-from-source，在 macOS seed 版上撞 Xcode 版本检查。
-    # unstable 里是 1.9.3，跟 tap 同版本。
+    # Omni CLI. Not via Homebrew: siderolabs/tap's omnictl ships no bottle, so
+    # brew treats it as build-from-source and hits the Xcode version check on
+    # macOS seed builds. unstable has 1.9.3, the same version as the tap.
     unstable.omnictl
   ];
 
-  # 壁纸。host 文件里普通赋值即可覆盖（modules/hosts/darwin/wallpaper）。
+  # Wallpaper. A plain assignment in a host file overrides it
+  # (modules/hosts/darwin/wallpaper).
   darwinWallpaper = lib.mkDefault (lib.custom.relativeToRoot "assets/bg.jpeg");
 }

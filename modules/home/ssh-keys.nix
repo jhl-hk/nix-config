@@ -1,13 +1,13 @@
 {lib, ...}:
 #############################################################
 #
-#  SSH 密钥选择
+#  SSH key selection
 #
-#  哪台机器用哪把私钥，是 per-host 的事实，不该写成
-#  `if hostname == "..."` 的条件判断。声明成选项之后，
-#  host 文件里一行 `sshKeys.primary = "...";` 就够了。
+#  Which machine uses which private key is a per-host fact, and should not be
+#  written as an `if hostname == "..."` conditional. Declared as an option, a
+#  host file needs one line: `sshKeys.primary = "...";`.
 #
-#  消费者：home/jhl/common/core/{ssh,git}.nix
+#  Consumers: home/jhl/common/core/{ssh,git}.nix
 #
 #############################################################
 {
@@ -16,17 +16,18 @@
       type = lib.types.str;
       default = "id_ed25519_sk_rk";
       description = ''
-        ~/.ssh 下主私钥的文件名（不含路径）。
-        同时用作 git 的 ssh 签名密钥（会自动加 .pub）。
+        Filename (no path) of the primary private key under ~/.ssh.
+        Also used as git's ssh signing key (.pub is appended automatically).
 
-        默认是常驻式 sk 密钥；插着 YubiKey 5C Nano 的机器覆盖成 id_ykmini。
+        The default is the resident sk key; machines with a YubiKey 5C Nano
+        plugged in override it to id_ykmini.
       '';
     };
 
     extra = lib.mkOption {
       type = lib.types.listOf lib.types.str;
       default = ["id_yk5c"];
-      description = "额外挂进 ssh-agent / IdentityFile 的密钥文件名。";
+      description = "Extra key filenames to add to ssh-agent / IdentityFile.";
     };
   };
 }

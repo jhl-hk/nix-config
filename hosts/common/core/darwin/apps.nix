@@ -1,13 +1,14 @@
 {...}:
 #############################################################
 #
-#  Homebrew 清单
+#  Homebrew manifest
 #
-#  只有数据。接线和 masApps 的 beta 门控在
-#  modules/hosts/darwin/homebrew/。
+#  Data only. The wiring, and the beta gate on masApps, live in
+#  modules/hosts/darwin/homebrew/.
 #
-#  taps / brews / casks 是 listOf，跟其它模块的定义会拼接，
-#  所以 hosts/common/optional/darwin/*.nix 可以各自往里加。
+#  taps / brews / casks are listOf, so definitions from other modules
+#  concatenate -- which is how hosts/common/optional/darwin/*.nix can each
+#  append their own.
 #
 #############################################################
 {
@@ -55,6 +56,7 @@
       "tokei"
       "tmux"
       "kubelogin"
+      "age-plugin-yubikey"
 
       # Networking & security
       "iperf3"
@@ -142,8 +144,8 @@
       "clash-verge-rev"
     ];
 
-    # 需要先登录 Apple ID：mas signin your@email.com
-    # seed 版本上会被整个忽略，见 darwinHomebrew.macosBeta
+    # Requires signing in to an Apple ID first: mas signin your@email.com
+    # Skipped entirely on seed builds; see darwinHomebrew.macosBeta
     masApps = {
       # "Yubico Authenticator" = 1497506650;  # YubiKey Auth App
       "Infuse" = 1136220934; # Video Player

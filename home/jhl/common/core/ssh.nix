@@ -3,11 +3,11 @@
 #
 #  SSH
 #
-#  跨平台的那半。密钥文件名来自 modules/home/ssh-keys.nix 的选项，
-#  不再靠 hostname 条件判断。
+#  The cross-platform half. Key filenames come from the options in
+#  modules/home/ssh-keys.nix, no longer from a hostname conditional.
 #
-#  macOS 上那套 Homebrew ssh-agent 的 shell 逻辑在
-#  ./darwin/ssh-agent.nix。
+#  The Homebrew ssh-agent shell logic for macOS lives in
+#  ./darwin/ssh-agent.nix.
 #
 #############################################################
 let

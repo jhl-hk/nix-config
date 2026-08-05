@@ -1,0 +1,103 @@
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
+#############################################################
+#
+#  opencode
+#
+#  Manages ~/.config/opencode/opencode.json only.
+#  The binary itself is not nix-managed; it comes from the "opencode" brew in
+#  apps.nix.
+#
+#  -- Why not programs.opencode ------------------------------------------
+#
+#  The home-manager module works, but conflicts with the premise that the
+#  binary comes from Homebrew: avoiding a second copy requires package = null,
+#  and these two lines in the module do not handle null --
+#
+#      packageVersion = if cfg.package != null then lib.getVersion cfg.package else null;
+#      hasTuiConfig   = lib.versionAtLeast packageVersion "1.2.15";
+#
+#  versionAtLeast null "1.2.15" throws "expected a string but found null".
+#  It sits inside warnings, and home-manager's nix-darwin module merges HM's
+#  warnings into the system-level warnings, so evaluating toplevel blows up --
+#  this does not just affect opencode, the whole rebuild fails to start
+#  (verified in practice).
+#
+#  Why not sidestep it with a non-null package: that would make home.packages
+#  actually install a second opencode, and environment.systemPath puts nix
+#  ahead of /opt/homebrew (see the mkOrder 1100 section in
+#  hosts/common/core/darwin.nix), so the brew copy would be shadowed and the
+#  two versions would drift apart.
+#
+#  Once upstream fixes that null branch, this can go back to
+#  programs.opencode.settings -- the generated content is identical.
+#
+#  -- Consequences of a read-only symlink --------------------------------
+#
+#  Same point claude.nix records: what is generated here is a read-only symlink
+#  into the nix store. `opencode plugin <module>` is documented as "install
+#  plugin and update config" -- it wants to write opencode.json back, and once
+#  managed it cannot. Declare plugins below with plugin = [...] instead.
+#
+#  -- Where keys go ------------------------------------------------------
+#
+#  https://opencode.ai/config.json is the authority on available keys.
+#  Note that opencode >=1.2.15 moved theming, layout, and other TUI concerns
+#  out to ~/.config/opencode/tui.json; writing them into this file gets them
+#  treated as deprecated keys.
+#
+#############################################################
+let
+  # Only wire up providers with a refreshed model list (see the models option
+  # in modules/home/llm.nix)
+  active = lib.filterAttrs (_: p: p.models != []) config.llm.providers;
+
+  # A custom opencode provider: npm selects the AI SDK adapter, and options is
+  # passed through to it verbatim. apiKey is written as {env:VAR}, for which
+  # opencode has a dedicated /^\{env:([^}]+)\}$/ match (confirmed in the
+  # binary), so the value never enters the nix store.
+  toProvider = name: p: {
+    npm = "@ai-sdk/openai-compatible";
+    inherit name;
+    options = {
+      baseURL = p.apiUrl;
+      apiKey = "{env:${p.envVar}}";
+    };
+    models = lib.genAttrs p.models (_: {});
+  };
+
+  # Default provider / model. While the model list has not been refreshed, the
+  # whole block is omitted so opencode keeps its own default.
+  dflt = config.llm.defaultProvider;
+  dfltProvider = active.${dflt} or null;
+  hasDefault = dfltProvider != null && dfltProvider.defaultModel != "";
+  settings =
+    {
+      "$schema" = "https://opencode.ai/config.json";
+
+      # Homebrew owns the binary, so don't let opencode update itself -- it
+      # would replace the brew-installed copy in place and fight the next
+      # brew upgrade / zap.
+      autoupdate = false;
+
+      # Sessions are not shared by default. Upstream defaults to "manual"
+      # (sharing on demand via /share); this tightens it to fully off. Set it
+      # back to "manual" if you want to share sessions.
+      share = "disabled";
+    }
+    // lib.optionalAttrs (active != {}) {
+      provider = lib.mapAttrs toProvider active;
+    }
+    // lib.optionalAttrs hasDefault {
+      # opencode's model is in "provider/model" form, where provider is the
+      # key of the provider attribute set above.
+      model = "${dflt}/${dfltProvider.defaultModel}";
+    };
+in {
+  xdg.configFile."opencode/opencode.json".source =
+    (pkgs.formats.json {}).generate "opencode.json" settings;
+}

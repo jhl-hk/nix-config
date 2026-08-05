@@ -7,8 +7,8 @@
 #
 #  Git
 #
-#  身份来自 hostSpec（源头是 nix-secrets），签名密钥来自
-#  modules/home/ssh-keys.nix 的选项。
+#  Identity comes from hostSpec (sourced from nix-secrets); the signing key
+#  comes from the options in modules/home/ssh-keys.nix.
 #
 #############################################################
 {

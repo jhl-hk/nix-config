@@ -7,10 +7,10 @@
 }:
 #############################################################
 #
-#  User: jhl -- NixOS 那半
+#  User: jhl -- the NixOS half
 #
-#  空骨架，现在没有 NixOS 机器会导入它。
-#  结构和 darwin.nix 保持一致，加第一台 Linux 机器时改这里。
+#  Empty skeleton; no NixOS machine imports it yet. Kept structurally in step
+#  with darwin.nix -- edit here when the first Linux machine arrives.
 #
 #############################################################
 let

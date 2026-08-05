@@ -5,67 +5,68 @@
 hostname := `hostname`
 secrets := "../nix-secrets"
 
-# 默认列出所有 recipe
+# List all recipes by default
 default:
     @just --list
 
 # ==========
-# 日常
+# Everyday
 # ==========
 
-# 重建并切换到新配置
+# Rebuild and switch to the new config
 rebuild: rebuild-pre && rebuild-post
     sudo darwin-rebuild switch --flake .#{{ hostname }}
     @printf '\nSwitched to new config\n'
 
-# rebuild 的别名，zsh 里的 sysnew 用的是 rebuild
+# Alias for rebuild; the sysnew alias in zsh uses rebuild
 switch: rebuild
 
-# 只构建不切换
+# Build without switching
 build: rebuild-pre
     sudo darwin-rebuild build --flake .#{{ hostname }}
 
-# 带 --show-trace 的 rebuild，排查求值错误用
+# rebuild with --show-trace, for debugging evaluation errors
 rebuild-trace: rebuild-pre && rebuild-post
     sudo darwin-rebuild switch --flake .#{{ hostname }} --show-trace
 
-# rebuild 之后再跑一遍 check，push 之前用
+# rebuild followed by check; use before pushing
 rebuild-full: rebuild check
 
-# 更新 flake input 再 rebuild
+# Update flake inputs, then rebuild
 rebuild-update: update rebuild
 
-# 检查求值错误
+# Check for evaluation errors
 check *ARGS:
     nix flake check --all-systems --show-trace {{ ARGS }}
 
-# 忽略 flake.lock 的 diff，input 更新的噪声太大
+# diff excluding flake.lock -- input updates are too noisy
 diff:
     git diff ':!flake.lock'
 
 # ==========
-# rebuild 的前后钩子
+# rebuild pre/post hooks
 # ==========
 
-# 拉最新 secrets，并让 flake 看见未跟踪的新文件
+# Pull the latest secrets and make the flake see new untracked files.
 #
-# git add --intent-to-add 是必需的：flake 的源码追踪完全忽略未跟踪文件，
-# intent-to-add 把它们抬进 index 但不暂存内容。新建的 .nix 文件不做这步
-# 会静默地不生效。
+# git add --intent-to-add is required: flake source tracking ignores untracked
+# files entirely, and intent-to-add lifts them into the index without staging
+# their content. Skip this and a newly created .nix file silently has no effect.
 
-# rebuild 前钩子：拉 secrets + 让 flake 看见未跟踪文件
+# rebuild pre-hook: pull secrets + let the flake see untracked files
 rebuild-pre: update-nix-secrets
     git add --intent-to-add .
 
-# 确认 sops 真的解密成功了
+# Confirm sops decryption actually succeeded
 rebuild-post: check-sops
 
-# 拉 nix-secrets 并重新锁定
+# Pull nix-secrets and re-lock it.
 #
-# nix-config 把 nix-secrets 当成 locked remote input，本地改了不 push
-# 是不生效的。rebase 失败会被忽略（工作树脏也让 rebuild 继续跑）。
+# nix-config treats nix-secrets as a locked remote input, so a local change
+# that has not been pushed has no effect. A failed rebase is ignored (a dirty
+# work tree should not stop the rebuild).
 
-# 拉取 nix-secrets 并重新锁定
+# Pull nix-secrets and re-lock the flake input
 update-nix-secrets:
     #!/usr/bin/env bash
     set -uo pipefail
@@ -76,24 +77,24 @@ update-nix-secrets:
     nix flake update nix-secrets --timeout 5
 
 # ==========
-# 维护
+# Maintenance
 # ==========
 
-# 更新 flake input 和 brew
+# Update flake inputs and brew
 update:
     nix flake update
     brew update && brew upgrade
 
-# 清理旧的 generation
+# Clean up old generations
 clean:
     sudo nix-collect-garbage -d
     mo clean
 
-# 格式化所有 .nix 文件
+# Format every .nix file
 fmt:
     nix fmt
 
-# 报告这台机器是不是 macOS beta（决定 darwinHomebrew.macosBeta）
+# Report whether this machine is on a macOS beta (drives darwinHomebrew.macosBeta)
 check-beta:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -112,11 +113,12 @@ check-beta:
 # Secrets
 # ==========
 
-# 生成一把新的 age key（打印到 stdout，不写文件）
+# Generate a new age key (printed to stdout, not written to a file)
 age-key:
     nix run nixpkgs#age -- age-keygen
 
-# 改完 .sops.yaml 之后，把每个密文文件重新加密给当前的收件人列表
+# After editing .sops.yaml, re-encrypt every ciphertext file for the current
+# recipient list
 rekey:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -124,7 +126,7 @@ rekey:
     shopt -s nullglob
     files=(secrets/*.yaml)
     if [ ${#files[@]} -eq 0 ]; then
-        echo "没有 secrets/*.yaml，跳过"
+        echo "No secrets/*.yaml, skipping"
         exit 0
     fi
     for f in "${files[@]}"; do
@@ -132,43 +134,44 @@ rekey:
         nix run nixpkgs#sops -- updatekeys -y "$f"
     done
     echo
-    echo "别忘了在 {{ secrets }} 里 commit + push，然后跑 just update-nix-secrets"
+    echo "Remember to commit + push in {{ secrets }}, then run just update-nix-secrets"
 
-# 编辑一个密文文件，例：just sops-edit shared
+# Edit a ciphertext file, e.g. just sops-edit shared
 sops-edit FILE:
     #!/usr/bin/env bash
     set -euo pipefail
     export SOPS_AGE_KEY_FILE="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}"
     if [ ! -f "$SOPS_AGE_KEY_FILE" ]; then
-        echo "❌ 找不到 age key: $SOPS_AGE_KEY_FILE" >&2
+        echo "❌ age key not found: $SOPS_AGE_KEY_FILE" >&2
         exit 1
     fi
-    # secrets/ 一开始不存在，sops 不会自己建目录
+    # secrets/ does not exist initially, and sops will not create the directory
     mkdir -p "{{ secrets }}/secrets"
-    # 从 nix-secrets 根目录跑，让 .sops.yaml 的 creation_rules 正确匹配
+    # Run from the nix-secrets root so .sops.yaml creation_rules match correctly
     cd "{{ secrets }}"
     nix run nixpkgs#sops -- "secrets/{{ FILE }}.yaml"
     echo
-    echo "改完记得： cd {{ secrets }} && git add -A && git commit && git push"
-    echo "然后回来： just update-nix-secrets"
+    echo "After editing: cd {{ secrets }} && git add -A && git commit && git push"
+    echo "Then come back: just update-nix-secrets"
 
-# rebuild 之后的轻量检查：本机声明的每个 secret 是否都真的落地了
+# Lightweight post-rebuild check: did every secret this machine declares
+# actually land?
 #
-# sops-install-secrets 是通过 postActivation 跑的，而 activate 脚本带
-# set -e，所以解密失败会直接让 switch 报错中止 —— 不是静默的。
-# 这里补的是另一件事：确认声明过的 secret 确实出现在 /run/secrets 下，
-# 挡住「配置写了但没生效」这类情况。
+# sops-install-secrets runs through postActivation, and the activate script uses
+# set -e, so a decryption failure aborts the switch with an error -- it is not
+# silent. This checks a different thing: that declared secrets really do appear
+# under /run/secrets, catching the "configured but not in effect" case.
 #
-# 没声明任何 secret 时直接跳过，不会假装成功。
+# Skipped outright when no secrets are declared; it does not fake success.
 
-# 确认本机声明的每个 secret 都真的落到了 /run/secrets
+# Confirm every secret declared on this machine really landed in /run/secrets
 check-sops:
     #!/usr/bin/env bash
     set -uo pipefail
     manifest=$(nix eval --raw ".#darwinConfigurations.$(hostname).config.sops.secrets" \
                  --apply 's: builtins.concatStringsSep "\n" (builtins.attrNames s)' 2>/dev/null)
     if [ -z "$manifest" ]; then
-        echo "sops: 本机没有声明任何 secret，跳过"
+        echo "sops: this machine declares no secrets, skipping"
         exit 0
     fi
     rc=0
@@ -177,101 +180,159 @@ check-sops:
         if sudo test -s "/run/secrets/$name"; then
             echo "  ✅ /run/secrets/$name"
         else
-            echo "  ❌ /run/secrets/$name 不存在或为空"
+            echo "  ❌ /run/secrets/$name missing or empty"
             rc=1
         fi
     done <<< "$manifest"
     exit $rc
 
-# canary 自检：把 sops 管道端到端跑通一次
+# Canary self-check: exercise the sops pipeline end to end.
 #
-# 需要先按 hosts/common/optional/darwin/sops-canary.nix 头部的说明，
-# 在 shared.yaml 里写入 canary/value 并把该文件 import 进本机。
+# Requires first following the instructions at the top of
+# hosts/common/optional/darwin/sops-canary.nix: write canary/value into
+# shared.yaml and import that file on this machine.
 
-# sops 管道端到端自检（需要先配好 canary，见文件头说明）
+# End-to-end sops pipeline self-check (set up the canary first, see above)
 verify-sops EXPECT="sops-pipeline-ok":
     #!/usr/bin/env bash
     set -uo pipefail
 
-    # 先查前置条件。少了任何一步，下面四项一定全红，
-    # 但那是「没配好」不是「管道坏了」—— 分清楚这两件事。
+    # Check the preconditions first. If any step is missing, all four checks
+    # below are guaranteed to fail red -- but that means "not set up", not
+    # "pipeline broken". Keep those two apart.
     missing=0
     if [ ! -f "{{ secrets }}/secrets/shared.yaml" ]; then
-        echo "❌ 前置条件：{{ secrets }}/secrets/shared.yaml 不存在"
-        echo "   跑： just sops-edit shared      然后写入："
+        echo "❌ precondition: {{ secrets }}/secrets/shared.yaml does not exist"
+        echo "   run: just sops-edit shared      then write:"
         echo "        canary:"
         echo "            value: {{ EXPECT }}"
-        echo "   再在 {{ secrets }} 里 commit + push"
+        echo "   then commit + push in {{ secrets }}"
         missing=1
     fi
     canary_mod="hosts/common/optional/darwin/sops-canary.nix"
     if [ ! -f "$canary_mod" ]; then
-        echo "❌ 前置条件：$canary_mod 不存在（验完就删掉了）"
-        echo "   从 git 历史取回："
+        echo "❌ precondition: $canary_mod does not exist (deleted after verifying)"
+        echo "   restore it from git history:"
         echo "     p=$canary_mod"
         echo '     git show "$(git rev-list -n1 HEAD -- "$p")^:$p" > "$p"'
         missing=1
     elif ! nix eval --raw ".#darwinConfigurations.$(hostname).config.sops.secrets" \
            --apply 's: builtins.concatStringsSep " " (builtins.attrNames s)' 2>/dev/null \
            | grep -q 'canary/value'; then
-        echo "❌ 前置条件：本机没有声明 canary/value"
-        echo "   在 hosts/darwin/$(hostname)/default.nix 的 imports 里加一行："
+        echo "❌ precondition: this machine does not declare canary/value"
+        echo "   add a line to the imports in hosts/darwin/$(hostname)/default.nix:"
         echo "        \"$canary_mod\""
-        echo "   再跑 just rebuild"
+        echo "   then run just rebuild"
         missing=1
     fi
     if [ $missing -ne 0 ]; then
         echo
-        echo "前置条件没满足，跳过检查（这不代表 sops 管道有问题）"
+        echo "Preconditions unmet, skipping checks (this does not mean the sops pipeline is broken)"
         exit 1
     fi
 
     rc=0
 
-    echo "1) 裸密文 /run/secrets/canary/value"
+    echo "1) raw secret /run/secrets/canary/value"
     if got=$(sudo cat /run/secrets/canary/value 2>/dev/null) && [ "$got" = "{{ EXPECT }}" ]; then
-        echo "   ✅ 值正确"
+        echo "   ✅ value correct"
     else
-        echo "   ❌ 读到 '${got:-<空>}'，期望 '{{ EXPECT }}'"
+        echo "   ❌ read '${got:-<empty>}', expected '{{ EXPECT }}'"
         rc=1
     fi
 
-    echo "2) 占位符替换 ~/.sops-canary"
+    echo "2) placeholder substitution in ~/.sops-canary"
     if [ -f "$HOME/.sops-canary" ]; then
         if grep -q "^canary={{ EXPECT }}$" "$HOME/.sops-canary"; then
-            echo "   ✅ 占位符已替换"
+            echo "   ✅ placeholder substituted"
         else
-            echo "   ❌ 内容不对："
+            echo "   ❌ wrong contents:"
             sed 's/^/      /' "$HOME/.sops-canary"
             rc=1
         fi
     else
-        echo "   ❌ 文件不存在"
+        echo "   ❌ file does not exist"
         rc=1
     fi
 
-    echo "3) 权限"
-    # sops.templates 落地的是软链 -> /run/secrets/rendered/<name>，
-    # owner/mode 作用在**目标**上，所以要 stat -L 跟过去。
-    echo "   $HOME/.sops-canary -> $(readlink "$HOME/.sops-canary" 2>/dev/null || echo '(不是软链)')"
+    echo "3) permissions"
+    # sops.templates lands a symlink -> /run/secrets/rendered/<name>, and
+    # owner/mode apply to the **target**, so stat -L has to follow it.
+    echo "   $HOME/.sops-canary -> $(readlink "$HOME/.sops-canary" 2>/dev/null || echo '(not a symlink)')"
     perm=$(sudo stat -L -f '%Sp %Su' "$HOME/.sops-canary" 2>/dev/null || echo "? ?")
     if [ "$perm" = "-rw------- $USER" ]; then
-        echo "   ✅ 目标权限 $perm"
+        echo "   ✅ target permissions $perm"
     else
-        echo "   ❌ 目标权限 $perm，期望 -rw------- $USER"
+        echo "   ❌ target permissions $perm, expected -rw------- $USER"
         rc=1
     fi
 
-    echo "4) 开机路径（launchd daemon，和 switch 时那条不是同一条）"
+    echo "4) boot path (launchd daemon, a different path from the switch one)"
     sudo launchctl kickstart -k system/org.nixos.sops-install-secrets 2>&1 | sed 's/^/   /'
     sleep 1
     if sudo test -s /run/secrets/canary/value; then
-        echo "   ✅ 重跑后密文仍在"
+        echo "   ✅ secret still present after re-run"
     else
-        echo "   ❌ 重跑后密文没了 —— 重启后会失效"
+        echo "   ❌ secret gone after re-run -- it will break on reboot"
         rc=1
     fi
 
     echo
-    [ $rc -eq 0 ] && echo "sops 管道端到端通过" || echo "sops 管道有问题，见上面的 ❌"
+    [ $rc -eq 0 ] && echo "sops pipeline passes end to end" || echo "sops pipeline has a problem, see the ❌ above"
     exit $rc
+
+# ==========
+# LLM
+# ==========
+
+# Refresh the LLM model list: hit /v1/models, write
+# home/jhl/common/core/llm/models.json
+#
+# Why this step exists: flake evaluation has no network, and that endpoint needs
+# a key anyway (a bare GET returns 401), so the model list cannot be fetched at
+# build time. Generating a file and readFile-ing it keeps the list declarative
+# -- in git, diffable, revertable.
+#
+# The key is decrypted straight from the ciphertext rather than read from
+# /run/secrets, so no rebuild is needed first.
+llm-models:
+    #!/usr/bin/env bash
+    set -euo pipefail
+    out="home/jhl/common/core/llm/models.json"
+    export SOPS_AGE_KEY_FILE="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}"
+
+    if [ ! -f "{{ secrets }}/secrets/shared.yaml" ]; then
+        echo "❌ {{ secrets }}/secrets/shared.yaml not found; run just sops-edit shared first" >&2
+        exit 1
+    fi
+
+    key=$(nix run nixpkgs#sops -- -d --extract '["llm"]["api_key"]' \
+        "{{ secrets }}/secrets/shared.yaml" 2>/dev/null || true)
+    if [ -z "$key" ]; then
+        echo "❌ shared.yaml has no llm.api_key; run just sops-edit shared first" >&2
+        exit 1
+    fi
+
+    url="https://llm.jianyuelab.net/v1/models"
+    echo "GET $url"
+    body=$(curl -sS --fail-with-body --max-time 30 -H "Authorization: Bearer $key" "$url") || {
+        echo "❌ fetch failed; the server response is above" >&2
+        exit 1
+    }
+
+    # Take ids only, sorted and deduplicated. One per line, for readable diffs.
+    printf '%s' "$body" \
+        | nix run nixpkgs#jq -- -S '[.data[].id] | unique' > "$out.tmp"
+
+    n=$(nix run nixpkgs#jq -- 'length' < "$out.tmp")
+    if [ "$n" -eq 0 ]; then
+        echo "❌ endpoint returned 0 models; not overwriting the existing $out" >&2
+        rm -f "$out.tmp"
+        exit 1
+    fi
+
+    mv "$out.tmp" "$out"
+    echo "✅ $n models -> $out"
+    nix run nixpkgs#jq -- -r '.[]' < "$out" | sed 's/^/   /'
+    echo
+    echo "Next: just rebuild"

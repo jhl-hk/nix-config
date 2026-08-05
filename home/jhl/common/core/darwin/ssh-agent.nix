@@ -7,19 +7,21 @@
 #
 #  SSH Agent (macOS)
 #
-#  全部终端共用一个 ssh-agent 实例，密钥按需加载。
-#  用 Homebrew 的 OpenSSH（带 YubiKey sk 支持），不是系统自带那个。
+#  All terminals share a single ssh-agent instance, with keys loaded on demand.
+#  Uses Homebrew's OpenSSH (which has YubiKey sk support), not the system one.
 #
-#  从 ssh.nix 拆出来的：这一段全是 /opt/homebrew 路径，只在 macOS 成立。
+#  Split out of ssh.nix: this whole section is /opt/homebrew paths and only
+#  holds on macOS.
 #
 #############################################################
 let
   keys = [config.sshKeys.primary] ++ config.sshKeys.extra;
 
-  # 拼成**单行**再插值。多行插值会把整段 zsh 代码的缩进搞乱：
-  # Nix 的 '' 字符串按所有行的最小缩进做 de-indent，而以 ${...} 开头
-  # 的行如果顶格，最小缩进就变成 0，于是一个空格都不脱，生成的
-  # .zshrc 里整块代码都带着 4 空格缩进。
+  # Build a **single line** before interpolating. A multi-line interpolation
+  # wrecks the indentation of the whole zsh block: Nix de-indents '' strings by
+  # the minimum indentation across all lines, and a line starting with ${...}
+  # at column 0 makes that minimum 0, so nothing is stripped and the generated
+  # .zshrc carries the source's 4-space indentation throughout.
   keyList = lib.concatMapStringsSep " " (k: ''"$HOME/.ssh/${k}"'') keys;
 in {
   home.sessionVariables = {
@@ -35,15 +37,16 @@ in {
     NIX_SSH_ADD="/opt/homebrew/bin/ssh-add"
     NIX_SSH_AGENT="/opt/homebrew/bin/ssh-agent"
 
-    # 固定 socket 路径，重启后仍然可用，root 也能访问
+    # Fixed socket path: survives restarts and is reachable by root too
     SSH_AUTH_SOCK="$HOME/.ssh/ssh-agent.sock"
     export SSH_AUTH_SOCK
 
     _ssh_agent_start() {
       if [ -S "$SSH_AUTH_SOCK" ]; then
-        # `ssh-add -l` 只有在联系不上 agent 时才退 2；agent 活着但没装
-        # 密钥时退的是 1。只判断成功的话，会把「活着但空」的 agent 当成
-        # 死的，于是每开一个新 shell 都杀掉 socket 重起一个。所以判 != 2。
+        # `ssh-add -l` exits 2 only when it cannot reach the agent; a live
+        # agent with no keys loaded exits 1. Testing only for success would
+        # treat a live-but-empty agent as dead, killing the socket and starting
+        # a new agent for every new shell. Hence the != 2 test.
         $NIX_SSH_ADD -l >/dev/null 2>&1
         if [ $? -ne 2 ]; then
           return 0
@@ -56,7 +59,7 @@ in {
       chmod 600 "$SSH_AUTH_SOCK"
     }
 
-    # 密钥懒加载：第一次真的要用的时候才装
+    # Lazy key loading: only add them the first time they are actually needed
     ssh() {
       if $NIX_SSH_ADD -l >/dev/null 2>&1; then
         command ssh "$@"

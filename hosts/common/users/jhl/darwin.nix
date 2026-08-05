@@ -7,10 +7,11 @@
 }:
 #############################################################
 #
-#  User: jhl -- macOS 那半
+#  User: jhl -- the macOS half
 #
-#  home-manager 的接线在这里，不在 flake.nix。因为要读 config.hostSpec
-#  才能算出该导入哪个 home 文件，而 flake.nix 那层还拿不到 config。
+#  home-manager is wired up here rather than in flake.nix, because working out
+#  which home file to import requires reading config.hostSpec, and config is
+#  not available at the flake.nix layer.
 #
 #############################################################
 let
@@ -29,10 +30,10 @@ in {
     useUserPackages = true;
     backupFileExtension = "backup";
 
-    # 注意这里**没有** lib。home-manager 自己的 lib 是
-    # pkgs.lib.extend hmExtension，用 extraSpecialArgs 传 lib 会把它整个
-    # 顶掉，于是 lib.hm 消失。lib.custom 由 overlays 的 customLib 层
-    # 挂进 pkgs.lib，HM 侧照样能用。
+    # Note there is **no** lib here. home-manager's own lib is
+    # pkgs.lib.extend hmExtension; passing lib via extraSpecialArgs replaces it
+    # wholesale and lib.hm disappears. lib.custom reaches the HM side through
+    # the customLib layer in overlays, which attaches it to pkgs.lib.
     extraSpecialArgs = {
       inherit inputs outputs;
       isDarwin = true;

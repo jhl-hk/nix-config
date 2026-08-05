@@ -9,15 +9,16 @@
 #
 #  Common Core
 #
-#  每台机器都会导入这里。整个仓库的两件事在这个文件发生：
+#  Imported by every machine. Two repo-wide things happen in this file:
 #
-#    1. 平台分派 —— modules/hosts/${platform} 和 core/${platform}.nix
-#       靠 flake.nix 传进来的 isDarwin 选。用 specialArg 而不是
-#       config.hostSpec.isDarwin，因为 hostSpec 这时候还在组装中。
+#    1. Platform dispatch -- modules/hosts/${platform} and
+#       core/${platform}.nix are picked using the isDarwin passed down from
+#       flake.nix. A specialArg rather than config.hostSpec.isDarwin, because
+#       hostSpec is still being assembled at this point.
 #
-#    2. hostSpec 灌注 —— 身份和拓扑数据从 inputs.nix-secrets 一次性
-#       inherit 进来。之后所有模块一律读 config.hostSpec.<x>，
-#       不再直接碰 inputs.nix-secrets。
+#    2. hostSpec population -- identity and topology data is inherited from
+#       inputs.nix-secrets in one place. After this, every module reads
+#       config.hostSpec.<x> and never touches inputs.nix-secrets again.
 #
 #############################################################
 let
@@ -27,20 +28,21 @@ let
     else "nixos";
 in {
   imports = map lib.custom.relativeToRoot [
-    # 自动扫描的模块层（提供 options，不打开任何功能）
+    # Auto-scanned module layer (provides options, enables nothing)
     "modules/common"
     "modules/hosts/common"
     "modules/hosts/${platform}"
 
-    # 平台专属的 core
+    # Platform-specific core
     "hosts/common/core/${platform}.nix"
 
-    # 跨平台的 core
+    # Cross-platform core
     "hosts/common/core/nix-settings.nix"
     "hosts/common/core/sops.nix"
 
-    # 用户。default.nix 是平台无关的那半，平台那半由这里显式挑 ——
-    # Nix 不会自己推断 nixos.nix 是给 NixOS 用的。
+    # User. default.nix is the platform-agnostic half; the platform half is
+    # picked explicitly here -- Nix will not infer on its own that nixos.nix
+    # is meant for NixOS.
     "hosts/common/users/jhl"
     "hosts/common/users/jhl/${platform}.nix"
   ];
@@ -62,7 +64,7 @@ in {
       ;
   };
 
-  # 每台机器都要有的东西
+  # What every machine gets
   environment.systemPackages = with pkgs; [
     vim
     git

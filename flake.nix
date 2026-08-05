@@ -30,9 +30,9 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # 私有仓库。身份、拓扑、服务数据的明文半区经
-    # hosts/common/core/default.nix 灌进 hostSpec；
-    # 加密半区是 secrets/*.yaml，由 sops-nix 在 activation 时解密。
+    # Private repo. Its cleartext half -- identity, topology, service data --
+    # is fed into hostSpec by hosts/common/core/default.nix; its encrypted
+    # half is secrets/*.yaml, decrypted by sops-nix at activation time.
     nix-secrets = {
       url = "git+ssh://git@github.com/jhl-hk/nix-secrets.git?ref=main&shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -49,14 +49,16 @@
   }: let
     inherit (self) outputs;
 
-    # 把 lib.custom 挂上去。
+    # Attach lib.custom.
     #
-    # 必须按平台各自 extend：nix-darwin 会拿模块系统的 lib.trivial.release
-    # 和自己的版本对比，如果这里统一用 unstable 的 nixpkgs.lib，Darwin 主机
-    # 就会报 "nix-darwin 26.05 with Nixpkgs 26.11"。
+    # Each platform must be extended separately: nix-darwin compares the
+    # module system's lib.trivial.release against its own version, so feeding
+    # it the unstable nixpkgs.lib makes Darwin hosts abort with
+    # "nix-darwin 26.05 with Nixpkgs 26.11".
     #
-    # 这条路只覆盖**系统作用域**。home-manager 作用域走 overlays 里的
-    # customLib 层 —— 见那里的注释，用 extraSpecialArgs 传 lib 会打掉 lib.hm。
+    # This path only covers the **system scope**. The home-manager scope goes
+    # through the customLib layer in overlays -- see the comment there;
+    # passing lib via extraSpecialArgs would clobber lib.hm.
     mkLib = base:
       base.extend (
         self': _super': {
@@ -72,8 +74,9 @@
       "x86_64-linux"
     ];
 
-    # 主机自动发现：hosts/<platform>/ 下的每个**子目录**就是一台机器。
-    # 只认目录，所以 .gitkeep 之类的占位文件不会被当成 host。
+    # Host auto-discovery: every **subdirectory** of hosts/<platform>/ is a
+    # machine. Only directories count, so placeholder files like .gitkeep are
+    # never mistaken for a host.
     hostsIn = dir:
       if builtins.pathExists dir
       then lib.attrNames (lib.filterAttrs (_: type: type == "directory") (builtins.readDir dir))
@@ -88,9 +91,10 @@
           isDarwin = true;
         };
         modules = [
-          # core 必须排在 host 前面。option 的定义顺序会影响 listOf 类型的
-          # 合并结果 —— environment.systemPath 就靠这个顺序落在
-          # nix 路径和 /usr/bin 中间（见 hosts/common/core/darwin.nix）。
+          # core must come before the host. Definition order affects how
+          # listOf options merge -- environment.systemPath relies on this
+          # ordering to land between the nix paths and /usr/bin
+          # (see hosts/common/core/darwin.nix).
           ./hosts/common/core
           ./hosts/darwin/${hostName}
 
@@ -117,11 +121,11 @@
 
     darwinConfigurations = lib.genAttrs (hostsIn ./hosts/darwin) mkDarwinHost;
 
-    # 现在是空的。往 hosts/nixos/<Name>/ 放一个目录就会自动出现。
+    # Empty for now. Drop a directory in hosts/nixos/<Name>/ and it appears.
     nixosConfigurations = lib.genAttrs (hostsIn ./hosts/nixos) mkNixosHost;
 
     # pkgs/common/<name>/package.nix -> nix build .#packages.<system>.<name>
-    # 和 overlays 的 additions 层用的是同一份目录扫描。
+    # Same directory scan as the additions layer in overlays.
     packages = forAllSystems (
       system:
         nixpkgs.lib.packagesFromDirectoryRecursive {
@@ -138,8 +142,9 @@
       }
     );
 
-    # `nix flake check` 默认不碰 darwinConfigurations，挂在这里 just check
-    # 才会真的构建每台机器，而不是只做类型检查。push 之前的关卡。
+    # `nix flake check` ignores darwinConfigurations by default. Hanging them
+    # here makes `just check` actually build every machine instead of only
+    # type-checking it. The gate to pass before pushing.
     checks = forAllSystems (
       system:
         lib.optionalAttrs (system == "aarch64-darwin") (

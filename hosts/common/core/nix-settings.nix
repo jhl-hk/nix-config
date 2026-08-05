@@ -13,8 +13,8 @@
   # Enable flakes
   nix.settings.experimental-features = ["nix-command" "flakes"];
 
-  # 应用 overlays/default.nix 里的四层。home-manager 用了 useGlobalPkgs，
-  # 所以这里加上之后 home 侧拿到的也是同一个 pkgs。
+  # Applies the layers from overlays/default.nix. home-manager runs with
+  # useGlobalPkgs, so adding them here means the home side gets the same pkgs.
   nixpkgs.overlays = builtins.attrValues outputs.overlays;
 
   # Allow unfree packages

@@ -3,17 +3,17 @@
 #
 #  Claude Code Configuration
 #
-#  只托管 skills：仓库里的 claude/skills/<name> 软链到
-#  ~/.claude/skills/<name>，按 skill 逐个链接而不是整目录接管，
-#  这样手动装的其它 skill 还能和它们共存。
+#  Manages skills only: claude/skills/<name> in the repo is symlinked to
+#  ~/.claude/skills/<name>, linked one skill at a time rather than taking over
+#  the whole directory, so manually installed skills can coexist.
 #
-#  settings.json / CLAUDE.md / memory 刻意不纳入 nix：
-#  home.file 生成的是指向 nix store 的只读软链，Claude Code
-#  自己要回写这些文件，托管了就写不动。
+#  settings.json / CLAUDE.md / memory are deliberately left out of nix:
+#  home.file produces read-only symlinks into the nix store, and Claude Code
+#  writes those files back itself, which it could not do once managed.
 #
 #############################################################
 let
-  # 要部署的 skill —— 对应 claude/skills/<name>/SKILL.md
+  # Skills to deploy -- each maps to claude/skills/<name>/SKILL.md
   skills = [
     "nix-config"
   ];

@@ -12,19 +12,20 @@
   system = {
     startup.chime = false;
 
-    # 壁纸挪到 modules/hosts/darwin/wallpaper 了 —— 原来这里和
-    # jhlsMacBookAir 各写一段 postActivation.text，两段都会跑。
+    # The wallpaper moved to modules/hosts/darwin/wallpaper -- this file and
+    # jhlsMacBookAir each used to write their own postActivation.text, and
+    # both fragments ran.
 
     defaults = {
       # Menu bar clock
       menuExtraClock = {
-        Show24Hour = true; # 24 小时制
-        ShowAMPM = true; # 只在 12 小时制下生效，保留当前值
-        ShowDayOfWeek = true; # 显示星期
-        ShowDate = 0; # 0 = 空间允许时显示日期, 1 = 总是, 2 = 从不
+        Show24Hour = true; # 24-hour clock
+        ShowAMPM = true; # only applies in 12-hour mode; kept at its current value
+        ShowDayOfWeek = true; # show the weekday
+        ShowDate = 0; # 0 = when space permits, 1 = always, 2 = never
       };
 
-      # Control Center / 菜单栏图标
+      # Control Center / menu bar icons
       controlcenter.BatteryShowPercentage = true;
 
       # Dock settings
@@ -52,21 +53,23 @@
       NSGlobalDomain = {
         AppleICUForce24HourTime = true;
         AppleInterfaceStyle = "Dark"; # Dark mode
-        _HIHideMenuBar = false; # 不自动隐藏菜单栏
-        # 键盘相关的键在 home/jhl/common/core/darwin/keyboard.nix
+        _HIHideMenuBar = false; # don't auto-hide the menu bar
+        # Keyboard-related keys live in home/jhl/common/core/darwin/keyboard.nix
       };
 
-      # 菜单栏里其余的开关，nix-darwin 没有对应的 typed option。
+      # The remaining menu bar switches, for which nix-darwin has no typed
+      # option.
       #
-      # com.apple.controlcenter 的每个模块是个位域，不是布尔：
-      #   2  = 活动时显示 (show when active)
-      #   8  = 不在菜单栏显示
-      #   18 = 始终在菜单栏显示   (= 16 | 2)
-      #   24 = 明确设为不显示     (= 16 | 8)
-      # nix-darwin 的 system.defaults.controlcenter.* 只会写 18/24，
-      # 用它会把 Sound/Display/NowPlaying 从"活动时显示"变成"常驻菜单栏"，
-      # 所以这里直接写原始值。模块状态存在 ByHost plist 里，
-      # 路径跟 nix-darwin 自己写 controlcenter 用的是同一个。
+      # Each com.apple.controlcenter module is a bit field, not a boolean:
+      #   2  = show when active
+      #   8  = don't show in the menu bar
+      #   18 = always show in the menu bar  (= 16 | 2)
+      #   24 = explicitly set to hidden     (= 16 | 8)
+      # nix-darwin's system.defaults.controlcenter.* only ever writes 18 or 24,
+      # so using it would flip Sound/Display/NowPlaying from "show when active"
+      # to "always in the menu bar". Hence the raw values here. Module state
+      # lives in the ByHost plist, at the same path nix-darwin itself uses when
+      # writing controlcenter.
       CustomUserPreferences = {
         "~${config.system.primaryUser}/Library/Preferences/ByHost/com.apple.controlcenter" = {
           Sound = 2;
@@ -79,9 +82,9 @@
           UserSwitcher = 24;
         };
 
-        # 这个键不在 ByHost 域里
+        # This key does not live in the ByHost domain
         "com.apple.controlcenter" = {
-          AutoHideMenuBarOption = 3; # 0 = 总是隐藏, 1 = 仅桌面, 2 = 仅全屏, 3 = 从不
+          AutoHideMenuBarOption = 3; # 0 = always, 1 = desktop only, 2 = fullscreen only, 3 = never
         };
 
         NSGlobalDomain = {

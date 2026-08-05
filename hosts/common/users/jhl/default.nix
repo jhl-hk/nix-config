@@ -6,10 +6,11 @@
 }:
 #############################################################
 #
-#  User: jhl -- 平台无关的那半
+#  User: jhl -- the platform-agnostic half
 #
-#  三文件拆分（default / darwin / nixos）纯粹是约定，Nix 不会自己
-#  按平台挑。平台那半由 hosts/common/core/default.nix 显式一起导入。
+#  The three-file split (default / darwin / nixos) is pure convention; Nix
+#  does not pick by platform on its own. The platform half is imported
+#  explicitly alongside this one by hosts/common/core/default.nix.
 #
 #############################################################
 let
@@ -19,8 +20,8 @@ in {
     {
       shell = pkgs.zsh;
     }
-    # Darwin 的 users.users.<u> 没有 group / extraGroups / uid 这些属性，
-    # 不 gate 的话 Darwin 侧求值会报 unknown option。
+    # Darwin's users.users.<u> has no group / extraGroups / uid attributes;
+    # without this gate the Darwin side fails with an unknown-option error.
     // lib.optionalAttrs pkgs.stdenv.isLinux {
       isNormalUser = true;
       group = "wheel";

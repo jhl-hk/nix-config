@@ -5,44 +5,49 @@
 }:
 #############################################################
 #
-#  ~/.npmrc -- @jianyuelab 私有 GitHub Packages
+#  ~/.npmrc -- @jianyuelab private GitHub Packages
 #
-#  第一个真实的 secret 消费者，用来把 sops 管道验通。
+#  The first real secret consumer, used to prove the sops pipeline works.
 #
-#  用 sops.templates 而不是直接 sops.secrets.<x>.path：
-#  token 只是 .npmrc 这个格式里的一个子串，templates 会在 activation
-#  时把 placeholder 替换掉再落盘，secrets.path 只能给出裸值。
+#  Uses sops.templates rather than sops.secrets.<x>.path directly: the token is
+#  only one substring of the .npmrc format, and templates substitute the
+#  placeholder at activation time before writing the file, whereas secrets.path
+#  can only hand back the bare value.
 #
-#  ⚠️ path 落地的是一个**软链** -> /run/secrets/rendered/npmrc，
-#     不是就地写的文件（实测确认）。三个后果：
-#       - 读没问题，npm 会跟软链；owner/mode 作用在目标上（0600 jhl）
-#       - /run 是易失的，重启后靠 launchd daemon 重建；重建完成前
-#         这是一条悬空软链
-#       - **不要再用 `npm login` / `npm config set`** —— 那会写穿软链，
-#         改动落进 /run/secrets/rendered/，下次 activation 直接被冲掉。
-#         token 要改就改 shared.yaml。
+#  WARNING: what lands at `path` is a **symlink** -> /run/secrets/rendered/npmrc,
+#     not a file written in place (verified in practice). Three consequences:
+#       - Reading is fine, npm follows the symlink; owner/mode apply to the
+#         target (0600 jhl)
+#       - /run is volatile and rebuilt after reboot by a launchd daemon; until
+#         that finishes this is a dangling symlink
+#       - **Stop using `npm login` / `npm config set`** -- those write through
+#         the symlink, so the change lands in /run/secrets/rendered/ and is
+#         wiped by the next activation. To change the token, change shared.yaml.
 #
-#  ── 打开它需要三步 ────────────────────────────────────────
-#  1) 在 nix-secrets 里创建密文（这一步只能你自己做）：
+#  -- Turning it on takes three steps ------------------------------------
+#  1) Create the ciphertext in nix-secrets (only you can do this step):
 #
 #       cd ../nix-secrets
 #       nix shell nixpkgs#sops nixpkgs#age
 #       export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
 #       sops secrets/shared.yaml
 #
-#     内容：
+#     Contents:
 #
 #       npm:
 #           jianyuelab_token: ghp_xxxxxxxxxxxx
 #
-#     然后 git add/commit/push，回 nix-config 跑 just update-nix-secrets
+#     Then git add/commit/push, and back in nix-config run
+#     `just update-nix-secrets`
 #
-#  2) 在需要的机器的 hosts/darwin/<Host>/default.nix 里加进 imports：
+#  2) Add it to the imports of each machine that needs it, in
+#     hosts/darwin/<Host>/default.nix:
 #       "hosts/common/optional/darwin/npmrc.nix"
 #
-#  3) just rebuild，然后**手工确认**解密真的成功了：
+#  3) just rebuild, then **confirm by hand** that decryption actually worked:
 #       grep -q '^//npm.pkg.github.com/:_authToken=ghp' ~/.npmrc && echo OK
-#     （Darwin 上 sops 失败不会报错，只会留下没替换的文件）
+#     (on Darwin a sops failure is not reported; it just leaves the file
+#     un-substituted)
 #
 #############################################################
 let

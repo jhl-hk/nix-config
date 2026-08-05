@@ -3,9 +3,9 @@
 #
 #  Steam
 #
-#  Cherry-pick 的可选项。hosts/common/optional/ 下的东西**不会**被
-#  自动导入 —— 想要的机器在自己的 imports 里点名，这样打开 host 文件
-#  就能看全这台机器跑什么。
+#  A cherry-picked optional. Nothing under hosts/common/optional/ is
+#  auto-imported -- a machine that wants it names it in its own imports, so
+#  opening a host file shows everything that machine runs.
 #
 #############################################################
 {

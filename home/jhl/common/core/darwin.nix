@@ -1,8 +1,8 @@
 {...}:
 #############################################################
 #
-#  Home Core -- macOS 那半
-#  由 common/core/default.nix 的 ./${platform}.nix 挑中。
+#  Home Core -- the macOS half
+#  Selected by ./${platform}.nix in common/core/default.nix.
 #
 #############################################################
 {

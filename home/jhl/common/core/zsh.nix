@@ -3,14 +3,14 @@
 #
 #  Zsh
 #
-#  Homebrew / JAVA_HOME 那几行 PATH 严格来说只在 macOS 成立，
-#  但现在只有 Mac 机器，先留在这里。加第一台 Linux 机器时
-#  把它们挪到 ./darwin.nix。
+#  Strictly speaking the Homebrew / JAVA_HOME PATH lines only hold on macOS,
+#  but there are only Macs right now so they stay here for the moment. Move
+#  them to ./darwin.nix when the first Linux machine arrives.
 #
 #############################################################
 let
-  # 仓库路径。原来这里硬编码的是 ~/Documents/nix-config，
-  # 仓库搬到 nix-src/ 之后三个别名全失效了。
+  # Repo path. This used to be hard-coded as ~/Documents/nix-config, which
+  # broke all three aliases once the repo moved under nix-src/.
   flakeDir = "${hostSpec.home}/Documents/nix-src/nix-config";
 in {
   programs.zsh = {
@@ -25,11 +25,9 @@ in {
     '';
 
     shellAliases = {
-      ll = "ls -lah";
-      la = "ls -A";
-      sysnew = "cd ${flakeDir} && just rebuild";
-      sysup = "cd ${flakeDir} && just update";
-      syscl = "cd ${flakeDir} && just clean";
+      sysnew = "cd ${flakeDir} && just rebuild && cd -";
+      sysup = "cd ${flakeDir} && just update && cd -";
+      syscl = "cd ${flakeDir} && just clean && cd -";
     };
 
     history = {
@@ -48,7 +46,7 @@ in {
       export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
       export JAVA_HOME="/opt/homebrew/opt/openjdk"
 
-      # sops 手工操作时用得到
+      # Needed when driving sops by hand
       export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
     '';
   };

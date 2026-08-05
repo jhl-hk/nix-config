@@ -1,33 +1,89 @@
-{...}:
+{
+  config,
+  lib,
+  ...
+}:
 #############################################################
 #
 #  Zed Configuration
 #
-#  Zed 本体由 Homebrew cask 安装（见 hosts/common/darwin/apps.nix），
-#  所以这里 package = null，只托管 ~/.config/zed 下的配置文件。
+#  Zed itself is installed by a Homebrew cask (see
+#  hosts/common/darwin/apps.nix), so package = null here and this only manages
+#  the config files under ~/.config/zed.
 #
-#  mutableUserSettings/Keymaps = true（默认）：
-#  激活时把下面的声明式配置 *合并* 进现有的 settings.json / keymap.json，
-#  Zed 自己写进去的其它键会被保留，同名键以 Nix 这边为准。
+#  mutableUserSettings/Keymaps = true (the default):
+#  at activation the declarative config below is *merged* into the existing
+#  settings.json / keymap.json. Other keys Zed wrote itself are preserved;
+#  where names collide, the Nix side wins.
 #
 #############################################################
 let
-  # Nix 字符串没有 \u 转义，用 fromJSON 拿到 ESC (0x1b)
+  # Nix strings have no \u escape, so fromJSON is used to get ESC (0x1b)
   esc = builtins.fromJSON "\"\\u001b\"";
+
+  # ---- openai_compatible generated from modules/home/llm.nix ----
+  #
+  # The key deliberately never appears here. Zed's docs, verbatim:
+  #   "Do not put API keys in settings.json"
+  # It looks for a <PROVIDER_ID>_API_KEY environment variable, whose value is
+  # injected into the login session by the launchd agent in
+  # home/jhl/common/core/llm.nix.
+  #
+  # Only providers with a refreshed model list are generated -- before
+  # `just llm-models` has ever run, available_models would be empty and Zed
+  # would just show a provider nothing can be selected from.
+  activeLlm = lib.filterAttrs (_: p: p.models != []) config.llm.providers;
+
+  toZedModel = p: name: {
+    inherit name;
+    max_tokens = p.maxTokens;
+    max_output_tokens = p.maxOutputTokens;
+    max_completion_tokens = p.maxTokens;
+    capabilities = {
+      tools = true;
+      images = false;
+      parallel_tool_calls = false;
+      prompt_cache_key = false;
+      chat_completions = true;
+      interleaved_reasoning = false;
+      max_tokens_parameter = false;
+    };
+  };
+
+  generatedProviders =
+    lib.mapAttrs (_: p: {
+      api_url = p.apiUrl;
+      available_models = map (toZedModel p) p.models;
+    })
+    activeLlm;
+
+  # The default provider. Before the model list is refreshed it is not in
+  # activeLlm, and every default-model-related key below is omitted wholesale
+  # -- mutableUserSettings is merge semantics, so writing nothing preserves
+  # whatever you picked in the UI, which beats pointing at a nonexistent model.
+  dflt = config.llm.defaultProvider;
+  dfltProvider = activeLlm.${dflt} or null;
+  hasDefault = dfltProvider != null && dfltProvider.defaultModel != "";
+
+  defaultModelRef = {
+    provider = dflt;
+    model = dfltProvider.defaultModel;
+  };
 in {
   programs.zed-editor = {
     enable = true;
-    package = null; # 用 Homebrew cask 的 Zed
+    package = null; # use the Homebrew cask's Zed
 
-    # 启动时自动安装的扩展（写成 settings.json 的 auto_install_extensions）
-    # 名字 = extension 仓库名，见 https://github.com/zed-industries/extensions
+    # Extensions auto-installed at startup (written as auto_install_extensions
+    # in settings.json). Names are extension repo names, see
+    # https://github.com/zed-industries/extensions
     extensions = [
-      # 主题 / 图标
+      # Themes / icons
       "catppuccin"
       "catppuccin-icons"
       "macos-classic"
 
-      # 语言
+      # Languages
       "astro"
       "csv"
       "dockerfile"
@@ -39,16 +95,16 @@ in {
       "svelte"
       "toml"
       "vue"
-      "bird2" # BIRD 路由守护进程配置
+      "bird2" # BIRD routing daemon config
 
-      # 工具
+      # Tools
       "git-firefly"
       "wakatime"
       "discord-presence"
     ];
 
     userSettings = {
-      # ---- 外观 ----
+      # ---- Appearance ----
       theme = {
         mode = "system";
         light = "One Light";
@@ -59,16 +115,16 @@ in {
       buffer_font_size = 13;
       buffer_font_family = "Maple Mono";
       buffer_font_features = {
-        calt = true; # 连字
+        calt = true; # ligatures
       };
 
-      # ---- 面板停靠 ----
+      # ---- Panel docking ----
       project_panel.dock = "right";
       outline_panel.dock = "right";
       collaboration_panel.dock = "right";
       git_panel.dock = "right";
 
-      # ---- 编辑器 ----
+      # ---- Editor ----
       tab_size = 2;
       show_completions_on_input = false;
 
@@ -86,64 +142,28 @@ in {
       disable_ai = false;
       show_edit_predictions = true;
 
-      language_models.openai_compatible = {
-        "Local" = {
-          api_url = "http://192.168.17.250:8080/v1";
-          available_models = [
-            {
-              name = "deepseek-v4-flash";
-              max_tokens = 200000;
-              max_output_tokens = 32000;
-              max_completion_tokens = 200000;
-              capabilities = {
-                tools = true;
-                images = false;
-                parallel_tool_calls = false;
-                prompt_cache_key = false;
-                chat_completions = true;
-                interleaved_reasoning = false;
-                max_tokens_parameter = false;
-              };
-            }
-          ];
-        };
-        "Redtea" = {
-          api_url = "https://llm.redcoke.dev/v1";
-          available_models = [
-            {
-              name = "gpt-5.6";
-              max_tokens = 200000;
-              max_output_tokens = 32000;
-              max_completion_tokens = 200000;
-              capabilities = {
-                tools = true;
-                images = false;
-                parallel_tool_calls = false;
-                prompt_cache_key = false;
-                chat_completions = true;
-                interleaved_reasoning = false;
-                max_tokens_parameter = false;
-              };
-            }
-          ];
-        };
-      };
+      # Entirely generated from llm.providers; no providers are hand-written
+      # here any more.
+      #
+      # WARNING: deleting a provider from nix does **not** delete it from the
+      #    settings.json on disk. mutableUserSettings is a one-way merge: keys
+      #    nix declares overwrite same-named ones, and keys nix no longer
+      #    declares are left untouched. The old Local / Redtea / Taizhou Local
+      #    entries have to be removed from ~/.config/zed/settings.json by hand,
+      #    once.
+      language_models.openai_compatible = generatedProviders;
 
-      agent = {
-        default_model = {
-          provider = "Redtea";
-          model = "gpt-5.6";
-          enable_thinking = false;
+      agent =
+        {
+          dock = "left";
+          favorite_models = [];
+          model_parameters = [];
+          commit_message_instructions = "Use the Conventional Commits format: <type>(<scope>): <description>.";
+        }
+        // lib.optionalAttrs hasDefault {
+          default_model = defaultModelRef // {enable_thinking = false;};
+          commit_message_model = defaultModelRef;
         };
-        dock = "left";
-        favorite_models = [];
-        model_parameters = [];
-        commit_message_model = {
-          provider = "openai-subscribed";
-          model = "gpt-5.5";
-        };
-        commit_message_instructions = "Use the Conventional Commits format: <type>(<scope>): <description>.";
-      };
 
       agent_servers = {
         gemini.type = "registry";
@@ -158,13 +178,16 @@ in {
         };
       };
 
-      edit_predictions = {
-        provider = "copilot";
-        open_ai_compatible_api = {
-          model = "gpt-5.5";
-          api_url = "https://llm.redcoke.dev/v1";
+      edit_predictions =
+        {
+          provider = "copilot";
+        }
+        // lib.optionalAttrs hasDefault {
+          open_ai_compatible_api = {
+            model = dfltProvider.defaultModel;
+            api_url = dfltProvider.apiUrl;
+          };
         };
-      };
     };
 
     userKeymaps = [

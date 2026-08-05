@@ -5,14 +5,16 @@
 }:
 #############################################################
 #
-#  Home Core -- 每台机器都要的基线
+#  Home Core -- the baseline every machine gets
 #
-#  这里的 imports 是**手写**的，不是 scanPaths。core 是「我在哪都想要
-#  的东西」，手写一份清单可以一眼看完自己的 dotfile 面积。
-#  想按机器开关的东西放 common/optional/。
+#  The imports here are **hand-written**, not scanPaths. core is "the things I
+#  want everywhere", and a hand-written list lets you see the whole dotfile
+#  surface at a glance. Anything that should be switchable per machine belongs
+#  in common/optional/.
 #
-#  hostSpec 是通过 extraSpecialArgs 传进来的**函数参数**，不是选项 ——
-#  home 模块直接在函数头解构 { hostSpec, ... }，不要去读 NixOS 的 config。
+#  hostSpec arrives as a **function argument** via extraSpecialArgs, not as an
+#  option -- home modules destructure { hostSpec, ... } at the function head
+#  rather than reading NixOS's config.
 #
 #############################################################
 let
@@ -22,11 +24,11 @@ let
     else "nixos";
 in {
   imports = [
-    # 提供 options 的 home 模块，自动扫描
+    # Option-providing home modules, auto-scanned
     (lib.custom.relativeToRoot "modules/home")
 
-    # 平台那半。这行是普通的路径插值，不是魔法 ——
-    # 重命名 darwin.nix / nixos.nix 会让对应平台直接求值失败。
+    # The platform half. This line is ordinary path interpolation, not magic
+    # -- renaming darwin.nix / nixos.nix makes that platform fail to evaluate.
     ./${platform}.nix
 
     ./git.nix
@@ -35,6 +37,8 @@ in {
     ./starship.nix
     ./tmux.nix
     ./claude.nix
+    ./llm.nix
+    ./opencode.nix
   ];
 
   home = {
@@ -42,15 +46,17 @@ in {
     homeDirectory = hostSpec.home;
     stateVersion = "26.05";
 
-    # 我们混用 unstable 的 nixpkgs 和 stable 的 darwin，关掉版本一致性检查
+    # We mix unstable nixpkgs with stable darwin, so turn off the version
+    # consistency check
     enableNixpkgsReleaseCheck = false;
 
     sessionVariables = {
       EDITOR = "vim";
     };
 
-    # git 提交签名校验用的 allowed_signers。内容是公钥，
-    # 但属于身份数据，所以放在 nix-secrets 的明文半区。
+    # allowed_signers, used to verify git commit signatures. The contents are
+    # public keys, but they are identity data, so they live in the cleartext
+    # half of nix-secrets.
     file.".ssh/allowed_signers".text = lib.concatLines hostSpec.sshAllowedSigners;
   };
 
