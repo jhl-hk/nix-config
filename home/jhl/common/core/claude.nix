@@ -16,6 +16,7 @@ let
   # Skills to deploy -- each maps to claude/skills/<name>/SKILL.md
   skills = [
     "nix-config"
+    "rir-apis"
   ];
 in {
   home.file = lib.listToAttrs (
