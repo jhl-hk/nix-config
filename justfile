@@ -113,9 +113,31 @@ check-beta:
 # Secrets
 # ==========
 
-# Generate a new age key (printed to stdout, not written to a file)
-age-key:
-    nix run nixpkgs#age -- age-keygen
+# age-keygen is a second binary inside the age package, so `nix run nixpkgs#age`
+# cannot reach it: that runs `age`, which treats "age-keygen" as an input file.
+# Hence `nix shell ... --command`.
+#
+#   just age-key ~/.config/sops/age/keys.txt
+
+# Generate a new age key; with a path it is written to disk and the public key printed, with no argument it goes to stdout (and your scrollback)
+age-key OUT="":
+    #!/usr/bin/env bash
+    set -euo pipefail
+    if [ -n "{{ OUT }}" ]; then
+        if [ -e "{{ OUT }}" ]; then
+            echo "❌ refusing to overwrite existing key: {{ OUT }}" >&2
+            exit 1
+        fi
+        mkdir -p "$(dirname "{{ OUT }}")"
+        chmod 700 "$(dirname "{{ OUT }}")"
+        nix shell nixpkgs#age --command age-keygen -o "{{ OUT }}"
+        chmod 600 "{{ OUT }}"
+        echo
+        echo "Public key (this is what goes in .sops.yaml):"
+        nix shell nixpkgs#age --command age-keygen -y "{{ OUT }}"
+    else
+        nix shell nixpkgs#age --command age-keygen
+    fi
 
 # After editing .sops.yaml, re-encrypt every ciphertext file for the current
 # recipient list
