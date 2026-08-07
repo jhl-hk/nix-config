@@ -23,6 +23,7 @@
       };
       init.defaultBranch = "main";
       pull.rebase = false;
+      submodule.recurse = true;
       core.editor = "vim";
       commit.gpgSign = true;
       gpg = {
