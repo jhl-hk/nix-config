@@ -77,6 +77,15 @@
   environment.systemPackages = with pkgs; [
     starship
 
+    # `xterm-ghostty` terminfo, so sshing *into* this Mac from Ghostty works.
+    # ncurses only ships terminfo for terminals it knows, and macOS's
+    # /usr/share/terminfo has no ghostty entry, so every login shell that
+    # touches the terminal prints "can't find terminal definition".
+    # This is the terminfo-only output (~5 KiB) of the ghostty-bin package:
+    # the source `ghostty` derivation is unsupported on Darwin (Zig build), and
+    # the app itself comes from the Homebrew cask in ./darwin/apps.nix.
+    ghostty-bin.terminfo
+
     # Omni CLI. Not via Homebrew: siderolabs/tap's omnictl ships no bottle, so
     # brew treats it as build-from-source and hits the Xcode version check on
     # macOS seed builds. unstable has 1.9.3, the same version as the tap.
