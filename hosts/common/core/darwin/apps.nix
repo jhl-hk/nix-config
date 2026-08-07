@@ -56,6 +56,12 @@
       "tokei"
       "tmux"
       "kubelogin"
+      # Installs and switches Xcode versions, including prereleases. Needed on
+      # seed builds: Homebrew refuses to build any unbottled formula while
+      # /Applications/Xcode.app is older than the running macOS. There is no
+      # cask for Xcode itself (Apple forbids redistribution), and the old
+      # homebrew/cask-versions xcode-beta was archived in 2024.
+      "xcodes"
       "age-plugin-yubikey"
 
       # Networking & security
