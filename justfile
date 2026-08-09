@@ -53,9 +53,31 @@ diff:
 # files entirely, and intent-to-add lifts them into the index without staging
 # their content. Skip this and a newly created .nix file silently has no effect.
 
-# rebuild pre-hook: pull secrets + let the flake see untracked files
-rebuild-pre: update-nix-secrets
+# rebuild pre-hook: pull secrets + refresh the LLM model list + let the flake see untracked files
+rebuild-pre: update-nix-secrets llm-models-soft
     git add --intent-to-add .
+
+# llm-models as a rebuild step: same fetch, but never fatal.
+#
+# Run by hand, llm-models is strict on purpose -- a 401 or an empty response
+# should stop you and get looked at. As a pre-hook the trade goes the other
+# way: being offline, on a machine with no age key yet, or hitting a bad
+# gateway must not block a switch. Nothing is lost when it fails, because the
+# committed models.json stays exactly where it is -- a valid list, just a
+# stale one. Same reasoning as the `|| true` on the rebase in
+# update-nix-secrets.
+#
+# Ordering matters: this runs after update-nix-secrets, so the key it decrypts
+# is the one that was just pulled.
+
+# llm-models for rebuild-pre: refresh the model list, but never fail the rebuild
+llm-models-soft:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    export JUST_LLM_MODELS_IN_REBUILD=1
+    if ! {{ just_executable() }} llm-models; then
+        printf '\n⚠️  model list not refreshed, continuing with the committed models.json\n\n'
+    fi
 
 # Confirm sops decryption actually succeeded
 rebuild-post: check-sops
@@ -317,6 +339,12 @@ verify-sops EXPECT="sops-pipeline-ok":
 #
 # The key is decrypted straight from the ciphertext rather than read from
 # /run/secrets, so no rebuild is needed first.
+#
+# rebuild-pre already runs this on every switch (via llm-models-soft). Running
+# it by hand is for seeing the full list, or for getting the real error when
+# the automatic refresh is only warning.
+
+# Refresh the LLM model list from /v1/models into llm/models.json
 llm-models:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -355,6 +383,12 @@ llm-models:
 
     mv "$out.tmp" "$out"
     echo "✅ $n models -> $out"
-    nix run nixpkgs#jq -- -r '.[]' < "$out" | sed 's/^/   /'
-    echo
-    echo "Next: just rebuild"
+
+    # Called from rebuild-pre (llm-models-soft), the full listing is a wall of
+    # text in the middle of a switch and "Next: just rebuild" is wrong -- the
+    # rebuild is already happening. Standalone, both are the point.
+    if [ -z "${JUST_LLM_MODELS_IN_REBUILD:-}" ]; then
+        nix run nixpkgs#jq -- -r '.[]' < "$out" | sed 's/^/   /'
+        echo
+        echo "Next: just rebuild"
+    fi

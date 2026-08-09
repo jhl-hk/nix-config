@@ -19,7 +19,11 @@
 #  Generating a file and readFile-ing it keeps the list declarative: in git,
 #  diffable, revertable, and refreshed with one command.
 #
-#  Changing the model list takes two steps: just llm-models && just rebuild.
+#  Refreshing it is automatic: rebuild-pre runs llm-models on every switch, in
+#  its non-fatal wrapper, so an offline machine still rebuilds against the
+#  committed list. Run `just llm-models` by hand to see the current list, or to
+#  find out *why* it is not refreshing -- standalone it is strict and prints
+#  the failure.
 #
 #  -- Why the key is injected twice --------------------------------------
 #

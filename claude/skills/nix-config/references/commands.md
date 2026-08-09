@@ -32,7 +32,7 @@ All commands run from `/Users/jhl/Documents/nix-src/nix-config`. This mirrors `j
 
 `rebuild`, `rebuild-trace` declare `rebuild-pre && rebuild-post`; `build` declares only `rebuild-pre`.
 
-**`rebuild-pre`** depends on `update-nix-secrets`, then runs:
+**`rebuild-pre`** depends on `update-nix-secrets` and `llm-models-soft` (in that order — the model fetch decrypts the key that `update-nix-secrets` just pulled), then runs:
 
 ```
 git add --intent-to-add .
@@ -41,6 +41,8 @@ git add --intent-to-add .
 That line is not cosmetic. Flake source tracking **ignores untracked files entirely**, so a newly created `.nix` file is invisible to evaluation until it's at least intent-to-added. This is the single most common "my new module did nothing" cause. `--intent-to-add` lifts the file into the index without staging its contents, so it doesn't disturb a planned commit.
 
 **`update-nix-secrets`** does `git -C ../nix-secrets fetch`, then `git rebase` with failures swallowed (`|| true` — a dirty or diverged secrets checkout still lets the rebuild proceed), then `nix flake update nix-secrets --timeout 5`. Guarded by a `[ -d ../nix-secrets ]` check.
+
+**`llm-models-soft`** runs `llm-models` and swallows its exit code, printing a warning instead. `llm-models` on its own is strict — a 401, an empty response, or a missing `llm.api_key` all abort — and that is right when you run it deliberately. As a pre-hook the opposite is right: no network, no age key, or a 502 must not block a switch, and the committed `models.json` is a perfectly valid (if stale) list to build against. It also exports `JUST_LLM_MODELS_IN_REBUILD=1`, which suppresses `llm-models`'s per-model listing and its "Next: just rebuild" footer.
 
 **`rebuild-post`** runs `check-sops`.
 
@@ -52,6 +54,7 @@ That line is not cosmetic. Flake source tracking **ignores untracked files entir
 | `just clean` | `sudo nix-collect-garbage -d` + `mo clean` (the `mole` disk cleaner from Homebrew). |
 | `just fmt` | `nix fmt` — alejandra over the tree. |
 | `just check-beta` | Reads `sw_vers` and the SoftwareUpdate `CatalogURL`; reports whether this Mac is on a seed catalog and therefore whether `darwinHomebrew.macosBeta` should be set. Nix evaluates purely and cannot detect this, which is why it has to be declared per host. |
+| `just llm-models` | GETs `/v1/models` with the key decrypted straight out of `shared.yaml` (no rebuild needed first) and writes the sorted, deduplicated id list to `home/jhl/common/core/llm/models.json`, which `home/jhl/common/core/llm.nix` `readFile`s. Flake evaluation has no network, so the list cannot be fetched at build time — generating a file keeps it declarative: in git, diffable, revertable. **Already runs on every `just rebuild`** via `llm-models-soft`; run it by hand to see the full list, or to get the real error when the automatic refresh is quietly warning. |
 
 ## Secrets
 
