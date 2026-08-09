@@ -35,6 +35,7 @@ in {
     ./ssh.nix
     ./zsh.nix
     ./starship.nix
+    ./zoxide.nix
     ./tmux.nix
     ./claude.nix
     ./llm.nix
