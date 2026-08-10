@@ -19,6 +19,12 @@
     mouse = true;
 
     extraConfig = ''
+      # ---- extended keys --------------------------------------------------
+      # Lets tmux forward modified keys (Shift+Enter, Ctrl+Enter, ...) as CSI u
+      # sequences instead of collapsing them onto the plain key. pi warns at
+      # startup when this is off, because its multi-line input is Shift+Enter.
+      set -g extended-keys on
+
       # ---- wheel = page ---------------------------------------------------
       # Scrolling up in normal mode:
       #   - if the pane runs a fullscreen program (vim / less and friends, which

@@ -130,6 +130,7 @@
       "wechat"
       "zoom"
       "whatsapp"
+      "wechatwork"
 
       # Browsers
       "google-chrome"

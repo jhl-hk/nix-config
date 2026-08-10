@@ -89,6 +89,20 @@ let
     baseUrl = p.apiUrl;
     api = "openai-completions";
     apiKey = "$" + p.envVar;
+
+    # The gateway only accepts the classic OpenAI roles. pi sends the system
+    # prompt as role "developer" for models it believes reason, which every
+    # model here claims to be, and the first request comes back:
+    #
+    #   400 messages[0].role: unknown variant `developer`, expected one of
+    #       `system`, `user`, `assistant`, `tool`, `latest_reminder`
+    #
+    # This is the switch pi documents for exactly that endpoint shape; with it
+    # the prompt goes out as "system" again. Its sibling,
+    # supportsReasoningEffort, stays on -- the gateway has not objected to that
+    # parameter, and turning it off would give up thinking levels.
+    compat.supportsDeveloperRole = false;
+
     models = map (toModel p) p.models;
   };
 
@@ -120,6 +134,35 @@ let
       # An anonymous version ping on first run and after every version change.
       # A nix upgrade is a version change, so this would fire on switches.
       enableInstallTelemetry = false;
+
+      # Third-party packages. pi ships four tools -- read, bash, edit, write --
+      # and no networking and no MCP; everything past that is a package that
+      # registers its own tools.
+      #
+      #   pi-web-access  web_search / web_fetch, plus PDF and YouTube
+      #                  extraction. Works with no API key (bundled Exa,
+      #                  keyless DuckDuckGo); keys for Brave / Tavily / Jina /
+      #                  Kagi go in ~/.pi/web-search.json, which nix does not
+      #                  manage, so adding one later needs no rebuild.
+      #   pi-subagents   delegation to subagents, pi's answer to Claude Code's
+      #                  Task tool.
+      #
+      # Declared here rather than installed with `pi install`, which wants to
+      # write settings.json back and cannot. pi installs whatever is listed
+      # but missing at startup, and compares the pinned version against what
+      # is on disk, so bumping the number below *is* the update procedure.
+      #
+      # Pinned for the reason opencode.nix pins opencode-wakatime: an
+      # unpinned spec resolves to latest and moves under you silently. The
+      # install lands in ~/.pi/agent/npm/, outside nix, the same unmanaged
+      # half Claude Code's plugins live in.
+      #
+      # Worth stating plainly, because it is upstream's own warning: a pi
+      # package runs with full system access. These two are third-party code.
+      packages = [
+        "npm:pi-web-access@0.20.0"
+        "npm:pi-subagents@0.45.2"
+      ];
     }
     // lib.optionalAttrs hasDefault {
       defaultProvider = dflt;
