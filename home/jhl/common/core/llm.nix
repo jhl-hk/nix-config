@@ -57,6 +57,14 @@ in {
     apiUrl = "https://llm.jianyuelab.net/v1";
     models = builtins.fromJSON (builtins.readFile ./llm/models.json);
 
+    # Pinned rather than left to the option default. That default is "the first
+    # entry of the sorted list", which is a fact about the alphabet, not a
+    # choice -- it silently moved from codex-auto-review to deepseek-v4-flash
+    # the moment the gateway retired a model. Naming it here makes every
+    # consumer (pi, opencode, Zed's default_model / commit_message_model /
+    # edit_predictions) agree, and makes a change to it a diff.
+    defaultModel = "deepseek-v4-flash";
+
     # The name contains capitals, so the default will not do. Zed computes
     #   format!("{}_API_KEY", id).to_case(Case::UpperSnake)
     # and convert_case cuts at the e->L lower-to-upper boundary, giving

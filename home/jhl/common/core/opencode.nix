@@ -75,7 +75,10 @@ let
   # whole block is omitted so opencode keeps its own default.
   dflt = config.llm.defaultProvider;
   dfltProvider = active.${dflt} or null;
-  hasDefault = dfltProvider != null && dfltProvider.defaultModel != "";
+  # elem rather than a non-empty check, because core/llm.nix pins defaultModel
+  # by hand: an id the gateway has retired must fall back to opencode's own
+  # default, the same way an unrefreshed list does.
+  hasDefault = dfltProvider != null && lib.elem dfltProvider.defaultModel dfltProvider.models;
 
   # Per-agent model overrides for opencode's built-in primary agents. These live
   # here rather than in modules/home/llm.nix because plan/build are opencode

@@ -63,7 +63,10 @@ let
   # whatever you picked in the UI, which beats pointing at a nonexistent model.
   dflt = config.llm.defaultProvider;
   dfltProvider = activeLlm.${dflt} or null;
-  hasDefault = dfltProvider != null && dfltProvider.defaultModel != "";
+  # elem rather than a non-empty check, because core/llm.nix pins defaultModel
+  # by hand: if the gateway retires that id, write no default at all rather
+  # than one Zed cannot resolve -- mutableUserSettings keeps the UI's choice.
+  hasDefault = dfltProvider != null && lib.elem dfltProvider.defaultModel dfltProvider.models;
 
   defaultModelRef = {
     provider = dflt;

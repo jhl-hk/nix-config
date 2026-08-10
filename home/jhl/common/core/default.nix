@@ -41,6 +41,7 @@ in {
     ./claude.nix
     ./llm.nix
     ./opencode.nix
+    ./pi.nix
     ./wakatime.nix
   ];
 
