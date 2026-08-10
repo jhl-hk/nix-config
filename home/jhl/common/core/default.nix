@@ -32,6 +32,7 @@ in {
     ./${platform}.nix
 
     ./git.nix
+    ./nh.nix
     ./ssh.nix
     ./zsh.nix
     ./starship.nix

@@ -49,6 +49,7 @@ Private data lives in the sibling [`../nix-secrets`](https://github.com/jhl-hk/n
 just                # list every recipe
 just rebuild        # rebuild and switch this machine (runs update-nix-secrets before and check-sops after)
 just build          # build without switching
+just rebuild-trace  # switch with --show-trace, for debugging evaluation errors
 just check          # nix flake check --all-systems; really builds every machine
 just diff           # git diff, excluding flake.lock
 just update         # update flake inputs + brew
@@ -70,6 +71,15 @@ just verify-sops         # end-to-end canary self-check, see below
 ```
 
 **There is no CI.** No `.github/`, no GitHub Actions. `just check` is the gate before pushing, run locally.
+
+### `scripts/rebuild.sh`
+
+`rebuild` / `build` / `rebuild-trace` all go through `scripts/rebuild.sh [switch|build] [--trace] [HOSTNAME]`, adapted from [ChanningHe/nix-config](https://github.com/ChanningHe/nix-config). Two reasons it isn't just a `darwin-rebuild` line:
+
+- **A fresh Mac has none of the pieces.** No `darwin-rebuild`, no Xcode command line tools, and no Homebrew — nix-darwin *manages* brew but never installs it, so activation fails outright without it. The script installs each, and builds the closure with `nix build` + `./result/sw/bin/darwin-rebuild` when `darwin-rebuild` doesn't exist yet. First switch on a new machine is still `just rebuild`.
+- **It prefers [`nh`](https://github.com/nix-community/nh).** Same activation, but the build runs under nix-output-monitor and finishes with a package diff of what changed. Installed by `home/jhl/common/core/nh.nix`, which also sets `NH_FLAKE` so a bare `nh darwin switch` works from any directory.
+
+The recipes always target the current machine; the script takes a host name if you want another one: `scripts/rebuild.sh build SeandeMac-Studio`.
 
 ### Verifying the sops pipeline
 

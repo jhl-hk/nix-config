@@ -7,6 +7,7 @@ All commands run from `/Users/jhl/Documents/nix-src/nix-config`. This mirrors `j
 ## Contents
 
 - [Daily](#daily)
+- [scripts/rebuild.sh](#scriptsrebuildsh)
 - [Pre/post hooks](#prepost-hooks)
 - [Maintenance](#maintenance)
 - [Secrets](#secrets)
@@ -17,16 +18,29 @@ All commands run from `/Users/jhl/Documents/nix-src/nix-config`. This mirrors `j
 
 | Command | What it does |
 |---|---|
-| `just rebuild` | `sudo darwin-rebuild switch --flake .#$(hostname)`. Wrapped by `rebuild-pre` and `rebuild-post` (see below). The everyday command. |
+| `just rebuild` | `scripts/rebuild.sh switch` (see below). Wrapped by `rebuild-pre` and `rebuild-post`. The everyday command. |
 | `just switch` | Alias for `rebuild`. Exists because the `sysnew` zsh alias and muscle memory both use it. |
-| `just build` | Build the closure without activating. Runs `rebuild-pre` only — no point checking sops on a dry run. |
+| `just build` | `scripts/rebuild.sh build` — build the closure without activating. Runs `rebuild-pre` only, no point checking sops on a dry run. |
 | `just rebuild-trace` | `switch` with `--show-trace`. For debugging evaluation errors. |
 | `just rebuild-full` | `rebuild` then `check`. Slow; use before pushing. |
 | `just rebuild-update` | `update` then `rebuild`. |
 | `just check [ARGS]` | `nix flake check --all-systems --show-trace`. Because the `checks` output maps in every host's `.system` derivation, this **really builds all three Macs** — it is not just a type check. |
 | `just diff` | `git diff ':!flake.lock'`, so input-update churn doesn't drown the signal. |
 
-`hostname` is a justfile variable evaluated as `` `hostname` ``, so `just rebuild` always targets the machine you're on. There is no host argument — to build another machine's config use `nix build .#darwinConfigurations.<Name>.system` directly.
+`scripts/rebuild.sh` defaults to `$(hostname)`, so `just rebuild` always targets the machine you're on. The recipes take no host argument, but the script does: `scripts/rebuild.sh build SeandeMac-Studio`. It rejects a name with no `hosts/darwin/<Name>/` directory, which is what keeps a mistyped action from being read as a hostname.
+
+## scripts/rebuild.sh
+
+Ported from [ChanningHe/nix-config](https://github.com/ChanningHe/nix-config), trimmed to the Darwin half. `scripts/rebuild.sh [switch|build] [--trace] [HOSTNAME]`.
+
+It exists for two things a `darwin-rebuild` line in the justfile can't do:
+
+- **Bootstrap.** Before a machine's first switch there is no `darwin-rebuild`, no Xcode command line tools and no Homebrew — nix-darwin's homebrew module writes a Brewfile and runs `brew bundle`, it never installs brew. The script installs the CLT (then exits, because `xcode-select --install` is asynchronous), installs Rosetta 2 + Homebrew, and falls back to `nix build .#darwinConfigurations.<host>.system` followed by `./result/sw/bin/darwin-rebuild` when `darwin-rebuild` isn't on PATH yet. Flakes are enabled per invocation with `--extra-experimental-features` rather than by writing `~/.config/nix/nix.conf` — that file outranks the `/etc/nix/nix.conf` nix-darwin generates, so writing it would silently pin `experimental-features` forever.
+- **Prefer `nh`.** When `nh` is on PATH the switch runs `nh darwin <action> . --hostname <host>`: same activation, but the build goes through nix-output-monitor and ends with a package diff. `nh` elevates itself, so it is not run under `sudo`. Installed by `home/jhl/common/core/nh.nix`, which also sets `NH_FLAKE` (via `programs.nh.flake`) so a bare `nh darwin switch` works from anywhere. It is therefore missing exactly once, during a bootstrap, and the `darwin-rebuild` path covers that.
+
+`sudo` is used for `switch` only — `build` under sudo just leaves a root-owned `./result`. Upstream's `buildable-<timestamp>` git tag on every successful switch was **deliberately dropped**; don't add it back.
+
+The script targets bash 3.2, because `/bin/bash` is what runs it on a machine that has nothing installed yet: no `${var^^}`, and no `"${arr[@]}"` on a possibly-empty array under `set -u`.
 
 ## Pre/post hooks
 
@@ -87,7 +101,7 @@ The `shellHook` exports `SOPS_AGE_KEY_FILE=$HOME/.config/sops/age/keys.txt`, war
 
 ## What is deliberately absent
 
-This repo has no NixOS machines yet, so there is **no** `spawn.sh`, `provision-nixos.sh`, `rebuild.sh`, `deploy.nix`, deploy-rs, disko, `nixos-anywhere`, ISO builder, or attic push recipe. Do not reference them or invent them. If a Linux host is added later, those become real work items, not existing infrastructure.
+This repo has no NixOS machines yet, so there is **no** `spawn.sh`, `provision-nixos.sh`, `deploy.nix`, deploy-rs, disko, `nixos-anywhere`, ISO builder, or attic push recipe. `scripts/rebuild.sh` is the only script, and it is Darwin-only by design — it refuses to run on anything else rather than carrying a dead Linux branch. Do not reference them or invent them. If a Linux host is added later, those become real work items, not existing infrastructure.
 
 **There is no CI.** No `.github/` directory, no GitHub Actions workflow, no deploy key on `jhl-hk/nix-secrets`. A workflow existed briefly and was removed by choice — building three full Darwin closures on a hosted macOS runner was not worth the minutes, and it needed an SSH deploy key just to resolve the private `nix-secrets` input. `just check` is the pre-push gate and it runs locally. Do not add a workflow back without being asked.
 

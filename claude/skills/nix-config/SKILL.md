@@ -150,6 +150,7 @@ The YAML itself is user-operated — tell the user the exact key path and file, 
 
 ```
 just rebuild        # switch current host; auto-runs update-nix-secrets before and check-sops after
+                    # (rebuild/build/rebuild-trace go through scripts/rebuild.sh: bootstraps a fresh Mac, prefers nh)
 just build          # build without activating
 just check          # nix flake check --all-systems (the checks output really builds every Mac)
 just diff           # git diff minus flake.lock

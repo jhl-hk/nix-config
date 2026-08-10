@@ -2,7 +2,6 @@
 # Variables
 # ==========
 
-hostname := `hostname`
 secrets := "../nix-secrets"
 
 # List all recipes by default
@@ -13,21 +12,24 @@ default:
 # Everyday
 # ==========
 
+# The three recipes below delegate to scripts/rebuild.sh: it bootstraps a fresh
+# Mac (Xcode CLT, Rosetta, Homebrew) and prefers nh over darwin-rebuild when nh
+# is installed. See the header of that script.
+
 # Rebuild and switch to the new config
 rebuild: rebuild-pre && rebuild-post
-    sudo darwin-rebuild switch --flake .#{{ hostname }}
-    @printf '\nSwitched to new config\n'
+    scripts/rebuild.sh switch
 
 # Alias for rebuild; the sysnew alias in zsh uses rebuild
 switch: rebuild
 
 # Build without switching
 build: rebuild-pre
-    sudo darwin-rebuild build --flake .#{{ hostname }}
+    scripts/rebuild.sh build
 
 # rebuild with --show-trace, for debugging evaluation errors
 rebuild-trace: rebuild-pre && rebuild-post
-    sudo darwin-rebuild switch --flake .#{{ hostname }} --show-trace
+    scripts/rebuild.sh switch --trace
 
 # rebuild followed by check; use before pushing
 rebuild-full: rebuild check
