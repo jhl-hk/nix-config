@@ -72,6 +72,22 @@ let
     provider = dflt;
     model = dfltProvider.defaultModel;
   };
+
+  # Commit messages get their own model. commit_message_model is a Zed concept,
+  # so the id is hand-picked here rather than in modules/home/llm.nix -- the
+  # same split as opencode.nix's per-agent agentModels.
+  #
+  # And like there, the id is checked against the refreshed list instead of
+  # trusted: `just llm-models` can retire it from under this file, and falling
+  # back to the default beats writing a model Zed cannot resolve.
+  commitModelId = "gpt-5.6-sol";
+  commitModelRef =
+    if lib.elem commitModelId (dfltProvider.models or [])
+    then {
+      provider = dflt;
+      model = commitModelId;
+    }
+    else defaultModelRef;
 in {
   programs.zed-editor = {
     enable = true;
@@ -165,7 +181,7 @@ in {
         }
         // lib.optionalAttrs hasDefault {
           default_model = defaultModelRef // {enable_thinking = false;};
-          commit_message_model = defaultModelRef;
+          commit_message_model = commitModelRef;
         };
 
       agent_servers = {
