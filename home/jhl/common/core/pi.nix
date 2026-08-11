@@ -174,6 +174,12 @@ in {
   home.file =
     {
       ".pi/agent/settings.json".source = toJson "pi-settings.json" settings;
+
+      # Home-grown extension: output tok/s in the footer, which pi does not
+      # report. ~/.pi/agent/extensions/*.ts is an auto-discovered location, so
+      # this needs no matching entry in settings.extensions. pi loads .ts
+      # through jiti, so there is nothing to compile.
+      ".pi/agent/extensions/tokens-per-second.ts".source = ./pi/tokens-per-second.ts;
     }
     // lib.optionalAttrs (active != {}) {
       ".pi/agent/models.json".source = toJson "pi-models.json" models;
