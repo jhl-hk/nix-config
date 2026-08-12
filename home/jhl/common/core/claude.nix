@@ -24,7 +24,15 @@
 #############################################################
 let
   # Skills to deploy -- each maps to claude/skills/<name>/SKILL.md
+  #
+  # pi reads the same directory (see home/jhl/common/core/pi.nix), so anything
+  # added here shows up in both harnesses.
+  #
+  # apple-design is vendored, not written here: it comes from
+  # https://github.com/emilkowalski/skills (MIT, LICENSE kept beside it).
+  # Update it by copying the file again -- there is no upstream tracking.
   skills = [
+    "apple-design"
     "nix-config"
     "rir-apis"
   ];
