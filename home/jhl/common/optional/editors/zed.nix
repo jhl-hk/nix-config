@@ -7,14 +7,29 @@
 #
 #  Zed Configuration
 #
-#  Zed itself is installed by a Homebrew cask (see
-#  hosts/common/darwin/apps.nix), so package = null here and this only manages
-#  the config files under ~/.config/zed.
+#  Zed's binary is never nix-managed on any machine here, so package = null and
+#  this only manages the config files under ~/.config/zed. Where the binary
+#  comes from differs by machine, and neither is this repo's business:
+#
+#    macOS   the "zed" Homebrew cask, hosts/common/core/darwin/apps.nix
+#    Arch    pacman's zed package, whose binary is `zeditor`
+#
+#  The config path is the same on both (~/.config/zed), which is why one file
+#  covers them.
 #
 #  mutableUserSettings/Keymaps = true (the default):
 #  at activation the declarative config below is *merged* into the existing
 #  settings.json / keymap.json. Other keys Zed wrote itself are preserved;
 #  where names collide, the Nix side wins.
+#
+#  -- What this file assumes exists outside nix --------------------------
+#
+#  buffer_font_family below names a font this file does not install. It is
+#  provisioned per platform: the font-maple-mono cask on the Macs, and
+#  pkgs.maple-mono.variable from home/jhl/common/core/linux.nix elsewhere. A
+#  missing font is a **silent** failure -- Zed falls back to a default and says
+#  nothing -- so a new platform has to be given the font before this file is
+#  imported on it.
 #
 #############################################################
 let
@@ -91,7 +106,9 @@ let
 in {
   programs.zed-editor = {
     enable = true;
-    package = null; # use the Homebrew cask's Zed
+    # The distro's Zed: the Homebrew cask on macOS, pacman's on Arch. Setting a
+    # package here would install a second copy into the profile and shadow it.
+    package = null;
 
     # Extensions auto-installed at startup (written as auto_install_extensions
     # in settings.json). Names are extension repo names, see

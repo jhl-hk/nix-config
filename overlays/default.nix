@@ -20,15 +20,23 @@
       directory = ../pkgs/common;
     };
 
-  # Makes lib.custom available inside the home-manager scope too.
+  # Puts lib.custom on pkgs.lib, for code that reads pkgs.lib directly.
   #
-  # extraSpecialArgs.lib is not an option -- it replaces home-manager's own
-  # lib wholesale, lib.hm disappears, and every HM module that touches
-  # lib.hm.* (mako, plenty of services) dies with "attribute 'hm' missing".
+  # It does **not** feed the home-manager module system, despite what an
+  # earlier version of this comment claimed. HM builds its module lib as
+  # `stdlib-extended <the lib it was handed>`, i.e. `lib.extend (…: { hm = …; })`,
+  # and extend rebuilds from lib's *fixpoint* -- so the `custom` added below
+  # with `//` is dropped again. Measured against this very pkgs:
   #
-  # Hanging it off pkgs.lib avoids that: HM's lib is
-  # `pkgs.lib.extend hmExtension`, so custom and hm both survive. The system
-  # side gets it separately via specialArgs.lib in flake.nix.
+  #   pkgs.lib ? custom                      => true
+  #   (pkgs.lib.extend (_: _: {})) ? custom  => false
+  #
+  # What actually delivers lib.custom to home-manager is the lib HM extends:
+  # specialArgs.lib on the system lanes (nix-darwin forwards it), and the
+  # top-level `lib` argument of homeManagerConfiguration on the standalone
+  # lane. extraSpecialArgs.lib is wrong on both -- it replaces the extended
+  # result and lib.hm disappears, so every HM module touching lib.hm.* (mako,
+  # plenty of services) dies with "attribute 'hm' missing".
   customLib = _final: prev: {
     lib =
       prev.lib

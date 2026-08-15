@@ -24,19 +24,44 @@ All commands run from `/Users/jhl/Documents/nix-src/nix-config`. This mirrors `j
 | `just rebuild-trace` | `switch` with `--show-trace`. For debugging evaluation errors. |
 | `just rebuild-full` | `rebuild` then `check`. Slow; use before pushing. |
 | `just rebuild-update` | `update` then `rebuild`. |
-| `just check [ARGS]` | `nix flake check --all-systems --show-trace`. Because the `checks` output maps in every host's `.system` derivation, this **really builds all three Macs** — it is not just a type check. |
+| `just check [ARGS]` | `nix flake check --all-systems --show-trace`. Because the `checks` output maps in every host's build derivation — `.system` for the Macs, `.activationPackage` for the standalone home-manager hosts — this **really builds every machine**, not just type-checks it. Each lane is filtered to the system it can build on, so a Mac builds the three Darwin hosts and the Arch box builds `home-jhl-at-jhlsArchLinux`; the rest are evaluated either way. |
 | `just diff` | `git diff ':!flake.lock'`, so input-update churn doesn't drown the signal. |
 
-`scripts/rebuild.sh` defaults to `$(hostname)`, so `just rebuild` always targets the machine you're on. The recipes take no host argument, but the script does: `scripts/rebuild.sh build SeandeMac-Studio`. It rejects a name with no `hosts/darwin/<Name>/` directory, which is what keeps a mistyped action from being read as a hostname.
+`scripts/rebuild.sh` defaults to `$(uname -n)`, so `just rebuild` always targets the machine you're on. (`uname -n`, not `hostname`: Arch does not ship `hostname` by default.) The recipes take no host argument, but the script does: `scripts/rebuild.sh build SeandeMac-Studio`. It rejects a name with no `hosts/<lane>/<Name>/` directory — `hosts/darwin/` on macOS, `hosts/home/` on Linux — which is what keeps a mistyped action from being read as a hostname.
+
+## NIX_CONFIG
+
+The justfile opens with
+
+```just
+export NIX_CONFIG := "extra-experimental-features = nix-command flakes"
+```
+
+which every recipe inherits. It exists for the bootstrap case: on a machine that has never switched, nothing has enabled flakes yet. The Macs get `experimental-features` from the `/etc/nix/nix.conf` nix-darwin generates; the standalone lane gets it from the `~/.config/nix/nix.conf` home-manager writes (`home/jhl/common/optional/nix/standalone.nix`). Both are *products* of a rebuild that cannot run without them, and Arch's stock `/etc/nix/nix.conf` enables neither — so `just rebuild` used to die in `update-nix-secrets`, before `scripts/rebuild.sh` was ever reached.
+
+`NIX_CONFIG` is parsed as nix.conf content layered on top of the config files, and the `extra-` prefix appends instead of replacing, so it adds nothing a switched machine does not already have. It is a no-op after the first successful switch.
+
+`scripts/rebuild.sh` still passes `--extra-experimental-features` on its own bootstrap path; it is meant to work when run directly, not only through `just`.
 
 ## scripts/rebuild.sh
 
-Ported from [ChanningHe/nix-config](https://github.com/ChanningHe/nix-config), trimmed to the Darwin half. `scripts/rebuild.sh [switch|build] [--trace] [HOSTNAME]`.
+Ported from [ChanningHe/nix-config](https://github.com/ChanningHe/nix-config). `scripts/rebuild.sh [switch|build] [--trace] [HOSTNAME]`.
 
-It exists for two things a `darwin-rebuild` line in the justfile can't do:
+It exists for three things a plain rebuild line in the justfile can't do:
+
+- **Pick the lane.** `uname -s` decides: `Darwin` → `hosts/darwin/<Host>` and `darwinConfigurations`, `Linux` → `hosts/home/<Host>` and `homeConfigurations."<user>@<Host>"`. There is no NixOS branch, and any other platform is refused rather than guessed at.
 
 - **Bootstrap.** Before a machine's first switch there is no `darwin-rebuild`, no Xcode command line tools and no Homebrew — nix-darwin's homebrew module writes a Brewfile and runs `brew bundle`, it never installs brew. The script installs the CLT (then exits, because `xcode-select --install` is asynchronous), installs Rosetta 2 + Homebrew, and falls back to `nix build .#darwinConfigurations.<host>.system` followed by `./result/sw/bin/darwin-rebuild` when `darwin-rebuild` isn't on PATH yet. Flakes are enabled per invocation with `--extra-experimental-features` rather than by writing `~/.config/nix/nix.conf` — that file outranks the `/etc/nix/nix.conf` nix-darwin generates, so writing it would silently pin `experimental-features` forever.
-- **Prefer `nh`.** When `nh` is on PATH the switch runs `nh darwin <action> . --hostname <host>`: same activation, but the build goes through nix-output-monitor and ends with a package diff. `nh` elevates itself, so it is not run under `sudo`. Installed by `home/jhl/common/core/nh.nix`, which also sets `NH_FLAKE` (via `programs.nh.flake`) so a bare `nh darwin switch` works from anywhere. It is therefore missing exactly once, during a bootstrap, and the `darwin-rebuild` path covers that.
+- **Prefer `nh`.** When `nh` is on PATH the switch runs `nh darwin <action> . --hostname <host>` (or `nh home <action> . -c <user>@<host> -b backup` on the standalone lane): same activation, but the build goes through nix-output-monitor and ends with a package diff. `nh` elevates itself, so it is not run under `sudo`. Installed by `home/jhl/common/core/nh.nix`, which also sets `NH_FLAKE` (via `programs.nh.flake`) so a bare `nh darwin switch` / `nh home switch` works from anywhere. It is therefore missing exactly once, during a bootstrap, and the fallback paths cover that.
+
+### The standalone (Linux) lane
+
+No sudo anywhere — it only writes inside `$HOME` and the per-user nix profile. Preference order is `nh home` → `home-manager` → a bootstrap `nix build .#homeConfigurations."<user>@<host>".activationPackage` followed by `HOME_MANAGER_BACKUP_EXT=backup ./result/activate`.
+
+Two details worth knowing:
+
+- **`-b backup` is always passed.** A distro-managed machine usually already has a `.zshrc`; without a backup extension activation aborts on the first collision. It matches `backupFileExtension` on the Darwin lane.
+- **Flakes may not be enabled yet.** `home/jhl/common/optional/nix/standalone.nix` is what writes `~/.config/nix/nix.conf`, and it only lands once the generation it is part of has been activated — so the bootstrap build passes `--extra-experimental-features` explicitly. Unlike on Darwin there is no objection to that file existing: the distro owns `/etc/nix`, so it is the only layer this repo can write.
 
 `sudo` is used for `switch` only — `build` under sudo just leaves a root-owned `./result`. Upstream's `buildable-<timestamp>` git tag on every successful switch was **deliberately dropped**; don't add it back.
 
@@ -101,7 +126,9 @@ The `shellHook` exports `SOPS_AGE_KEY_FILE=$HOME/.config/sops/age/keys.txt`, war
 
 ## What is deliberately absent
 
-This repo has no NixOS machines yet, so there is **no** `spawn.sh`, `provision-nixos.sh`, `deploy.nix`, deploy-rs, disko, `nixos-anywhere`, ISO builder, or attic push recipe. `scripts/rebuild.sh` is the only script, and it is Darwin-only by design — it refuses to run on anything else rather than carrying a dead Linux branch. Do not reference them or invent them. If a Linux host is added later, those become real work items, not existing infrastructure.
+This repo has no NixOS machines yet, so there is **no** `spawn.sh`, `provision-nixos.sh`, `deploy.nix`, deploy-rs, disko, `nixos-anywhere`, ISO builder, or attic push recipe. Do not reference them or invent them — they become real work items only if a NixOS machine is ever added.
+
+`scripts/rebuild.sh` is the only script. It carries exactly two lanes, chosen by `uname`: nix-darwin on macOS, standalone home-manager on Linux. There is no NixOS branch, and it refuses to run anywhere else rather than guessing.
 
 **There is no CI.** No `.github/` directory, no GitHub Actions workflow, no deploy key on `jhl-hk/nix-secrets`. A workflow existed briefly and was removed by choice — building three full Darwin closures on a hosted macOS runner was not worth the minutes, and it needed an SSH deploy key just to resolve the private `nix-secrets` input. `just check` is the pre-push gate and it runs locally. Do not add a workflow back without being asked.
 

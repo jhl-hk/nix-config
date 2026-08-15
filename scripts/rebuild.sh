@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# rebuild.sh -- build or activate this Mac's nix-darwin configuration.
+# rebuild.sh -- build or activate this machine's configuration.
 #
 # Adapted from https://github.com/ChanningHe/nix-config (scripts/rebuild.sh).
 #
@@ -8,16 +8,30 @@
 # in the rebuild-pre and rebuild-post hooks, so running the script directly
 # skips the secrets pull, the intent-to-add, and the sops check.
 #
-# Two things it does that a bare `darwin-rebuild` line in the justfile cannot:
+# -- Two lanes ---------------------------------------------------------------
 #
-#   1. Bootstrap a fresh Mac. Before the first switch there is no
+# The lane is chosen by uname, because it is a fact about the machine you are
+# standing on, not something worth a flag:
+#
+#   Darwin  hosts/darwin/<Host>/       -> darwinConfigurations.<Host>
+#           the full nix-darwin system, activated with darwin-rebuild
+#   Linux   hosts/home/<Host>/         -> homeConfigurations.<user>@<Host>
+#           standalone home-manager, because the distro owns the system.
+#           NixOS machines would be a third lane; there are none yet, and this
+#           script deliberately does not guess -- a Linux box with hosts/home/
+#           entry is treated as standalone.
+#
+# -- What it does that a bare rebuild line in the justfile cannot -------------
+#
+#   1. Bootstrap a machine that has never switched. On a Mac that means no
 #      darwin-rebuild, no Xcode command line tools and no Homebrew (nix-darwin
-#      manages brew, it does not install it). Each gap is closed here so the
-#      first run on a new machine is still one command.
+#      manages brew, it does not install it). On Linux it means no
+#      home-manager binary and, usually, no flakes enabled yet -- the closure
+#      is built with --extra-experimental-features and activated from ./result.
 #   2. Prefer nh. It drives the same activation through nix-output-monitor and
 #      prints a package diff of what the switch actually changes. Installed by
 #      home/jhl/common/core/nh.nix, so it is missing exactly once -- during
-#      that first bootstrap -- and the darwin-rebuild path covers it.
+#      that first bootstrap -- and the fallback paths cover it.
 #
 # Usage: scripts/rebuild.sh [switch|build] [--trace] [HOSTNAME]
 
@@ -36,13 +50,25 @@ usage() {
 		  switch      build and activate (default)
 		  build       build only, activate nothing
 		  --trace     pass --show-trace, for debugging evaluation errors
-		  HOSTNAME    a directory name under hosts/darwin/ (default: this machine)
+		  HOSTNAME    a directory name under hosts/darwin/ on macOS, or under
+		              hosts/home/ on Linux (default: this machine)
 	EOF
 }
 
 ACTION="switch"
-HOST=$(hostname)
+# `hostname` is not installed everywhere -- Arch does not ship inetutils by
+# default, and `uname -n` is in coreutils, which every machine has.
+HOST=$(uname -n)
 TRACE=0
+
+case "$(uname -s)" in
+Darwin) LANE="darwin" ;;
+Linux) LANE="home" ;;
+*)
+	red "Unsupported platform: $(uname -s)"
+	exit 1
+	;;
+esac
 
 while [ $# -gt 0 ]; do
 	case "$1" in
@@ -64,18 +90,18 @@ done
 
 # Catch a mistyped action before it is silently taken for a hostname and
 # reappears as an opaque "attribute 'typo' missing" from Nix.
-if [ ! -d "$repo_root/hosts/darwin/$HOST" ]; then
-	red "No such host: $HOST (expected hosts/darwin/$HOST/)"
+if [ ! -d "$repo_root/hosts/$LANE/$HOST" ]; then
+	red "No such host: $HOST (expected hosts/$LANE/$HOST/)"
 	known=""
-	for dir in "$repo_root"/hosts/darwin/*/; do
+	for dir in "$repo_root"/hosts/"$LANE"/*/; do
+		[ -d "$dir" ] || continue
 		known="$known $(basename "$dir")"
 	done
-	yellow "Known hosts:$known"
-	exit 1
-fi
-
-if [ "$(uname -s)" != "Darwin" ]; then
-	red "This flake has Darwin hosts only; refusing to run on $(uname -s)."
+	if [ -n "$known" ]; then
+		yellow "Known $LANE hosts:$known"
+	else
+		yellow "No hosts under hosts/$LANE/ yet."
+	fi
 	exit 1
 fi
 
@@ -88,29 +114,35 @@ fi
 # Bootstrap
 # ==========
 
-# The Xcode command line tools ship git, which the flake needs to read its own
-# source. `xcode-select --install` is asynchronous and drives a GUI dialog, so
-# there is nothing sensible to wait on -- fire it and ask for a re-run.
-if ! /usr/bin/xcode-select -p >/dev/null 2>&1; then
-	yellow "Xcode command line tools are missing, opening the installer"
-	xcode-select --install || true
-	red "Re-run this once the installer has finished."
-	exit 1
-fi
-
-# nix-darwin's homebrew module writes a Brewfile and runs `brew bundle`; it
-# never installs Homebrew itself, so activation fails outright without this.
-if [ ! -x /opt/homebrew/bin/brew ]; then
-	if [ "$(uname -m)" = "arm64" ]; then
-		# Some casks are x86_64-only, and a machine with no brew yet has
-		# certainly never been asked for Rosetta.
-		yellow "Installing Rosetta 2"
-		softwareupdate --install-rosetta --agree-to-license
+if [ "$LANE" = "darwin" ]; then
+	# The Xcode command line tools ship git, which the flake needs to read its
+	# own source. `xcode-select --install` is asynchronous and drives a GUI
+	# dialog, so there is nothing sensible to wait on -- fire it and ask for a
+	# re-run.
+	if ! /usr/bin/xcode-select -p >/dev/null 2>&1; then
+		yellow "Xcode command line tools are missing, opening the installer"
+		xcode-select --install || true
+		red "Re-run this once the installer has finished."
+		exit 1
 	fi
-	yellow "Installing Homebrew"
-	NONINTERACTIVE=1 /bin/bash -c \
-		"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+	# nix-darwin's homebrew module writes a Brewfile and runs `brew bundle`; it
+	# never installs Homebrew itself, so activation fails outright without this.
+	if [ ! -x /opt/homebrew/bin/brew ]; then
+		if [ "$(uname -m)" = "arm64" ]; then
+			# Some casks are x86_64-only, and a machine with no brew yet has
+			# certainly never been asked for Rosetta.
+			yellow "Installing Rosetta 2"
+			softwareupdate --install-rosetta --agree-to-license
+		fi
+		yellow "Installing Homebrew"
+		NONINTERACTIVE=1 /bin/bash -c \
+			"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+	fi
 fi
+# The home lane needs no bootstrap of its own: the distro's package manager
+# already put nix, git and a shell there, and everything else this repo wants
+# comes out of the generation being built.
 
 # ==========
 # Rebuild
@@ -120,39 +152,90 @@ cd "$repo_root"
 
 green "====== $(printf '%s' "$ACTION" | tr '[:lower:]' '[:upper:]') $HOST ======"
 
-if command -v nh >/dev/null 2>&1; then
-	args=(darwin "$ACTION" . --hostname "$HOST")
-	if [ "$TRACE" -eq 1 ]; then
-		args+=(--show-trace)
-	fi
-	# No sudo: nh elevates itself for the activation step and refuses to run
-	# as root.
-	nh "${args[@]}"
-else
-	args=("$ACTION" --flake ".#$HOST")
-	if [ "$TRACE" -eq 1 ]; then
-		args+=(--show-trace)
-	fi
-	# Only the activation needs root; `build` under sudo would just leave a
-	# root-owned ./result behind. An empty array would be simpler, but "${a[@]}"
-	# on an empty array is an unbound-variable error under `set -u` in bash 3.2,
-	# and /bin/bash is what runs this while bootstrapping.
-	sudo="sudo"
-	if [ "$ACTION" = "build" ]; then
-		sudo="command"
-	fi
-	if command -v darwin-rebuild >/dev/null 2>&1; then
-		$sudo darwin-rebuild "${args[@]}"
+if [ "$LANE" = "darwin" ]; then
+	if command -v nh >/dev/null 2>&1; then
+		args=(darwin "$ACTION" . --hostname "$HOST")
+		if [ "$TRACE" -eq 1 ]; then
+			args+=(--show-trace)
+		fi
+		# No sudo: nh elevates itself for the activation step and refuses to run
+		# as root.
+		nh "${args[@]}"
 	else
-		# First switch on this machine. Build the closure with a plain `nix
-		# build` -- flakes are enabled per invocation rather than by writing
-		# ~/.config/nix/nix.conf, because that file outranks the
-		# /etc/nix/nix.conf nix-darwin generates and would quietly pin
-		# experimental-features to whatever was true on bootstrap day.
-		yellow "darwin-rebuild not found, building the closure from the flake first"
-		nix --extra-experimental-features "nix-command flakes" \
-			build ".#darwinConfigurations.$HOST.system"
-		$sudo ./result/sw/bin/darwin-rebuild "${args[@]}"
+		args=("$ACTION" --flake ".#$HOST")
+		if [ "$TRACE" -eq 1 ]; then
+			args+=(--show-trace)
+		fi
+		# Only the activation needs root; `build` under sudo would just leave a
+		# root-owned ./result behind. An empty array would be simpler, but "${a[@]}"
+		# on an empty array is an unbound-variable error under `set -u` in bash 3.2,
+		# and /bin/bash is what runs this while bootstrapping.
+		sudo="sudo"
+		if [ "$ACTION" = "build" ]; then
+			sudo="command"
+		fi
+		if command -v darwin-rebuild >/dev/null 2>&1; then
+			$sudo darwin-rebuild "${args[@]}"
+		else
+			# First switch on this machine. Build the closure with a plain `nix
+			# build` -- flakes are enabled per invocation rather than by writing
+			# ~/.config/nix/nix.conf, because that file outranks the
+			# /etc/nix/nix.conf nix-darwin generates and would quietly pin
+			# experimental-features to whatever was true on bootstrap day.
+			yellow "darwin-rebuild not found, building the closure from the flake first"
+			nix --extra-experimental-features "nix-command flakes" \
+				build ".#darwinConfigurations.$HOST.system"
+			$sudo ./result/sw/bin/darwin-rebuild "${args[@]}"
+		fi
+	fi
+else
+	# Standalone home-manager. No sudo anywhere on this lane -- it only ever
+	# writes inside $HOME and the per-user nix profile.
+	#
+	# The flake attribute is "<user>@<host>", so it needs quoting all the way
+	# through to nix; a bare @ in an attribute path is not the problem, the
+	# surrounding attr-name quotes are.
+	CONFIG="$(id -un)@$HOST"
+
+	# Existing dotfiles are the normal case here: the distro, or you, put a
+	# .zshrc there long before nix showed up. Without a backup extension
+	# activation aborts on the first collision. Matches backupFileExtension on
+	# the darwin lane.
+	BACKUP="backup"
+
+	if command -v nh >/dev/null 2>&1; then
+		args=(home "$ACTION" . -c "$CONFIG" -b "$BACKUP")
+		if [ "$TRACE" -eq 1 ]; then
+			args+=(--show-trace)
+		fi
+		nh "${args[@]}"
+	elif command -v home-manager >/dev/null 2>&1; then
+		args=("$ACTION" --flake ".#$CONFIG" -b "$BACKUP")
+		if [ "$TRACE" -eq 1 ]; then
+			args+=(--show-trace)
+		fi
+		home-manager "${args[@]}"
+	else
+		# First switch on this machine: no nh, no home-manager, and -- since
+		# home/jhl/common/optional/nix/standalone.nix is what turns flakes on --
+		# quite possibly no flakes either. Build the activation package by hand
+		# and run it. Unlike the darwin lane there is no objection to
+		# ~/.config/nix/nix.conf here: the distro owns /etc/nix, so that file is
+		# the only layer this repo can write, and it is written by the very
+		# generation being built.
+		yellow "home-manager not found, building the activation package from the flake first"
+		buildArgs=(--extra-experimental-features "nix-command flakes"
+			build ".#homeConfigurations.\"$CONFIG\".activationPackage")
+		if [ "$TRACE" -eq 1 ]; then
+			buildArgs+=(--show-trace)
+		fi
+		nix "${buildArgs[@]}"
+
+		if [ "$ACTION" = "switch" ]; then
+			# activate reads the backup extension from the environment; there is
+			# no flag for it.
+			HOME_MANAGER_BACKUP_EXT="$BACKUP" ./result/activate
+		fi
 	fi
 fi
 

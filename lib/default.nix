@@ -34,4 +34,59 @@
         ) (builtins.readDir path)
       )
     );
+
+  # Evaluate the hostSpec option tree on its own, outside NixOS / nix-darwin.
+  #
+  # The standalone home-manager lane (hosts/home/, machines running nix on top
+  # of another distro) has no system configuration, so there is no module tree
+  # for hosts/common/core to run in -- yet home modules still expect the same
+  # hostSpec attrset through extraSpecialArgs. Feeding the schema to a bare
+  # evalModules keeps one definition of it: same types, same defaults, same
+  # assertions, and no second copy to drift out of step.
+  #
+  #   lib.custom.evalHostSpec {
+  #     specialArgs = { inherit inputs lib pkgs; isDarwin = false; };
+  #     modules = [ ./hosts/common/core/host-spec.nix ./hosts/home/<Name> ];
+  #   }
+  #
+  # Returns the plain attrset, not the evalModules result -- the caller wants
+  # something it can hand straight to extraSpecialArgs.
+  evalHostSpec = {
+    specialArgs,
+    modules,
+  }: let
+    evaluated = lib.evalModules {
+      inherit specialArgs;
+      modules =
+        [
+          ../modules/common/host-spec.nix
+
+          # host-spec.nix writes to `assertions`, an option that NixOS,
+          # nix-darwin and home-manager each declare for it. A bare evalModules
+          # declares nothing, so without this the definition is rejected as an
+          # unknown option. Same type nixpkgs uses in
+          # nixos/modules/misc/assertions.nix.
+          {
+            options.assertions = lib.mkOption {
+              type = lib.types.listOf lib.types.unspecified;
+              internal = true;
+              default = [];
+              description = "Assertions to check, mirroring the NixOS option of the same name.";
+            };
+          }
+        ]
+        ++ modules;
+    };
+
+    failed = builtins.filter (a: !a.assertion) evaluated.config.assertions;
+  in
+    # Nothing checks `assertions` in a bare evalModules, so do it here. Skip
+    # this and a violated hostSpec assertion is simply ignored on the
+    # standalone lane while it aborts the build on the system lanes.
+    if failed == []
+    then evaluated.config.hostSpec
+    else
+      throw ''
+        hostSpec assertions failed:
+        ${lib.concatMapStringsSep "\n" (a: "  - ${a.message}") failed}'';
 }

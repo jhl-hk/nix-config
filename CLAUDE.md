@@ -1,6 +1,13 @@
 # CLAUDE.md
 
-nix-darwin + home-manager flake managing three Macs (`jhlsMacBookPro`, `jhlsMacBookAir`, `SeandeMac-Studio`), one user (`jhl`). Private data lives in the sibling `../nix-secrets`, consumed as a flake input.
+nix-darwin + home-manager flake, one user (`jhl`), four machines on two lanes:
+
+- **nix-darwin** — `jhlsMacBookPro`, `jhlsMacBookAir`, `SeandeMac-Studio`. Host dir `hosts/darwin/<Host>/`, output `darwinConfigurations.<Host>`.
+- **standalone home-manager** — `jhlsArchLinux`, i.e. nix on top of Arch. Host dir `hosts/home/<Host>/`, output `homeConfigurations.jhl@<Host>`. **No system configuration exists on this lane**: no `hosts/common/core`, no `environment.systemPackages`, no sops. Anything needing root belongs to pacman.
+
+A third lane, NixOS (`hosts/nixos/`), is an unused skeleton — don't mistake it for the standalone lane.
+
+Private data lives in the sibling `../nix-secrets`, consumed as a flake input.
 
 ## Read this first
 
@@ -31,8 +38,8 @@ The correct move is: write the Nix that references `sops.secrets."<path>"`, stat
 ## Before claiming anything works
 
 - **New files need `git add --intent-to-add .`** Flake source tracking ignores untracked files entirely, so a newly created `.nix` file silently has no effect — evaluation succeeds while your change does nothing. `just rebuild` runs this via `rebuild-pre`; when evaluating by hand, run it yourself first.
-- **Evaluate, don't assume.** `nix eval .#darwinConfigurations.<host>.config.system.build.toplevel.drvPath` catches assertions and type errors. `just check` builds all three machines and is the gate before pushing. There is no CI.
-- **Check the generated artifact, not just that it evaluates.** For anything that produces a file, build and read it — e.g. `nix build .#darwinConfigurations.<host>.config.home-manager.users.jhl.xdg.configFile."<path>".source` then `cat` it.
+- **Evaluate, don't assume.** `nix eval .#darwinConfigurations.<host>.config.system.build.toplevel.drvPath` catches assertions and type errors; on the standalone lane it is `nix eval .#homeConfigurations.\"jhl@<host>\".activationPackage.drvPath`. `just check` builds every machine and is the gate before pushing. There is no CI.
+- **Check the generated artifact, not just that it evaluates.** For anything that produces a file, build and read it — e.g. `nix build .#darwinConfigurations.<host>.config.home-manager.users.jhl.xdg.configFile."<path>".source` then `cat` it. The standalone equivalent drops the middle: `.#homeConfigurations."jhl@<host>".config.xdg.configFile."<path>".source`.
 - **Format:** `just fmt`, or `nix run nixpkgs#alejandra -- --check <files>`.
 
 ## Failure modes that are silent
@@ -45,6 +52,8 @@ These break without an error, which makes them the expensive ones:
 - Homebrew runs `onActivation.cleanup = "zap"`. Removing a brew from `apps.nix` uninstalls it; a manual `brew install` is temporary.
 - `home.file` / `xdg.configFile` produce **read-only** store symlinks. Do not manage a config file that its own tool writes back (Claude Code's `settings.json`, `opencode plugin`, Zed's UI-written settings).
 - `programs.zed-editor` runs with `mutableUserSettings = true`, a **one-way merge**: removing a key from Nix does not remove it from the on-disk `settings.json`.
+- `hosts/home/<Host>/default.nix` is **not a NixOS module** — it is `evalModules`'d against `modules/common/host-spec.nix` alone. It may set `hostSpec` and nothing else. Keep `hosts/common/core/host-spec.nix` free of `imports` and other options for the same reason: both lanes evaluate it, only one has a system scope around it.
+- Cross-platform home files really are cross-platform now. A Darwin-only path (`/opt/homebrew`, `/etc/profiles/per-user`, `launchd`, `targets.darwin`) in `home/jhl/common/core/*.nix` reaches Arch too. Put it in `common/core/darwin.nix` or `common/core/darwin/`.
 
 For the rest — `system.stateVersion` types, `mkOrder 1100`, `lib` in `extraSpecialArgs` — see the README's "Traps" section and `architecture.md`.
 

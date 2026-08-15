@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  hostSpec,
   ...
 }:
 #############################################################
@@ -25,7 +26,7 @@
 #  find out *why* it is not refreshing -- standalone it is strict and prints
 #  the failure.
 #
-#  -- Why the key is injected twice --------------------------------------
+#  -- Why the key is injected twice, on macOS ----------------------------
 #
 #  An export in zsh only reaches processes started from a terminal. When Zed is
 #  launched from the Dock or Spotlight its parent is launchd, no shell is
@@ -35,6 +36,24 @@
 #  The cost, stated plainly: setenv is **login-session global**, so every GUI
 #  process in that session can read this key. If that is unacceptable, disable
 #  the agent and type the key into Zed once so it lands in the Keychain.
+#
+#  -- and why Linux only gets the terminal half --------------------------
+#
+#  The launchd block is gated on isDarwin. Without the gate it would still be
+#  harmless -- home-manager defaults launchd.enable to isDarwin, so no plist is
+#  ever written -- but "inert because of somebody else's default" is not a
+#  thing to rely on, and it reads as though GUI injection works everywhere.
+#
+#  There is a Linux equivalent if it is ever wanted: home-manager already
+#  writes ~/.config/environment.d/10-home-manager.conf, which systemd's user
+#  manager imports into the graphical session. It is not used here because it
+#  takes literal values -- it cannot shell out to read a file the way the
+#  launchd agent does -- so putting the key there would mean writing it into
+#  the nix store, which is exactly what modules/home/llm.nix refuses to do.
+#
+#  Moot on jhlsArchLinux for now regardless: that machine has no sops, so
+#  apiKeyFile never exists and even the zsh export below skips itself. See the
+#  header of home/jhl/jhlsArchLinux.nix.
 #
 #############################################################
 let
@@ -78,8 +97,9 @@ in {
     lib.concatStrings (lib.mapAttrsToList (_: exportLine) active)
   );
 
-  # GUI: this is the path when Zed is launched from the Dock
-  launchd.agents = lib.mapAttrs' (name: p:
+  # GUI: this is the path when Zed is launched from the Dock. macOS only --
+  # see the header for the Linux situation.
+  launchd.agents = lib.optionalAttrs hostSpec.isDarwin (lib.mapAttrs' (name: p:
     lib.nameValuePair "llm-env-${name}" {
       enable = true;
       config = {
@@ -104,5 +124,5 @@ in {
         ];
       };
     })
-  active;
+  active);
 }

@@ -4,6 +4,22 @@
 
 secrets := "../nix-secrets"
 
+# Every recipe here shells out to `nix`, and on a machine that has not switched
+# yet there is nothing enabling flakes: the Macs get experimental-features from
+# the /etc/nix/nix.conf nix-darwin generates, and the standalone lane gets it
+# from the ~/.config/nix/nix.conf that home-manager writes -- both of which are
+# products of a rebuild that cannot run without them. Arch's own nix.conf
+# enables neither.
+#
+# NIX_CONFIG is read as nix.conf content on top of the config files, and the
+# extra- prefix appends rather than replaces, so this adds the two features
+# without disturbing anything a machine already sets. On an already-switched
+# machine it is a no-op.
+#
+# scripts/rebuild.sh passes --extra-experimental-features itself as well; it is
+# meant to work when run directly, not only through just.
+export NIX_CONFIG := "extra-experimental-features = nix-command flakes"
+
 # List all recipes by default
 default:
     @just --list
@@ -12,9 +28,10 @@ default:
 # Everyday
 # ==========
 
-# The three recipes below delegate to scripts/rebuild.sh: it bootstraps a fresh
-# Mac (Xcode CLT, Rosetta, Homebrew) and prefers nh over darwin-rebuild when nh
-# is installed. See the header of that script.
+# The three recipes below delegate to scripts/rebuild.sh. It picks the lane by
+# uname -- nix-darwin on a Mac, standalone home-manager on Linux -- bootstraps a
+# machine that has never switched, and prefers nh when nh is installed. See the
+# header of that script.
 
 # Rebuild and switch to the new config
 rebuild: rebuild-pre && rebuild-post
@@ -104,15 +121,28 @@ update-nix-secrets:
 # Maintenance
 # ==========
 
-# Update flake inputs and brew
+# Update flake inputs and brew.
+#
+# Homebrew only exists on the Macs; the Arch machine's system packages are
+# pacman's business and deliberately not touched from here.
+
+# Update flake inputs, and brew on macOS
 update:
+    #!/usr/bin/env bash
+    set -euo pipefail
     nix flake update
-    brew update && brew upgrade
+    if [ "$(uname -s)" = "Darwin" ]; then
+        brew update && brew upgrade
+    fi
 
 # Clean up old generations
 clean:
+    #!/usr/bin/env bash
+    set -euo pipefail
     sudo nix-collect-garbage -d
-    mo clean
+    if [ "$(uname -s)" = "Darwin" ]; then
+        mo clean
+    fi
 
 # Format every .nix file
 fmt:
@@ -122,6 +152,10 @@ fmt:
 check-beta:
     #!/usr/bin/env bash
     set -euo pipefail
+    if [ "$(uname -s)" != "Darwin" ]; then
+        echo "not a Mac; darwinHomebrew.macosBeta does not apply here"
+        exit 0
+    fi
     build=$(sw_vers -buildVersion)
     catalog=$(defaults read /Library/Preferences/com.apple.SoftwareUpdate.plist CatalogURL 2>/dev/null || true)
     printf 'macOS %s (%s)\n' "$(sw_vers -productVersion)" "$build"
@@ -209,12 +243,20 @@ sops-edit FILE:
 # under /run/secrets, catching the "configured but not in effect" case.
 #
 # Skipped outright when no secrets are declared; it does not fake success.
+#
+# Also skipped on the standalone home-manager lane, which has no system scope
+# and therefore no sops.secrets to check -- see the header of
+# home/jhl/jhlsArchLinux.nix for what wiring it up would take.
 
 # Confirm every secret declared on this machine really landed in /run/secrets
 check-sops:
     #!/usr/bin/env bash
     set -uo pipefail
-    manifest=$(nix eval --raw ".#darwinConfigurations.$(hostname).config.sops.secrets" \
+    if [ "$(uname -s)" != "Darwin" ]; then
+        echo "sops: no system scope on this machine (standalone home-manager), skipping"
+        exit 0
+    fi
+    manifest=$(nix eval --raw ".#darwinConfigurations.$(uname -n).config.sops.secrets" \
                  --apply 's: builtins.concatStringsSep "\n" (builtins.attrNames s)' 2>/dev/null)
     if [ -z "$manifest" ]; then
         echo "sops: this machine declares no secrets, skipping"
@@ -242,6 +284,13 @@ check-sops:
 verify-sops EXPECT="sops-pipeline-ok":
     #!/usr/bin/env bash
     set -uo pipefail
+
+    # The canary exercises sops-nix's *system* path -- postActivation plus the
+    # launchd daemon -- neither of which exists on the standalone lane.
+    if [ "$(uname -s)" != "Darwin" ]; then
+        echo "no system sops on this machine (standalone home-manager), nothing to verify"
+        exit 0
+    fi
 
     # Check the preconditions first. If any step is missing, all four checks
     # below are guaranteed to fail red -- but that means "not set up", not

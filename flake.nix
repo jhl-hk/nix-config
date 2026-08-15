@@ -74,7 +74,7 @@
       "x86_64-linux"
     ];
 
-    # Host auto-discovery: every **subdirectory** of hosts/<platform>/ is a
+    # Host auto-discovery: every **subdirectory** of hosts/<lane>/ is a
     # machine. Only directories count, so placeholder files like .gitkeep are
     # never mistaken for a host.
     hostsIn = dir:
@@ -116,6 +116,72 @@
           home-manager.nixosModules.home-manager
         ];
       };
+
+    # Standalone home-manager: a Linux machine that is **not** NixOS, i.e. nix
+    # installed on top of a distro that already owns the system (Arch, here).
+    # There is a home configuration and no system configuration, so this lane
+    # shares nothing with mkNixosHost beyond the home files themselves.
+    #
+    # Three things the system lanes get for free have to be done by hand:
+    #
+    #   hostSpec   hosts/common/core cannot run -- there is no system module
+    #              tree -- so the schema is evaluated on its own through
+    #              lib.custom.evalHostSpec, over the same host-spec.nix the
+    #              system lanes populate it with.
+    #   pkgs       useGlobalPkgs normally hands home-manager the system's pkgs,
+    #              already carrying overlays and allowUnfree from
+    #              hosts/common/core/nix-settings.nix. Built explicitly here.
+    #   the key    the attribute is "<user>@<host>", which is what
+    #              `home-manager switch --flake .#jhl@<host>` and `nh home`
+    #              both look for.
+    mkHomeHost = hostName: let
+      system = "x86_64-linux";
+
+      pkgs = import nixpkgs {
+        inherit system;
+        overlays = builtins.attrValues outputs.overlays;
+        config.allowUnfree = true;
+      };
+
+      hostSpec = lib.custom.evalHostSpec {
+        specialArgs = {
+          inherit inputs lib pkgs;
+          isDarwin = false;
+        };
+        modules = [
+          ./hosts/common/core/host-spec.nix
+          ./hosts/home/${hostName}
+        ];
+      };
+    in
+      lib.nameValuePair "${hostSpec.username}@${hostName}" (
+        home-manager.lib.homeManagerConfiguration {
+          inherit pkgs;
+
+          # This `lib` argument is **not** extraSpecialArgs.lib, and the
+          # difference matters. home-manager runs
+          # `import lib/stdlib-extended.nix lib` on it and evaluates modules
+          # with the result, so lib.hm is added on top of what is passed rather
+          # than replacing it -- both custom and hm survive. Putting lib in
+          # extraSpecialArgs instead would overwrite the extended one and drop
+          # lib.hm; see the note in hosts/common/users/jhl/darwin.nix.
+          #
+          # It is also the only channel that works. lib.custom is attached with
+          # nixpkgs.lib.extend (see mkLib above), and the module system reaches
+          # it here exactly the way the system lanes do through specialArgs.lib.
+          # pkgs.lib does *not* work as a substitute: the customLib overlay adds
+          # custom with `//`, outside lib's fixpoint, and .extend rebuilds from
+          # that fixpoint and drops it again.
+          inherit lib;
+
+          extraSpecialArgs = {
+            inherit inputs outputs hostSpec;
+            isDarwin = false;
+          };
+
+          modules = [./home/${hostSpec.username}/${hostName}.nix];
+        }
+      );
   in {
     overlays = import ./overlays {inherit inputs;};
 
@@ -123,6 +189,11 @@
 
     # Empty for now. Drop a directory in hosts/nixos/<Name>/ and it appears.
     nixosConfigurations = lib.genAttrs (hostsIn ./hosts/nixos) mkNixosHost;
+
+    # Non-NixOS Linux, home-manager only. Same discovery rule as the two lanes
+    # above, but the attribute is keyed "<user>@<host>" rather than "<host>",
+    # which is the name home-manager and nh expect.
+    homeConfigurations = builtins.listToAttrs (map mkHomeHost (hostsIn ./hosts/home));
 
     # pkgs/common/<name>/package.nix -> nix build .#packages.<system>.<name>
     # Same directory scan as the additions layer in overlays.
@@ -142,9 +213,13 @@
       }
     );
 
-    # `nix flake check` ignores darwinConfigurations by default. Hanging them
-    # here makes `just check` actually build every machine instead of only
-    # type-checking it. The gate to pass before pushing.
+    # `nix flake check` ignores darwinConfigurations and homeConfigurations by
+    # default. Hanging them here makes `just check` actually build every machine
+    # instead of only type-checking it. The gate to pass before pushing.
+    #
+    # Each lane is filtered to the system it can build on, so `nix flake check
+    # --all-systems` from either a Mac or the Arch box evaluates all of them and
+    # builds the ones that belong to it.
     checks = forAllSystems (
       system:
         lib.optionalAttrs (system == "aarch64-darwin") (
@@ -152,6 +227,18 @@
             name: cfg: lib.nameValuePair "darwin-${name}" cfg.system
           )
           self.darwinConfigurations
+        )
+        // lib.optionalAttrs (system == "x86_64-linux") (
+          lib.mapAttrs' (
+            # "jhl@jhlsArchLinux" -> "home-jhl-at-jhlsArchLinux". The @ is legal
+            # in an attribute name but ends up in a derivation name, where it is
+            # not, so flatten it here.
+            name: cfg:
+              lib.nameValuePair
+              "home-${lib.replaceStrings ["@"] ["-at-"] name}"
+              cfg.activationPackage
+          )
+          self.homeConfigurations
         )
     );
   };

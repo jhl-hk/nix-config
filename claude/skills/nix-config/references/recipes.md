@@ -12,6 +12,7 @@ The central reference for extending nix-config. Each recipe maps an intent ("add
 - [Recipe 5: add a home-manager program or dotfile](#recipe-5-add-a-home-manager-program-or-dotfile)
 - [Recipe 6: add a Homebrew package](#recipe-6-add-a-homebrew-package)
 - [Recipe 7: add a host](#recipe-7-add-a-host)
+- [Recipe 7b: add a non-NixOS Linux host](#recipe-7b-add-a-non-nixos-linux-host)
 - [Recipe 8: wire something that needs a secret](#recipe-8-wire-something-that-needs-a-secret)
 - [Recipe 9: add a user](#recipe-9-add-a-user)
 - [Common pitfalls](#common-pitfalls)
@@ -34,7 +35,8 @@ Match the intent to exactly one row before touching files.
 | User dotfile, macOS-only | `home/jhl/common/core/darwin/<name>.nix` + add to `common/core/darwin.nix` |
 | Opt-in user feature | `home/jhl/common/optional/<cat>/<name>.nix`, imported by `home/jhl/<Host>.nix` |
 | Per-host home tweak, no new file | `home/jhl/<Host>.nix` directly |
-| Brand new machine | `hosts/darwin/<Host>/default.nix` + `home/jhl/<Host>.nix` (Recipe 7) |
+| Brand new Mac | `hosts/darwin/<Host>/default.nix` + `home/jhl/<Host>.nix` (Recipe 7) |
+| Brand new non-NixOS Linux box | `hosts/home/<Host>/default.nix` + `home/jhl/<Host>.nix` (Recipe 7b) |
 
 The two tiers ("optional" file vs `modules/` module) exist because an optional file is just config — the fastest path when a feature is a single attrset a machine either wants or doesn't. A `modules/` module is right once two machines need the same feature with *different inputs*. Options give a typed interface and prevent copy-paste drift.
 
@@ -246,6 +248,42 @@ Two files, no flake edit.
 
 Then, **on that Mac**, `just rebuild`. Remember `git add --intent-to-add` (or just let `just rebuild-pre` do it) or the flake won't see the new directory.
 
+## Recipe 7b: add a non-NixOS Linux host
+
+For nix installed on top of a distro that owns the system — Arch, Debian, Fedora. The machine gets a `homeConfigurations."<user>@<Name>"` and no system configuration at all. Pattern source: `hosts/home/jhlsArchLinux/` and `home/jhl/jhlsArchLinux.nix`.
+
+Still two files and still no `flake.nix` edit:
+
+```nix
+# hosts/home/<Name>/default.nix
+{ ... }:
+{
+  hostSpec = {
+    hostName = "<Name>";
+  };
+}
+```
+
+```nix
+# home/jhl/<Name>.nix
+{ ... }:
+{
+  imports = [
+    ./common/core
+    ./common/optional/nix/standalone.nix
+  ];
+}
+```
+
+Four things are different from Recipe 7, and all four bite if you assume otherwise:
+
+- **The host file is not a module.** `flake.nix` runs it through `lib.custom.evalHostSpec`, a bare `evalModules` over `modules/common/host-spec.nix` alone. `imports`, `environment.systemPackages`, `networking.*` and every other NixOS option are unknown options there and fail loudly. Only `hostSpec` exists.
+- **There is no `hosts/common/core`.** Everything it would have supplied is either gone (system packages, `users.users`, `nix.gc`) or has to be redone on the home side. `home/jhl/common/optional/nix/standalone.nix` is the replacement for `nix-settings.nix`: it writes `~/.config/nix/nix.conf`, because `/etc/nix/nix.conf` belongs to the distro's nix package.
+- **There is no sops.** Every secret in this repo is declared in the system scope. Wiring secrets on this lane means adding `inputs.sops-nix.homeManagerModules.sops` to the home file and repointing consumers at `$XDG_RUNTIME_DIR/secrets` instead of `/run/secrets` — and it needs an age key on the machine first, which is user-operated work in `../nix-secrets`. See the header of `home/jhl/jhlsArchLinux.nix`.
+- **The platform sibling is `linux.nix`.** `home/jhl/common/core/default.nix` imports `./linux.nix` for anything where `hostSpec.isDarwin` is false. Do not put NixOS-specific things there.
+
+Then, **on that machine**, `just rebuild`. `scripts/rebuild.sh` sees `uname -s = Linux`, resolves `hosts/home/$(uname -n)`, and drives `nh home switch` / `home-manager switch` / a bootstrap `nix build` + `./result/activate`, in that order of preference. Same `git add --intent-to-add` rule as everywhere else.
+
 ## Recipe 8: wire something that needs a secret
 
 The Nix side is mechanical; the secret value is written by the user with `sops`.
@@ -298,8 +336,8 @@ There is no dedicated tooling; mirror `jhl`.
 
 - **`relativeToRoot` takes a string.** `map lib.custom.relativeToRoot [ "hosts/common/core" ]`, never `./hosts/common/core`.
 - **New files are invisible to the flake until `git add --intent-to-add`.** Flake source tracking ignores untracked files entirely. `just rebuild-pre` handles it; a bare `darwin-rebuild` does not.
-- **`system.stateVersion`:** integer on Darwin, string on NixOS.
-- **Don't put `lib` in `extraSpecialArgs`.** It drops `lib.hm`. See `architecture.md`.
+- **`system.stateVersion`:** integer on Darwin, string on NixOS, and absent entirely on the standalone home-manager lane (which uses `home.stateVersion`, a string, set once in `home/jhl/common/core/default.nix`).
+- **Don't put `lib` in `extraSpecialArgs`.** It drops `lib.hm`. Pass it through the argument home-manager extends instead — `specialArgs.lib` on the system lanes, the top-level `lib` argument of `homeManagerConfiguration` on the standalone lane. `pkgs.lib` does not carry `lib.custom` through `.extend`. See `architecture.md`.
 - **`environment.systemPath` needs `lib.mkOrder 1100`,** not a plain definition and not `mkAfter`.
 - **Don't interpolate a multi-line string at column 0 inside `''`.** Nix de-indents by the minimum indentation across lines, and a line beginning with `${...}` at column 0 makes that minimum 0 — so nothing is stripped and the generated file keeps its source indentation. `home/jhl/common/core/darwin/ssh-agent.nix` builds a single-line array to dodge this.
 - **`lib.mkDefault` in shared layers, plain assignment in host files.** Reaching for `mkForce` in a shared file is a smell.

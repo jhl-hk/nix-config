@@ -13,11 +13,11 @@
 
 ## What hostSpec is
 
-A single `submodule` option declared in `modules/common/host-spec.nix`, imported into the system scope via `hosts/common/core/default.nix` → `modules/common`. The submodule sets `freeformType = attrsOf str`, which only catches *undeclared* string keys — every option below keeps its stricter declared type.
+A single `submodule` option declared in `modules/common/host-spec.nix`, imported into the system scope via `hosts/common/core/default.nix` → `modules/common`. On the standalone home-manager lane there is no system scope, so `lib.custom.evalHostSpec` evaluates the very same file on its own and hands the resulting attrset to `extraSpecialArgs` — same types, same defaults, same assertions. The submodule sets `freeformType = attrsOf str`, which only catches *undeclared* string keys — every option below keeps its stricter declared type.
 
 Values land in two places:
 
-- `hosts/common/core/default.nix` sets `username`, `handle`, `isDarwin` literally and `inherit`s `domain`, `email`, `userFullName`, `sshAllowedSigners`, `networking`, `networkInfo`, `serviceInfo` from `inputs.nix-secrets`.
+- `hosts/common/core/host-spec.nix` sets `username`, `handle`, `isDarwin` literally and `inherit`s `domain`, `email`, `userFullName`, `sshAllowedSigners`, `networking`, `networkInfo`, `serviceInfo` from `inputs.nix-secrets`. Both lanes evaluate this file — the system lanes import it from `core/default.nix`, the standalone lane through `evalHostSpec` — so it must stay a pure `hostSpec` module with no `imports` and no other options.
 - Each `hosts/darwin/<Host>/default.nix` sets `hostName` and per-machine flags.
 
 **Home-manager does not import this module.** `hostSpec` reaches HM as a function argument through `home-manager.extraSpecialArgs` in `hosts/common/users/jhl/darwin.nix`, so home modules destructure `{ hostSpec, ... }` at the function head. Do not add `modules/common` to the HM imports — that would create a second, unpopulated declaration.

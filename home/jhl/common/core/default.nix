@@ -21,14 +21,18 @@ let
   platform =
     if hostSpec.isDarwin
     then "darwin"
-    else "nixos";
+    else "linux";
 in {
   imports = [
     # Option-providing home modules, auto-scanned
     (lib.custom.relativeToRoot "modules/home")
 
     # The platform half. This line is ordinary path interpolation, not magic
-    # -- renaming darwin.nix / nixos.nix makes that platform fail to evaluate.
+    # -- renaming darwin.nix / linux.nix makes that platform fail to evaluate.
+    #
+    # Note the split is darwin/linux, not darwin/nixos: the non-Darwin side is
+    # shared by NixOS and by the standalone home-manager machines under
+    # hosts/home/, which have no NixOS underneath them at all.
     ./${platform}.nix
 
     ./git.nix

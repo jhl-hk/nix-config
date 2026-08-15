@@ -7,9 +7,11 @@
 #
 #  Zsh
 #
-#  Strictly speaking the Homebrew / JAVA_HOME PATH lines only hold on macOS,
-#  but there are only Macs right now so they stay here for the moment. Move
-#  them to ./darwin.nix when the first Linux machine arrives.
+#  The cross-platform half. The Homebrew / JAVA_HOME / per-user-profile PATH
+#  lines moved to ./darwin.nix when jhlsArchLinux arrived -- none of those paths
+#  exist on Linux, and /etc/profiles/per-user is a nix-darwin arrangement, not a
+#  home-manager one. Standalone home-manager puts its own profile on PATH
+#  through hm-session-vars.sh, which this module sources already.
 #
 #  initContent is an mkMerge because the completion block has to be ordered.
 #  home-manager's zsh module lays .zshrc out by mkOrder, and the parts that
@@ -77,17 +79,8 @@ in {
       '')
 
       ''
-        # Add Homebrew to PATH
-        export PATH="/opt/homebrew/bin:/opt/homebrew/sbin:$PATH"
-
-        # Add Home Manager binaries to PATH
-        export PATH="/etc/profiles/per-user/$USER/bin:$PATH"
-
-        # Java (OpenJDK via Homebrew)
-        export PATH="/opt/homebrew/opt/openjdk/bin:$PATH"
-        export JAVA_HOME="/opt/homebrew/opt/openjdk"
-
-        # Needed when driving sops by hand
+        # Needed when driving sops by hand. Cross-platform: the path is the
+        # same one hosts/common/core/sops.nix points sops.age.keyFile at.
         export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
       ''
     ];
