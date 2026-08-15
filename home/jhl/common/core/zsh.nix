@@ -1,8 +1,4 @@
-{
-  lib,
-  hostSpec,
-  ...
-}:
+{lib, ...}:
 #############################################################
 #
 #  Zsh
@@ -10,26 +6,35 @@
 #  The cross-platform half. The Homebrew / JAVA_HOME / per-user-profile PATH
 #  lines moved to ./darwin.nix when jhlsArchLinux arrived -- none of those paths
 #  exist on Linux, and /etc/profiles/per-user is a nix-darwin arrangement, not a
-#  home-manager one. Standalone home-manager puts its own profile on PATH
-#  through hm-session-vars.sh, which this module sources already.
+#  home-manager one.
 #
-#  initContent is an mkMerge because the completion block has to be ordered.
-#  home-manager's zsh module lays .zshrc out by mkOrder, and the parts that
-#  matter here are:
+#  Nothing replaces them on the standalone lane, and nothing needs to. This
+#  module's .zshenv sources hm-session-vars.sh, but that file carries session
+#  *variables* (EDITOR, STARSHIP_CONFIG, NH_FLAKE ...) and contains no PATH
+#  entry unless home.sessionPath is set, which it is not off Darwin. What puts
+#  ~/.nix-profile/bin on PATH there is the distro's own
+#  /etc/profile.d/nix-daemon.sh, shipped by Arch's nix package.
+#
+#  initContent carries an explicit mkOrder because the completion block has to
+#  land in one specific place. home-manager's zsh module lays .zshrc out by
+#  mkOrder, and the parts that matter here are:
 #
 #    570  completionInit (the compinit call below)
 #    650  our completion zstyles -- compsys must exist before they are set,
 #         and menu selection must be configured before anything binds Tab
 #    700  autosuggestion
 #    851  zoxide (./zoxide.nix)
-#   1000  a bare string, i.e. the PATH block at the bottom of this file
+#   1000  a bare string, e.g. the Homebrew PATH block in ./darwin.nix
+#
+#  Two things that used to live here are now shared with ./bash.nix, because
+#  home-manager feeds one option to both shells and duplicating them would let
+#  the two drift:
+#
+#    sysnew / sysup / syscl   -> home.shellAliases     in ./default.nix
+#    SOPS_AGE_KEY_FILE        -> home.sessionVariables in ./default.nix
 #
 #############################################################
-let
-  # Repo path. This used to be hard-coded as ~/Documents/nix-config, which
-  # broke all three aliases once the repo moved under nix-src/.
-  flakeDir = "${hostSpec.home}/Documents/nix-src/nix-config";
-in {
+{
   programs.zsh = {
     enable = true;
     enableCompletion = true;
@@ -41,22 +46,15 @@ in {
       autoload -U compinit && compinit -u
     '';
 
-    shellAliases = {
-      sysnew = "cd ${flakeDir} && just rebuild && cd -";
-      sysup = "cd ${flakeDir} && just update && cd -";
-      syscl = "cd ${flakeDir} && just clean && cd -";
-    };
-
     history = {
       size = 10000;
       path = "$HOME/.zsh_history";
     };
 
-    initContent = lib.mkMerge [
-      # Completion behaviour, adopted from
-      # https://github.com/ChanningHe/nix-config. Order 650: after compinit
-      # (570), before autosuggestions (700).
-      (lib.mkOrder 650 ''
+    # Completion behaviour, adopted from
+    # https://github.com/ChanningHe/nix-config. Order 650: after compinit
+    # (570), before autosuggestions (700).
+    initContent = lib.mkOrder 650 ''
         # CLICOLOR is what macOS's BSD ls reads. LS_COLORS is the GNU format
         # and is set here for one reason only: the list-colors zstyle at the
         # bottom of this block parses it to colourise the completion menu.
@@ -75,14 +73,7 @@ in {
         # it. Loads zsh/complist on demand.
         zstyle ':completion:*' menu select
         zstyle ':completion:*:descriptions' format '[%d]'
-        zstyle ':completion:*' list-colors ''${(s.:.)LS_COLORS}
-      '')
-
-      ''
-        # Needed when driving sops by hand. Cross-platform: the path is the
-        # same one hosts/common/core/sops.nix points sops.age.keyFile at.
-        export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
-      ''
-    ];
+      zstyle ':completion:*' list-colors ''${(s.:.)LS_COLORS}
+    '';
   };
 }

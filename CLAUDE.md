@@ -5,6 +5,8 @@ nix-darwin + home-manager flake, one user (`jhl`), four machines on two lanes:
 - **nix-darwin** — `jhlsMacBookPro`, `jhlsMacBookAir`, `SeandeMac-Studio`. Host dir `hosts/darwin/<Host>/`, output `darwinConfigurations.<Host>`.
 - **standalone home-manager** — `jhlsArchLinux`, i.e. nix on top of Arch. Host dir `hosts/home/<Host>/`, output `homeConfigurations.jhl@<Host>`. **No system configuration exists on this lane**: no `hosts/common/core`, no `environment.systemPackages`, no sops. Anything needing root belongs to pacman.
 
+  **On that machine nix owns exactly three things: CLI tools, dotfiles, and fonts.** GUI apps, input methods and anything else dlopen'd into another process stay with pacman — not preference, but NVIDIA/Wayland and a second toolkit copy per process. Configuring a program nix does not install is normal here (`zed`, `fcitx5`), exactly as the Macs do against Homebrew casks. The reasoning is recorded in full in `home/jhl/jhlsArchLinux.nix`; read it before widening the scope.
+
 A third lane, NixOS (`hosts/nixos/`), is an unused skeleton — don't mistake it for the standalone lane.
 
 Private data lives in the sibling `../nix-secrets`, consumed as a flake input.

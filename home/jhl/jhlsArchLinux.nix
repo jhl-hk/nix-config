@@ -11,12 +11,44 @@
 #  branches on uname and drives `home-manager switch` here instead of
 #  `darwin-rebuild switch`.
 #
-#  -- Division of labour --------------------------------------------------
+#  -- Division of labour, decided ------------------------------------------
 #
-#  pacman keeps the system and the GUI apps: zed (the `zeditor` package),
-#  ghostty, the desktop, the kernel. nix owns dotfiles and the CLI tools those
-#  dotfiles configure -- which is why programs.zed-editor below still runs with
-#  package = null, exactly as it does against the Homebrew cask on the Macs.
+#  **nix owns exactly three things here: CLI tools, dotfiles, and fonts.**
+#  Everything else on this machine is pacman's. This is a settled decision, not
+#  a starting point -- do not grow it without a reason that beats the three
+#  below.
+#
+#    CLI tools   whatever the dotfiles configure: zsh, starship, git, tmux,
+#                zoxide, nh, pi, wakatime-cli. Same versions as the Macs.
+#    dotfiles    including config files for programs nix does *not* install --
+#                zed and fcitx5 both run with their binary from pacman and
+#                their configuration from here, the same arrangement the Macs
+#                use against Homebrew casks.
+#    fonts       ../common/core/linux.nix. Homebrew supplies them on the Macs;
+#                there is no cask here, so nixpkgs does it.
+#
+#  What is deliberately left to pacman, and why each one is not a preference:
+#
+#    GUI apps      this laptop is NVIDIA + Wayland. A nixpkgs GUI app links
+#                  nixpkgs' graphics stack and cannot see /usr/lib's
+#                  libGLX_nvidia, so it loses acceleration or fails outright.
+#                  nixGL exists, is not in nixpkgs, and wraps per app.
+#    IME / plugins fcitx5-qt and fcitx5-gtk are .so files that Arch's own
+#                  applications dlopen into their process. Arch and nixpkgs
+#                  currently ship *identical* Qt and GTK versions, so this is
+#                  not version skew -- it is that the nix build's RUNPATH pulls
+#                  a second copy of the toolkit into an address space that
+#                  already has one. Same reasoning for any Qt/GTK plugin.
+#    system        kernel, drivers, /etc, PAM, system systemd units, the
+#                  display manager. Not reachable from a home-manager scope at
+#                  all.
+#
+#  Declarative pacman was considered and rejected: rendering a package list and
+#  syncing it with paru would version-control the *names*, but pacman is a
+#  rolling target with no way to pin a version, so it could never reproduce a
+#  state -- only a set. If nix owning packages ever becomes the actual
+#  requirement, the answer is NixOS and the empty hosts/nixos/ lane, not a
+#  half-declarative layer bolted onto Arch.
 #
 #  -- Secrets are not wired up yet ----------------------------------------
 #
@@ -55,7 +87,24 @@
     # ~/.config/nix/nix.conf instead. Read the header before copying this to a
     # Mac -- on Darwin the same file would outrank nix-darwin's.
     ./common/optional/nix/standalone.nix
+
+    # Pinyin + Mozc on a QWERTY layout, over this machine's Colemak English.
+    # The fcitx5 binaries come from pacman; only the profile is managed here.
+    ./common/optional/desktop/fcitx5.nix
   ];
+
+  # Graphical passphrase prompt, from the hand-written ~/.bashrc that
+  # common/core/bash.nix replaces.
+  #
+  # Machine-specific rather than Linux-wide: the path is pacman's, and
+  # ksshaskpass is KDE's implementation -- a GNOME or headless Linux box would
+  # want a different one or none at all. `prefer` rather than `force` so ssh
+  # still falls back to the terminal when there is no display, which is what
+  # makes an ssh session into this laptop still promptable.
+  home.sessionVariables = {
+    SSH_ASKPASS = "/usr/bin/ksshaskpass";
+    SSH_ASKPASS_REQUIRE = "prefer";
+  };
 
   # The default primary from modules/home/ssh-keys.nix -- the resident sk key --
   # is right here: ~/.ssh/id_ed25519_sk_rk exists and is what git signs with.
