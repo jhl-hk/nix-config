@@ -37,6 +37,39 @@
       url = "git+ssh://git@github.com/jhl-hk/nix-secrets.git?ref=main&shallow=1";
       inputs.nixpkgs.follows = "nixpkgs";
     };
+
+    # Claude Code skills that live in private JianyueLab repos.
+    #
+    # flake = false: both are plain content trees with no flake.nix, so the
+    # input is just a store path.
+    #
+    # -- Why these are inputs and not vendored ------------------------------
+    #
+    # jhl-hk/nix-config is a **public** repo, and both of these are private.
+    # claude/skills/<name> in-tree (the apple-design route) would publish
+    # JianyueLab internals to GitHub. As an input, only the URL and the locked
+    # rev land here -- the same trade nix-secrets above already makes, and the
+    # same one that makes `just check` need SSH auth to github.com on every
+    # machine.
+    #
+    # Consequence worth knowing: these are pinned by flake.lock, so editing a
+    # SKILL.md in ../../Dev/JianyueLab changes nothing until it is pushed and
+    # re-locked with `nix flake update jianyuelab-skills` (or -docs).
+    #
+    # Docs carries the whole knowledge base because
+    # skills/jianyuelab-docs/docs is a git symlink (mode 120000) to ../../docs
+    # -- the skill is only an index and is inert without it. Pointing at the
+    # subdirectory still works: home.file links the directory itself, so the
+    # relative symlink resolves inside the input's store path.
+    jianyuelab-skills = {
+      url = "git+ssh://git@github.com/JianyueLab/skills.git?ref=main&shallow=1";
+      flake = false;
+    };
+
+    jianyuelab-docs = {
+      url = "git+ssh://git@github.com/JianyueLab/Docs.git?ref=main&shallow=1";
+      flake = false;
+    };
   };
 
   outputs = inputs @ {

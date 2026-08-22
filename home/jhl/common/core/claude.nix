@@ -1,4 +1,8 @@
-{lib, ...}:
+{
+  inputs,
+  lib,
+  ...
+}:
 #############################################################
 #
 #  Claude Code Configuration
@@ -21,6 +25,15 @@
 #  config and API key come from home/jhl/common/core/wakatime.nix -- nothing
 #  extra to set up after installing.
 #
+#    claude plugin marketplace add JianyueLab/claude-plugin
+#    claude plugin i jyl-usage@jianyuelab-claude
+#
+#  Reports token usage to the llm-web portal, closing the gap where a
+#  subscription-billed Claude Code session is invisible to the gateway's meter.
+#  Its two config values come from home/jhl/common/core/jyl-usage.nix, which
+#  reuses the llm/api_key secret rather than adding one. That marketplace is a
+#  **private** repo, so the clone needs a working GitHub credential.
+#
 #############################################################
 let
   # Skills to deploy -- each maps to claude/skills/<name>/SKILL.md
@@ -36,14 +49,34 @@ let
     "nix-config"
     "rir-apis"
   ];
+
+  # Skills that cannot be vendored, because this repo is public and they are
+  # not. The value is a path inside a private flake input -- see the block
+  # above jianyuelab-skills in flake.nix for why, and for the re-locking step
+  # that a local edit needs before it is visible here.
+  #
+  # home.file links a directory source as **one symlink** to the store rather
+  # than recreating the tree, which is what keeps jianyuelab-docs working: its
+  # `docs` entry is a relative git symlink out to the repo root, and it only
+  # resolves while the link points into the input's own store path.
+  privateSkills = {
+    web-account-sdk = "${inputs.jianyuelab-skills}/web-account-sdk";
+    jianyuelab-docs = "${inputs.jianyuelab-docs}/skills/jianyuelab-docs";
+  };
 in {
-  home.file = lib.listToAttrs (
-    map (
-      name:
-        lib.nameValuePair ".claude/skills/${name}" {
-          source = lib.custom.relativeToRoot "claude/skills/${name}";
-        }
+  home.file =
+    lib.listToAttrs (
+      map (
+        name:
+          lib.nameValuePair ".claude/skills/${name}" {
+            source = lib.custom.relativeToRoot "claude/skills/${name}";
+          }
+      )
+      skills
     )
-    skills
-  );
+    // lib.mapAttrs' (
+      name: source:
+        lib.nameValuePair ".claude/skills/${name}" {inherit source;}
+    )
+    privateSkills;
 }

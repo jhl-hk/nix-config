@@ -44,6 +44,7 @@ in {
     ./zoxide.nix
     ./tmux.nix
     ./claude.nix
+    ./jyl-usage.nix
     ./llm.nix
     ./opencode.nix
     ./pi.nix
