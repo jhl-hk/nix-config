@@ -75,6 +75,7 @@
       "mole" # Disk cleaner
       "awscli" # AWS CLI
       "rclone"
+      "cloudflare-wrangler" # Cloudflare Workers/R2 CLI
 
       # AI
       "gemini-cli"

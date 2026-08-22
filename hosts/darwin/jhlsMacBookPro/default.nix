@@ -11,6 +11,7 @@
   imports = map lib.custom.relativeToRoot [
     "hosts/common/optional/darwin/steam.nix"
     "hosts/common/optional/darwin/llm.nix"
+    "hosts/common/optional/darwin/cloudflare.nix"
     "hosts/common/optional/darwin/wakatime.nix"
 
     # Installs the library only. The `enable -f` that makes it do anything

@@ -85,10 +85,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1786102529,
-        "narHash": "sha256-uNXXP7PGa4/jjQJZ5a+LA1QMBydyFDm1A30IEi44XJ8=",
+        "lastModified": 1787372992,
+        "narHash": "sha256-9hYRG3FMOXAnr/NDdFmvi2+Ih9qoQsIdRBHCc/XX3T4=",
         "ref": "main",
-        "rev": "64f78a2bcf77413243e5daa3b6ded95c30180b7a",
+        "rev": "9e371dd45f27ec6b7102c6d744ca1d64f475c0d4",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/jhl-hk/nix-secrets.git"
