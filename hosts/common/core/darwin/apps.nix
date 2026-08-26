@@ -76,6 +76,31 @@
       "rclone"
       "cloudflare-wrangler" # Cloudflare Workers/R2 CLI
 
+      # Backing tools for the docx/pdf/pptx/xlsx skills linked in
+      # home/jhl/common/core/claude.nix. Those skills are prose plus a few
+      # scripts; every real operation shells out to something here.
+      #
+      #   pandoc   docx -> markdown, the "read a Word file" path
+      #   qpdf     command-line merge/split/rotate/encrypt
+      #   poppler  provides pdftotext
+      #
+      # uv is the odd one out and the reason there is no python3.withPackages
+      # anywhere: the skills need openpyxl, pandas, pypdf, pdfplumber,
+      # reportlab, pytesseract and markitdown, all of which nixpkgs has -- but
+      # home/jhl/common/core/darwin.nix prepends /opt/homebrew/bin to PATH, so
+      # a nix python would never win a bare `python3` lookup and the modules
+      # would be invisible. Shadowing Homebrew's python@3.14 instead is not
+      # an option either: awscli, openssh, ykman and ldns all depend on it.
+      #
+      # So the modules are fetched per-invocation instead:
+      #   uv run --with openpyxl,pandas python script.py
+      #   uvx markitdown deck.pptx
+      # No global interpreter changes, nothing to keep in sync with brew.
+      "pandoc"
+      "qpdf"
+      "poppler"
+      "uv"
+
       # AI
       "gemini-cli"
       "opencode"
