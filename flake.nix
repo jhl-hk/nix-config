@@ -70,6 +70,22 @@
       url = "git+ssh://git@github.com/JianyueLab/Docs.git?ref=main&shallow=1";
       flake = false;
     };
+
+    # Anthropic's skills repo, for the four document-processing skills
+    # (docx/pdf/pptx/xlsx). Public, so no SSH and no touch on `nix flake update`.
+    #
+    # These are taken as an input rather than through `claude plugin install`
+    # because the plugin carries no hooks -- it is a pure skill library, so
+    # nothing is lost by linking the directories directly, and flake.lock
+    # pins them instead of Claude Code re-cloning HEAD at runtime.
+    #
+    # The upstream marketplace.json selects exactly these four out of the 19
+    # skills in the repo; home/jhl/common/core/claude.nix repeats that list.
+    # Check it against the "skills" array there when bumping this input.
+    anthropic-skills = {
+      url = "github:anthropics/skills";
+      flake = false;
+    };
   };
 
   outputs = inputs @ {
