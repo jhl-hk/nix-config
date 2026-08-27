@@ -36,6 +36,23 @@
       }
     ];
 
+    # The only two GUI apps in core. Both are infrastructure rather than
+    # applications, which is why they are not in desktop.nix:
+    #
+    #   tailscale-app  is how the other machines are reached at all. Leaving it
+    #                  to desktop.nix meant jhlsMacBookAir declined it, and with
+    #                  onActivation.cleanup = "zap" the first successful
+    #                  activation there would have uninstalled Tailscale and
+    #                  cut the ssh route being used to run that very rebuild.
+    #   ghostty        pairs with the ghostty-bin.terminfo in ./default.nix's
+    #                  systemPackages -- the terminfo is what makes sshing
+    #                  *into* a machine from Ghostty work, and it is already
+    #                  fleet-wide, so the terminal itself belongs beside it.
+    casks = [
+      "ghostty"
+      "tailscale-app"
+    ];
+
     brews = [
       "bun" # Package manager
       "node"

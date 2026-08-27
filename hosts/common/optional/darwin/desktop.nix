@@ -29,7 +29,6 @@
       "notchnook"
       "alt-tab"
       "claude"
-      "ghostty"
 
       # Development Tools
       "1password"
@@ -41,7 +40,6 @@
       "stats" # System status monitor
       "sublime-text" # Text editor
       "syncthing-app"
-      "tailscale-app" # VPN
       "termius" # SSH client
       "visual-studio-code"
       "wireshark-app"
