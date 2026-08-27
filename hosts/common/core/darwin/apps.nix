@@ -68,6 +68,7 @@
       "iperf3"
       "nexttrace"
       "sleuthkit"
+      "ssh-askpass"
       "ykman"
 
       # Utilities
