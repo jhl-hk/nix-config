@@ -28,5 +28,9 @@
 #
 #############################################################
 {
+  # No tap: flyline ships from homebrew/core. tw93/tap used to sit in the
+  # fleet-wide list, but nothing declared here or anywhere else consumes it --
+  # `brew info --json=v2 flyline` reports tap "homebrew/core", and so does
+  # mole, the other plausible candidate. It was dead weight and is now gone.
   darwinHomebrew.brews = ["flyline"];
 }
