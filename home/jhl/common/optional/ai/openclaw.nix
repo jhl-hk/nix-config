@@ -66,6 +66,24 @@ let
       model.primary = "openai/gpt-5.6-sol";
     };
 
+    # Pin the runtime, or OpenAI silently routes through the Codex harness.
+    # From the config schema's own description of agentRuntime.id:
+    #
+    #   "OpenAI on the official endpoint defaults to the Codex harness when
+    #    omitted."
+    #
+    # That harness is a separate plugin, and a broken one here: it fails to
+    # register with `Cannot read properties of undefined (reading
+    # 'openSyncKeyedStore')`, after which a Telegram turn sits in
+    # state=processing until the channel gives up 300s later. The symptom is
+    # a bot that receives messages and never answers -- no error reaches the
+    # user, and `openclaw status` only hints at it through a Runtime column
+    # reading "OpenAI Codex".
+    #
+    # An API key wants the plain inference loop anyway; the Codex harness is
+    # for ChatGPT/Codex OAuth setups.
+    models.providers.openai.agentRuntime.id = "openclaw";
+
     channels.telegram = {
       enabled = true;
 
