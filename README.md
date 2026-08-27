@@ -1,14 +1,14 @@
 # nix-config
 
-jhl's nix-darwin + home-manager flake. Four machines, one user (`jhl`), across two live lanes:
+jhl's nix-darwin + home-manager flake. Three machines, one user (`jhl`), all on the nix-darwin lane:
 
 | Lane | Host directory | Flake output | Machines |
 |---|---|---|---|
 | nix-darwin | `hosts/darwin/` | `darwinConfigurations.<Host>` | `jhlsMacBookPro`, `jhlsMacBookAir`, `SeandeMac-Studio` |
-| standalone home-manager | `hosts/home/` | `homeConfigurations.jhl@<Host>` | `jhlsArchLinux` |
+| standalone home-manager | `hosts/home/` | `homeConfigurations.jhl@<Host>` | none — skeleton only |
 | NixOS | `hosts/nixos/` | `nixosConfigurations.<Host>` | none — skeleton only |
 
-The standalone lane is nix running on top of a distro that owns the system (Arch, here). It has a home configuration and **no system configuration**: no `hosts/common/core`, no `environment.systemPackages`, no sops. Root-level concerns stay with pacman.
+The standalone lane is nix running on top of a distro that owns the system. It has a home configuration and **no system configuration**: no `hosts/common/core`, no `environment.systemPackages`, no sops. Root-level concerns stay with the distro's package manager. `jhlsArchLinux` lived here until it was retired; the machinery is intact, so a Linux box drops back in with a `hosts/home/<Host>/` directory and a `home/jhl/<Host>.nix`.
 
 Private data lives in the sibling [`../nix-secrets`](https://github.com/jhl-hk/nix-secrets) (private) and is pulled in as a flake input.
 
@@ -137,7 +137,7 @@ Full templates and edge cases are in `claude/skills/nix-config/references/recipe
 ## Traps you have to know about
 
 - **`system.stateVersion` has a different type per platform**: nix-darwin wants an integer (`6`), NixOS wants a string (`"25.05"`). Mixing them up is a type error at evaluation time. It pins migration logic, not the running version — do not touch it without reading the release notes. The standalone lane has no `system.stateVersion` at all; its equivalent is `home.stateVersion`, a string, set once in `home/jhl/common/core/default.nix`.
-- **Files under `home/jhl/common/core/` are genuinely cross-platform now.** Before `jhlsArchLinux` there were only Macs, so macOS paths in "cross-platform" files were harmless. They are not any more: `/opt/homebrew`, `/etc/profiles/per-user`, `launchd.agents` and `targets.darwin.*` all belong in `common/core/darwin.nix` or `common/core/darwin/`. The non-Darwin sibling is `linux.nix`, not `nixos.nix`, because it is loaded on machines with no NixOS underneath them.
+- **Files under `home/jhl/common/core/` are genuinely cross-platform.** With only Macs live, a macOS path in a "cross-platform" file is harmless *today* and breaks the moment a Linux host returns — `jhlsArchLinux` already proved that once: `/opt/homebrew`, `/etc/profiles/per-user`, `launchd.agents` and `targets.darwin.*` all belong in `common/core/darwin.nix` or `common/core/darwin/`. The non-Darwin sibling is `linux.nix`, not `nixos.nix`, because it is loaded on machines with no NixOS underneath them.
 - **`hosts/home/<Host>/default.nix` is not a module.** It is evaluated on its own by `lib.custom.evalHostSpec` against `modules/common/host-spec.nix` — so `imports`, `environment.systemPackages` and every other NixOS option are unknown options there. Only `hostSpec` exists. The same constraint applies to `hosts/common/core/host-spec.nix`, which both lanes evaluate.
 - **`lib.custom.relativeToRoot` takes a string, not a path literal**. `relativeToRoot "hosts/common/core"` is correct; `relativeToRoot ./hosts/common/core` is not.
 - **`environment.systemPath` must use `lib.mkOrder 1100`**. nix-darwin defines the nix paths at default order 1000 and the `/usr/bin` set at 1200; a plain definition drifts with module order, which can put Homebrew's paths ahead of nix or behind `/usr/bin`.
@@ -157,7 +157,7 @@ Full templates and edge cases are in `claude/skills/nix-config/references/recipe
   `/run/secrets.d` is a 64 MiB **HFS RAM disk** (`mount | grep secrets.d` shows the device number), so `rm -rf` empties it but cannot remove the mount point itself, reporting `Resource busy` — deleting the contents is enough for safety, the rest just reclaims memory. macOS clears `/run` on reboot, but do not rely on that.
 - **`onActivation.cleanup = "zap"`**: any Homebrew package not declared in `apps.nix` is uninstalled on the next switch. Anything from a manual `brew install` is temporary.
 - **Always push changes to nix-secrets.** It is a locked remote input, so local edits are invisible to the flake. `just rebuild` runs `update-nix-secrets` for you, but pushing is on you.
-- **The standalone lane has no sops.** Every secret in this repo is declared in the system scope, which that lane does not have, so `llm` and `wakatime` run without a key there and fail quietly rather than loudly. The header of `home/jhl/jhlsArchLinux.nix` records what wiring it up would take.
+- **The standalone lane has no sops.** Every secret in this repo is declared in the system scope, which that lane does not have, so `llm` and `wakatime` would run without a key there and fail quietly rather than loudly. Worth re-reading before putting a Linux machine back on that lane.
 - **On the standalone lane, `~/.config/nix/nix.conf` is written by this repo** (via `home/jhl/common/optional/nix/standalone.nix`), because the distro owns `/etc/nix`. Do not import that file on a Mac: there the same file would silently outrank the `nix.conf` nix-darwin generates. Note also that the flake's `nixConfig` substituters are refused for an untrusted user — fixing that means `trusted-users = jhl` in the root-owned `/etc/nix/nix.conf`, which is outside this repo.
 
 ## References

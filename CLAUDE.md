@@ -1,11 +1,11 @@
 # CLAUDE.md
 
-nix-darwin + home-manager flake, one user (`jhl`), four machines on two lanes:
+nix-darwin + home-manager flake, one user (`jhl`), three machines — all Macs — on one live lane:
 
 - **nix-darwin** — `jhlsMacBookPro`, `jhlsMacBookAir`, `SeandeMac-Studio`. Host dir `hosts/darwin/<Host>/`, output `darwinConfigurations.<Host>`.
-- **standalone home-manager** — `jhlsArchLinux`, i.e. nix on top of Arch. Host dir `hosts/home/<Host>/`, output `homeConfigurations.jhl@<Host>`. **No system configuration exists on this lane**: no `hosts/common/core`, no `environment.systemPackages`, no sops. Anything needing root belongs to pacman.
+- **standalone home-manager** — no machines right now. Host dir `hosts/home/<Host>/`, output `homeConfigurations.jhl@<Host>`. **No system configuration exists on this lane**: no `hosts/common/core`, no `environment.systemPackages`, no sops. Anything needing root belongs to the distro's package manager.
 
-  **On that machine nix owns exactly three things: CLI tools, dotfiles, and fonts.** GUI apps, input methods and anything else dlopen'd into another process stay with pacman — not preference, but NVIDIA/Wayland and a second toolkit copy per process. Configuring a program nix does not install is normal here (`zed`, `fcitx5`), exactly as the Macs do against Homebrew casks. The reasoning is recorded in full in `home/jhl/jhlsArchLinux.nix`; read it before widening the scope.
+  `jhlsArchLinux` was the one machine here and has been removed; `hosts/home/` is now a `.gitkeep` skeleton like `hosts/nixos/`. The lane's machinery — `mkHomeHost`, `lib.custom.evalHostSpec`, the Linux branch of `scripts/rebuild.sh`, `home/jhl/common/core/linux.nix` — is all still in place, so a Linux box returns by adding two files and nothing else. The division of labour that lane settled on (nix owns CLI tools, dotfiles and fonts; GUI apps and anything dlopen'd into another process stay with the distro) is worth recovering from git history before widening it.
 
 A third lane, NixOS (`hosts/nixos/`), is an unused skeleton — don't mistake it for the standalone lane.
 

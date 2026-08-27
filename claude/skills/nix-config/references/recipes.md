@@ -250,7 +250,7 @@ Then, **on that Mac**, `just rebuild`. Remember `git add --intent-to-add` (or ju
 
 ## Recipe 7b: add a non-NixOS Linux host
 
-For nix installed on top of a distro that owns the system — Arch, Debian, Fedora. The machine gets a `homeConfigurations."<user>@<Name>"` and no system configuration at all. Pattern source: `hosts/home/jhlsArchLinux/` and `home/jhl/jhlsArchLinux.nix`.
+For nix installed on top of a distro that owns the system — Arch, Debian, Fedora. The machine gets a `homeConfigurations."<user>@<Name>"` and no system configuration at all. Pattern source: `hosts/home/jhlsArchLinux/` and `home/jhl/jhlsArchLinux.nix` — both deleted when that machine was retired, so read them out of git history.
 
 Still two files and still no `flake.nix` edit:
 
@@ -279,7 +279,7 @@ Four things are different from Recipe 7, and all four bite if you assume otherwi
 
 - **The host file is not a module.** `flake.nix` runs it through `lib.custom.evalHostSpec`, a bare `evalModules` over `modules/common/host-spec.nix` alone. `imports`, `environment.systemPackages`, `networking.*` and every other NixOS option are unknown options there and fail loudly. Only `hostSpec` exists.
 - **There is no `hosts/common/core`.** Everything it would have supplied is either gone (system packages, `users.users`, `nix.gc`) or has to be redone on the home side. `home/jhl/common/optional/nix/standalone.nix` is the replacement for `nix-settings.nix`: it writes `~/.config/nix/nix.conf`, because `/etc/nix/nix.conf` belongs to the distro's nix package.
-- **There is no sops.** Every secret in this repo is declared in the system scope. Wiring secrets on this lane means adding `inputs.sops-nix.homeManagerModules.sops` to the home file and repointing consumers at `$XDG_RUNTIME_DIR/secrets` instead of `/run/secrets` — and it needs an age key on the machine first, which is user-operated work in `../nix-secrets`. See the header of `home/jhl/jhlsArchLinux.nix`.
+- **There is no sops.** Every secret in this repo is declared in the system scope. Wiring secrets on this lane means adding `inputs.sops-nix.homeManagerModules.sops` to the home file and repointing consumers at `$XDG_RUNTIME_DIR/secrets` instead of `/run/secrets` — and it needs an age key on the machine first, which is user-operated work in `../nix-secrets`. The retired `home/jhl/jhlsArchLinux.nix` recorded this in full; it is in git history.
 - **The platform sibling is `linux.nix`.** `home/jhl/common/core/default.nix` imports `./linux.nix` for anything where `hostSpec.isDarwin` is false. Do not put NixOS-specific things there.
 
 Then, **on that machine**, `just rebuild`. `scripts/rebuild.sh` sees `uname -s = Linux`, resolves `hosts/home/$(uname -n)`, and drives `nh home switch` / `home-manager switch` / a bootstrap `nix build` + `./result/activate`, in that order of preference. Same `git add --intent-to-add` rule as everywhere else.

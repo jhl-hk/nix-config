@@ -51,9 +51,10 @@
 #  launchd agent does -- so putting the key there would mean writing it into
 #  the nix store, which is exactly what modules/home/llm.nix refuses to do.
 #
-#  Moot on jhlsArchLinux for now regardless: that machine has no sops, so
-#  apiKeyFile never exists and even the zsh export below skips itself. See the
-#  header of home/jhl/jhlsArchLinux.nix.
+#  Moot on the standalone home-manager lane regardless: it has no system scope
+#  and therefore no sops, so apiKeyFile never exists and even the zsh export
+#  below skips itself. That lane is empty today -- jhlsArchLinux was its only
+#  machine and has been retired.
 #
 #############################################################
 let

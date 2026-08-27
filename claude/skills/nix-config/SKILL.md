@@ -5,12 +5,12 @@ description: Operates jhl's nix-darwin + home-manager monorepo at ~/Documents/ni
 
 # nix-config
 
-Operating manual for `/Users/jhl/Documents/nix-src/nix-config` (public logic) and `/Users/jhl/Documents/nix-src/nix-secrets` (private data, separate flake input). One user, `jhl`; four machines across two of the three host lanes:
+Operating manual for `/Users/jhl/Documents/nix-src/nix-config` (public logic) and `/Users/jhl/Documents/nix-src/nix-secrets` (private data, separate flake input). One user, `jhl`; three machines, all Macs, on one of the three host lanes:
 
 | Lane | Directory | Output | Machines |
 |---|---|---|---|
 | nix-darwin | `hosts/darwin/` | `darwinConfigurations.<Host>` | `jhlsMacBookPro`, `jhlsMacBookAir`, `SeandeMac-Studio` |
-| standalone home-manager | `hosts/home/` | `homeConfigurations.<user>@<Host>` | `jhlsArchLinux` |
+| standalone home-manager | `hosts/home/` | `homeConfigurations.<user>@<Host>` | none — skeleton only |
 | NixOS | `hosts/nixos/` | `nixosConfigurations.<Host>` | none yet (empty skeleton) |
 
 The standalone lane is for **nix on top of another distro** — Arch, here. There is no system configuration at all on that lane: no `hosts/common/core`, no `environment.systemPackages`, no system sops. Anything that needs root is pacman's job, not this repo's. The NixOS skeleton (`hosts/nixos/`, `modules/hosts/nixos/`, `hosts/common/core/nixos.nix`, `hosts/common/users/jhl/nixos.nix`) is still unused; do not confuse it with the standalone lane, which is a real, live machine.
@@ -121,7 +121,7 @@ Core is the always-on baseline; optional gives per-host granularity. The `<HostN
 
 ### Recipe 6 — add a Homebrew package
 
-Fleet-wide → append to the right list in `hosts/common/core/darwin/apps.nix` (`darwinHomebrew.brews` / `.casks` / `.taps` / `.masApps`). One machine only → make a `hosts/common/optional/darwin/<name>.nix` that appends to `darwinHomebrew.casks` and import it from that host.
+Fleet-wide **CLI** → `hosts/common/core/darwin/apps.nix`, which now holds only the ~14-brew baseline. GUI casks and Mac App Store titles live in `hosts/common/optional/darwin/desktop.nix`, and the heavier CLI in `dev-extras.nix`; both are imported by jhlsMacBookPro and SeandeMac-Studio but deliberately not by jhlsMacBookAir, which is CLI-only. One machine only → make a `hosts/common/optional/darwin/<name>.nix` that appends to `darwinHomebrew.casks` and import it from that host.
 
 `taps`/`brews`/`casks` are `listOf`, so definitions from any number of modules concatenate. `masApps` is `attrsOf int` and merges by attribute.
 
@@ -139,7 +139,7 @@ Same two files, different lane: `hosts/home/<Name>/default.nix` and `home/jhl/<N
 - The home file carries everything, including what a Mac would get from its system config. Import `home/jhl/common/optional/nix/standalone.nix` to enable flakes through `~/.config/nix/nix.conf`, since the distro owns `/etc/nix`.
 - The flake attribute is `homeConfigurations."<user>@<Name>"`, and `just rebuild` drives `home-manager switch`, not `darwin-rebuild`. `scripts/rebuild.sh` picks the lane from `uname`.
 
-Live example: `jhlsArchLinux`. Read the header of `home/jhl/jhlsArchLinux.nix` first — it records what the lane gives up, notably sops.
+No machines on it right now — `jhlsArchLinux` was the only one and was retired. The machinery is intact; recover its header from git history before putting a box back on the lane, it records what the lane gives up, notably sops.
 
 ### Recipe 8 — wire something that needs a secret
 
@@ -170,7 +170,7 @@ The YAML itself is user-operated — tell the user the exact key path and file, 
 - **`lib.mkDefault` in base layers, plain assignment in host files.** `hosts/common/core/darwin.nix` sets `darwinWallpaper` with `mkDefault` so a host can override with a bare assignment.
 - **Home modules take `hostSpec` as an argument, not from `config`.** It arrives via `extraSpecialArgs`; `modules/common/host-spec.nix` is deliberately *not* imported into the HM scope.
 - **Secrets are user-operated.** This skill writes Nix that references `sops.secrets."<path>"` and names the YAML key. It does not run `sops`, edit `.sops.yaml`, generate age keys, or rekey.
-- **The standalone lane has no sops and no system scope.** `hosts/common/optional/**`, `environment.systemPackages`, `users.users`, `sops.secrets` and `nix.gc` do not exist for `jhlsArchLinux`. Anything of that kind has to be redone on the home side or left to the distro. `~/.config/nix/nix.conf` replaces `nix-settings.nix` there (`home/jhl/common/optional/nix/standalone.nix`) — but do **not** import that file on a Mac, where it would silently outrank nix-darwin's generated `/etc/nix/nix.conf`.
+- **The standalone lane has no sops and no system scope.** `hosts/common/optional/**`, `environment.systemPackages`, `users.users`, `sops.secrets` and `nix.gc` do not exist on that lane. Anything of that kind has to be redone on the home side or left to the distro. `~/.config/nix/nix.conf` replaces `nix-settings.nix` there (`home/jhl/common/optional/nix/standalone.nix`) — but do **not** import that file on a Mac, where it would silently outrank nix-darwin's generated `/etc/nix/nix.conf`.
 - **Cross-platform home files are now genuinely cross-platform.** `/opt/homebrew`, `/etc/profiles/per-user`, `launchd.agents` and `targets.darwin.*` in `home/jhl/common/core/*.nix` reach Arch too. They belong in `common/core/darwin.nix` or `common/core/darwin/`.
 
 ## Commands cheat sheet
