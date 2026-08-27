@@ -42,29 +42,6 @@ in {
       '';
     };
 
-    cleanup = mkOption {
-      type = types.enum ["none" "uninstall" "zap"];
-      default = "zap";
-      description = ''
-        What to do on activation with Homebrew packages this repo does not
-        declare.
-
-        `zap` uninstalls them **and deletes their configuration and data**.
-        That is the fleet default because it is what makes the Brewfile the
-        single source of truth: a manual `brew install` is temporary, declare
-        it or lose it.
-
-        `uninstall` still removes undeclared packages but leaves their files
-        alone, so reinstalling one finds its settings intact. `none` disables
-        cleanup entirely, which also means the machine's Homebrew state stops
-        being readable from this repo.
-
-        Worth lowering on a machine where an undeclared package is load-bearing
-        for reaching the machine at all -- a VPN, an input method -- since zap
-        would take its state with it.
-      '';
-    };
-
     taps = mkOption {
       type = types.listOf (types.either types.str (types.attrsOf types.anything));
       default = [];
@@ -110,9 +87,8 @@ in {
         autoUpdate = true;
         # Any Homebrew package not declared above is uninstalled on the next
         # switch. Anything from a manual `brew install` is temporary: declare
-        # it or lose it. Per-host, because "lose it" is not equally cheap
-        # everywhere -- see the option's description.
-        inherit (cfg) cleanup;
+        # it or lose it.
+        cleanup = "zap";
         extraFlags = ["--force-cleanup"];
       };
 

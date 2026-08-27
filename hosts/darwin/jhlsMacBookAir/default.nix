@@ -12,14 +12,6 @@
     "hosts/common/optional/darwin/openclaw.nix"
   ];
 
-  # Not zap. This machine is reached over Tailscale and administered entirely
-  # over ssh, so an activation that deletes an undeclared package's data has
-  # no console to fall back on. `uninstall` keeps the Brewfile authoritative
-  # -- undeclared packages still go -- without taking their configuration
-  # with them, so recovering from a wrong declaration is a reinstall rather
-  # than a reconstruction.
-  darwinHomebrew.cleanup = "uninstall";
-
   hostSpec = {
     hostName = "jhlsMacBookAir";
     isMobile = true;
