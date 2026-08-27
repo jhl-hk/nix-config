@@ -64,9 +64,12 @@ let
     # exposed only these, so linking the whole skills/ directory would quietly
     # enable things (academy-guide, discernment-nudge) that were never chosen.
     #
-    # They shell out to pandoc/soffice/pdftotext/qpdf and the openpyxl,
-    # python-docx, python-pptx and pypdf modules. None of that is installed,
-    # so these are inert until it is -- see hosts/common/core/darwin/apps.nix.
+    # They shell out to pandoc/pdftotext/qpdf and, through uv, to openpyxl,
+    # pandas, pypdf and markitdown.
+    # so these are inert until it is. Those tools live in
+    # hosts/common/optional/darwin/dev-extras.nix, which jhlsMacBookAir does
+    # not import -- the skills are linked fleet-wide but only actually work on
+    # the machines that take that file.
     docx = "${inputs.anthropic-skills}/skills/docx";
     pdf = "${inputs.anthropic-skills}/skills/pdf";
     pptx = "${inputs.anthropic-skills}/skills/pptx";
@@ -142,21 +145,30 @@ in {
   # `claude plugin uninstall <name>@<marketplace>` for that.
   home.activation.claudePlugins = lib.hm.dag.entryAfter ["writeBoundary"] ''
     settings="${settingsPath}"
-    $DRY_RUN_CMD mkdir -p "$(dirname "$settings")"
-    [ -s "$settings" ] || $DRY_RUN_CMD echo '{}' > "$settings"
 
-    # A hand-edited settings.json that does not parse would otherwise be
-    # replaced by jq's failure output; bail and let the user fix it.
-    if ! ${pkgs.jq}/bin/jq -e . "$settings" >/dev/null 2>&1; then
-      echo "claude.nix: $settings is not valid JSON, skipping plugin merge" >&2
+    # home-manager marks DRY_RUN_CMD deprecated and gates on DRY_RUN itself.
+    # Prefixing would also be wrong here: $DRY_RUN_CMD neutralises the command
+    # but never the redirection, so `$DRY_RUN_CMD echo '{}' > "$f"` writes the
+    # literal text `echo {}` into the file on a dry run. Gate the whole block.
+    if [[ -v DRY_RUN ]]; then
+      echo "claude.nix: would merge plugin keys into $settings"
     else
-      $DRY_RUN_CMD ${pkgs.jq}/bin/jq \
+      mkdir -p "$(dirname "$settings")"
+      [ -s "$settings" ] || echo '{}' > "$settings"
+
+      if ! ${pkgs.jq}/bin/jq -e . "$settings" >/dev/null 2>&1; then
+        echo "claude.nix: $settings is not valid JSON, skipping plugin merge" >&2
+      elif ${pkgs.jq}/bin/jq \
         --argjson m ${lib.escapeShellArg (builtins.toJSON marketplaces)} \
         --argjson p ${lib.escapeShellArg (builtins.toJSON enabledPlugins)} \
         '.extraKnownMarketplaces = ((.extraKnownMarketplaces // {}) + $m)
          | .enabledPlugins = ((.enabledPlugins // {}) + $p)' \
-        "$settings" > "$settings.nix-tmp" \
-        && $DRY_RUN_CMD mv "$settings.nix-tmp" "$settings"
+        "$settings" > "$settings.nix-tmp"; then
+        mv "$settings.nix-tmp" "$settings"
+      else
+        rm -f "$settings.nix-tmp"
+        echo "claude.nix: jq merge failed, left $settings untouched" >&2
+      fi
     fi
   '';
 }
