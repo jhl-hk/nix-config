@@ -42,6 +42,9 @@
 #
 #############################################################
 let
+  openclawBin = "/opt/homebrew/bin/openclaw";
+  completionDir = "${config.home.homeDirectory}/.zsh/completions";
+
   configPath = "${config.home.homeDirectory}/.openclaw/openclaw.json";
 
   # Model ref is provider/model. openai/gpt-5.6-sol is what a fresh OpenAI
@@ -104,5 +107,38 @@ in {
         echo "openclaw.nix: jq merge failed, left $config_path untouched" >&2
       fi
     fi
+  '';
+
+  # -- Shell completion ----------------------------------------------------
+  #
+  # `openclaw completion --install` refuses to run here: it wants to append to
+  # ~/.zshrc, which home-manager owns as a read-only store symlink. Same trap
+  # as home/jhl/common/core/claude.nix's settings.json, and it takes the same
+  # shape of answer -- nix does the writing.
+  #
+  # --write-state drops four scripts into ~/.openclaw/completions/. The zsh one
+  # is named openclaw.zsh but opens with `#compdef openclaw`, so it is an
+  # fpath-style definition wearing the wrong filename: linked in as _openclaw
+  # it is autoloaded lazily on first completion, whereas sourcing it would
+  # parse 5400 lines in every new shell.
+  #
+  # Regenerated on each switch, so it tracks whatever version brew installed.
+  home.activation.openclawCompletion = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if [[ -v DRY_RUN ]]; then
+      echo "openclaw.nix: would regenerate the zsh completion"
+    elif [ -x ${openclawBin} ]; then
+      ${openclawBin} completion --shell zsh --write-state >/dev/null 2>&1 || true
+      mkdir -p "${completionDir}"
+      ln -sf "${config.home.homeDirectory}/.openclaw/completions/openclaw.zsh" \
+        "${completionDir}/_openclaw"
+    else
+      echo "openclaw.nix: ${openclawBin} is not installed, skipping completion" >&2
+    fi
+  '';
+
+  # Order 550: fpath has to grow before compinit, and ../../core/zsh.nix
+  # records compinit as order 570.
+  programs.zsh.initContent = lib.mkOrder 550 ''
+    fpath=("${completionDir}" $fpath)
   '';
 }
