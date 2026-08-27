@@ -50,7 +50,16 @@ let
   # this merge will assert it back on the next switch -- so change it here.
   settings = {
     agents.defaults = {
-      workspace = "${config.home.homeDirectory}/.openclaw/workspace";
+      # ~/Documents rather than the default ~/.openclaw/workspace: the agent
+      # is meant to work on real files, and on this machine that is where they
+      # are -- nix-config included.
+      #
+      # Worth being clear about what that widens. The workspace is the tree
+      # the agent reads and writes, so anything under ~/Documents is in scope
+      # for a Telegram message, which is why channels.telegram below keeps
+      # dmPolicy = "pairing" and requires a mention in groups. Narrow this to
+      # a subdirectory if that ever stops being the trade you want.
+      workspace = "${config.home.homeDirectory}/Documents";
       model.primary = "openai/gpt-5.6-sol";
     };
 
