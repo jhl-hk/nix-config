@@ -128,6 +128,11 @@ let
     # for ChatGPT/Codex OAuth setups.
     models.providers.openai.agentRuntime.id = "openclaw";
 
+    # Web search. duckduckgo needs no key, which is the whole reason to pick
+    # it here -- every other provider would mean another sops secret and
+    # another line in the .env template for a capability that is incidental.
+    tools.web.search.provider = "duckduckgo";
+
     channels.telegram = {
       enabled = true;
 
@@ -202,5 +207,47 @@ in {
   # records compinit as order 570.
   programs.zsh.initContent = lib.mkOrder 550 ''
     fpath=("${completionDir}" $fpath)
+  '';
+
+  # -- Skills --------------------------------------------------------------
+  #
+  # OpenClaw discovers skills from its own managed directory and has no config
+  # option for extra search paths -- the schema's only skills-and-path key is
+  # skills.limits.maxSkillsLoadedPerSource. So the nine skills ./claude.nix
+  # links into ~/.claude/skills are linked on again here.
+  #
+  # Symlinks rather than `openclaw skills install`: that command copies, and a
+  # copy drifts the moment nix rebuilds. It also cannot read these anyway --
+  # ~/.claude/skills/<name> is itself a symlink into the store, and the
+  # installer fails with ERR_FS_CP_NON_DIR_TO_DIR on it.
+  #
+  # Pointing at ~/.claude/skills/<name> rather than at the store path is what
+  # keeps this current: nix repoints that link on every switch and this one
+  # follows, so a skill only has to be declared in ./claude.nix.
+  #
+  # Note the document skills (docx/pdf/pptx/xlsx) shell out to pandoc, qpdf
+  # and poppler, which live in dev-extras.nix -- a file jhlsMacBookAir does
+  # not import. They are listed here and inert there.
+  home.activation.openclawSkills = lib.hm.dag.entryAfter ["linkGeneration"] ''
+    if [[ -v DRY_RUN ]]; then
+      echo "openclaw.nix: would relink skills into ~/.openclaw/skills"
+    else
+      src="${config.home.homeDirectory}/.claude/skills"
+      dst="${config.home.homeDirectory}/.openclaw/skills"
+      mkdir -p "$dst"
+      for s in "$src"/*; do
+        [ -e "$s" ] || continue
+        ln -sfn "$s" "$dst/$(basename "$s")"
+      done
+
+      # Drop links whose target ./claude.nix no longer deploys, so removing a
+      # skill there removes it here too. Only symlinks are touched; anything
+      # installed into this directory by `openclaw skills install` is a real
+      # directory and is left alone.
+      for l in "$dst"/*; do
+        [ -L "$l" ] || continue
+        [ -e "$l" ] || rm -f "$l"
+      done
+    fi
   '';
 }

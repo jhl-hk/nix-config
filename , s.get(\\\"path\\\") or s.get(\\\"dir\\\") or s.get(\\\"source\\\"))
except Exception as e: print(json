@@ -1,0 +1,11 @@
+=== ~/.openclaw 下与 skills 相关的目录 ===
+/Users/jhl/.openclaw/skill-workshop
+/Users/jhl/.openclaw/plugin-skills
+
+=== workspace 侧 ===
+
+=== 一个 bundled skill 的实际路径(推断布局) ===
+  File "<string>", line 6
+    for s in ss[:3]: print( , s.get("id") or s.get("name"), - 不可用:, e)
+                            ^
+SyntaxError: invalid syntax
