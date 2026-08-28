@@ -73,15 +73,26 @@ let
     #
     # api = "openai-completions" picks the wire format; baseUrl carries the
     # /v1 because that is where this gateway serves it (verified: /v1/models
-    # answers, /models does not). apiKey is written as an ${ENV} reference,
-    # not a value -- OpenClaw resolves it at read time from the environment,
-    # so the credential stays in ~/.openclaw/.env where sops renders it and
-    # never lands in this world-readable config.
+    # answers, /models does not). apiKey is a secret reference rather than a
+    # value, so the credential stays in ~/.openclaw/.env where sops renders it
+    # and never lands in this world-readable config.
     #
     models.providers.jianyuelab = {
       baseUrl = "https://llm-api.jianyuelab.net/v1";
       api = "openai-completions";
-      apiKey = "\${JIANYUELAB_API_KEY}";
+      # A secret **reference**, not a value and not a "${VAR}" string. The
+      # schema takes either a plain string or {source, provider, id}, and a
+      # string is used verbatim -- writing "${JIANYUELAB_API_KEY}" sends those
+      # 22 characters to the gateway as the bearer token, which answers 401.
+      # Confirmed the hard way: the same key works from `just llm-models`.
+      #
+      # source = "env" resolves at request time from the gateway process
+      # environment, which ~/.openclaw/.env populates and sops renders.
+      apiKey = {
+        source = "env";
+        provider = "default";
+        id = "JIANYUELAB_API_KEY";
+      };
 
       # Catalogue read from the same file `just llm-models` refreshes for Zed
       # and opencode, so one command keeps all three harnesses current and
