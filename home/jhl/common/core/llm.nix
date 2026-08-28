@@ -67,8 +67,15 @@ let
   # (sops's launchd daemon rebuilds /run/secrets only after boot), so an
   # unreadable file is skipped silently rather than setting the variable to an
   # empty string -- an empty key would make Zed think it is configured.
+  # Falls back to the module-level path, so the original provider keeps
+  # working unchanged while the second one names its own secret.
+  keyFileOf = p:
+    if p.apiKeyFile != null
+    then p.apiKeyFile
+    else cfg.apiKeyFile;
+
   exportLine = p: ''
-    [ -r ${cfg.apiKeyFile} ] && export ${p.envVar}="$(cat ${cfg.apiKeyFile})"
+    [ -r ${keyFileOf p} ] && export ${p.envVar}="$(cat ${keyFileOf p})"
   '';
 in {
   llm.defaultProvider = "JianyueLab";
@@ -93,6 +100,29 @@ in {
     envVar = "JIANYUE_LAB_API_KEY";
   };
 
+  # The second gateway. Same shape, different host and credential -- and a
+  # different key name, so llm/api_key and llm_api/api_key are two separate
+  # sops secrets, declared together in
+  # hosts/common/optional/darwin/llm.nix.
+  #
+  # models-api.json starts as [] and stays that way until `just llm-models`
+  # can reach the endpoint. That is deliberate: the module treats an empty
+  # list as "skip this provider entirely", so a machine that has never
+  # refreshed it generates no half-configured provider for Zed or opencode
+  # rather than one pointing at zero models.
+  llm.providers.JianyueLabAPI = {
+    apiUrl = "https://llm-api.jianyuelab.net/v1";
+    models = builtins.fromJSON (builtins.readFile ./llm/models-api.json);
+
+    # Set explicitly for the reason the file header spells out: Zed derives
+    # this name itself and convert_case splits at lower->upper boundaries, so
+    # a name with capitals never matches the plain-toUpper default.
+    envVar = "JIANYUELAB_API_KEY";
+
+    # Its own secret; see the option's description in modules/home/llm.nix.
+    apiKeyFile = "/run/secrets/llm_api/api_key";
+  };
+
   # Terminal: this is the path for opencode and for zed started from a shell
   programs.zsh.initContent = lib.mkIf (active != {}) (
     lib.concatStrings (lib.mapAttrsToList (_: exportLine) active)
@@ -114,8 +144,8 @@ in {
           "-c"
           ''
             for _ in $(seq 1 30); do
-              if [ -r ${cfg.apiKeyFile} ]; then
-                /bin/launchctl setenv ${p.envVar} "$(cat ${cfg.apiKeyFile})"
+              if [ -r ${keyFileOf p} ]; then
+                /bin/launchctl setenv ${p.envVar} "$(cat ${keyFileOf p})"
                 exit 0
               fi
               sleep 2

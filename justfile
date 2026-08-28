@@ -396,10 +396,12 @@ verify-sops EXPECT="sops-pipeline-ok":
 # the automatic refresh is only warning.
 
 # Refresh the LLM model list from /v1/models into llm/models.json
-llm-models:
+# Refresh one gateway's model list. Both providers in home/jhl/common/core/llm.nix
+# are fed this way; SECRET is the sops key under shared.yaml, HOST the gateway.
+llm-models-one SECRET HOST OUT:
     #!/usr/bin/env bash
     set -euo pipefail
-    out="home/jhl/common/core/llm/models.json"
+    out="{{ OUT }}"
     export SOPS_AGE_KEY_FILE="${SOPS_AGE_KEY_FILE:-$HOME/.config/sops/age/keys.txt}"
 
     if [ ! -f "{{ secrets }}/secrets/shared.yaml" ]; then
@@ -407,14 +409,14 @@ llm-models:
         exit 1
     fi
 
-    key=$(nix run nixpkgs#sops -- -d --extract '["llm"]["api_key"]' \
+    key=$(nix run nixpkgs#sops -- -d --extract '["{{ SECRET }}"]["api_key"]' \
         "{{ secrets }}/secrets/shared.yaml" 2>/dev/null || true)
     if [ -z "$key" ]; then
-        echo "❌ shared.yaml has no llm.api_key; run just sops-edit shared first" >&2
+        echo "❌ shared.yaml has no {{ SECRET }}.api_key; run just sops-edit shared first" >&2
         exit 1
     fi
 
-    url="https://llm.jianyuelab.net/v1/models"
+    url="https://{{ HOST }}/v1/models"
     echo "GET $url"
     body=$(curl -sS --fail-with-body --max-time 30 -H "Authorization: Bearer $key" "$url") || {
         echo "❌ fetch failed; the server response is above" >&2
@@ -434,6 +436,9 @@ llm-models:
 
     mv "$out.tmp" "$out"
     echo "✅ $n models -> $out"
+
+# Refresh every gateway's model list
+llm-models: (llm-models-one "llm" "llm.jianyuelab.net" "home/jhl/common/core/llm/models.json") (llm-models-one "llm_api" "llm-api.jianyuelab.net" "home/jhl/common/core/llm/models-api.json")
 
     # Called from rebuild-pre (llm-models-soft), the full listing is a wall of
     # text in the middle of a switch and "Next: just rebuild" is wrong -- the

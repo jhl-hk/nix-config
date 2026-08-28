@@ -30,6 +30,7 @@
 #############################################################
 let
   sopsFile = "${inputs.nix-secrets}/secrets/shared.yaml";
+  user = config.hostSpec.username;
 in {
   # The same cheap pre-flight check as modules/hosts/darwin/omni: sops encrypts
   # only values, key names stay in cleartext, and a text search is enough to
@@ -39,7 +40,8 @@ in {
     {
       assertion =
         builtins.pathExists sopsFile
-        && lib.hasInfix "api_key:" (builtins.readFile sopsFile);
+        && lib.hasInfix "llm:\n    api_key:" (builtins.readFile sopsFile)
+        && lib.hasInfix "llm_api:\n    api_key:" (builtins.readFile sopsFile);
       message = ''
         hosts/common/optional/darwin/llm.nix is imported, but
         secrets/shared.yaml has no llm.api_key yet.
@@ -47,6 +49,8 @@ in {
           just sops-edit shared
 
             llm:
+                api_key: sk-xxxxxxxx
+            llm_api:
                 api_key: sk-xxxxxxxx
 
         Then cd ../nix-secrets && git add -A && git commit && git push
@@ -60,7 +64,16 @@ in {
 
   sops.secrets."llm/api_key" = {
     inherit sopsFile;
-    owner = config.hostSpec.username;
+    owner = user;
+    mode = "0400";
+  };
+  # Second gateway, second credential. Kept as its own top-level section
+  # rather than a sibling key under `llm:` so the assertion below can match it
+  # by parent and indentation -- `api_key:` on its own is already satisfied by
+  # the llm, wakatime and openai sections.
+  sops.secrets."llm_api/api_key" = {
+    inherit sopsFile;
+    owner = user;
     mode = "0400";
   };
 }

@@ -89,6 +89,20 @@
             description = "OpenAI-compatible base URL, including /v1.";
           };
 
+          apiKeyFile = lib.mkOption {
+            type = lib.types.nullOr lib.types.str;
+            default = null;
+            description = ''
+              Where this provider's decrypted key lands. null means fall back
+              to the module-level `llm.apiKeyFile`.
+
+              Per-provider because the gateways do not share a credential:
+              llm.jianyuelab.net and llm-api.jianyuelab.net are two sops
+              secrets, and injecting one key for both would authenticate
+              exactly one of them.
+            '';
+          };
+
           envVar = lib.mkOption {
             type = lib.types.str;
             default = "${lib.toUpper name}_API_KEY";

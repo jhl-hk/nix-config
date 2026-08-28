@@ -66,6 +66,24 @@ let
       model.primary = "openai/gpt-5.6-sol";
     };
 
+    # The JianyueLab gateway, as an OpenAI-compatible provider.
+    #
+    # api = "openai-completions" picks the wire format; baseUrl carries the
+    # /v1 because that is where this gateway serves it (verified: /v1/models
+    # answers, /models does not). apiKey is written as an ${ENV} reference,
+    # not a value -- OpenClaw resolves it at read time from the environment,
+    # so the credential stays in ~/.openclaw/.env where sops renders it and
+    # never lands in this world-readable config.
+    #
+    # models is intentionally absent: fill it once `just llm-models` has
+    # populated home/jhl/common/core/llm/models-api.json, then set
+    # agents.defaults.model.primary to one of those ids.
+    models.providers.jianyuelab = {
+      baseUrl = "https://llm-api.jianyuelab.net/v1";
+      api = "openai-completions";
+      apiKey = "\${JIANYUELAB_API_KEY}";
+    };
+
     # Pin the runtime, or OpenAI silently routes through the Codex harness.
     # From the config schema's own description of agentRuntime.id:
     #
