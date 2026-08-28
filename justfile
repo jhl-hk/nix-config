@@ -396,8 +396,9 @@ verify-sops EXPECT="sops-pipeline-ok":
 # the automatic refresh is only warning.
 
 # Refresh the LLM model list from /v1/models into llm/models.json
-# Refresh one gateway's model list. Both providers in home/jhl/common/core/llm.nix
-# are fed this way; SECRET is the sops key under shared.yaml, HOST the gateway.
+# SECRET is the section under shared.yaml, HOST the gateway, OUT the json file.
+# Both providers in home/jhl/common/core/llm.nix are fed through here.
+# Refresh one gateway's model list
 llm-models-one SECRET HOST OUT:
     #!/usr/bin/env bash
     set -euo pipefail
@@ -436,10 +437,6 @@ llm-models-one SECRET HOST OUT:
 
     mv "$out.tmp" "$out"
     echo "✅ $n models -> $out"
-
-# Refresh every gateway's model list
-llm-models: (llm-models-one "llm" "llm.jianyuelab.net" "home/jhl/common/core/llm/models.json") (llm-models-one "llm_api" "llm-api.jianyuelab.net" "home/jhl/common/core/llm/models-api.json")
-
     # Called from rebuild-pre (llm-models-soft), the full listing is a wall of
     # text in the middle of a switch and "Next: just rebuild" is wrong -- the
     # rebuild is already happening. Standalone, both are the point.
@@ -448,3 +445,6 @@ llm-models: (llm-models-one "llm" "llm.jianyuelab.net" "home/jhl/common/core/llm
         echo
         echo "Next: just rebuild"
     fi
+
+# Refresh every gateway's model list
+llm-models: (llm-models-one "llm" "llm.jianyuelab.net" "home/jhl/common/core/llm/models.json") (llm-models-one "llm_api" "llm-api.jianyuelab.net" "home/jhl/common/core/llm/models-api.json")

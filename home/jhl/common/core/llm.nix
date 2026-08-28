@@ -90,7 +90,12 @@ in {
     # the moment the gateway retired a model. Naming it here makes every
     # consumer (pi, opencode, Zed's default_model / commit_message_model /
     # edit_predictions) agree, and makes a change to it a diff.
-    defaultModel = "deepseek-v4-flash";
+    # deepseek-v4-flash until this endpoint stopped serving it; verified
+    # against the refreshed models.json, which now has nine ids and not that
+    # one. A defaultModel naming a model the provider does not offer makes Zed
+    # and opencode drop their default-model config silently, so it is worth
+    # re-checking after every `just llm-models`.
+    defaultModel = "gpt-5.6-sol";
 
     # The name contains capitals, so the default will not do. Zed computes
     #   format!("{}_API_KEY", id).to_case(Case::UpperSnake)
@@ -121,6 +126,10 @@ in {
 
     # Its own secret; see the option's description in modules/home/llm.nix.
     apiKeyFile = "/run/secrets/llm_api/api_key";
+
+    # Same pin as the other gateway. This endpoint additionally serves
+    # Ornith-1.5-35B-A3B and deepseek-v4-flash, which the other one does not.
+    defaultModel = "gpt-5.6-sol";
   };
 
   # Terminal: this is the path for opencode and for zed started from a shell

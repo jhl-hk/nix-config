@@ -63,7 +63,10 @@ let
       # dmPolicy = "pairing" and requires a mention in groups. Narrow this to
       # a subdirectory if that ever stops being the trade you want.
       workspace = "${config.home.homeDirectory}/Documents";
-      model.primary = "openai/gpt-5.6-sol";
+      # provider/model. Points at the JianyueLab gateway declared below rather
+      # than openai/*, so turns bill against the portal and land in its meter.
+      # Ornith is only on that endpoint; llm.jianyuelab.net does not list it.
+      model.primary = "jianyuelab/Ornith-1.5-35B-A3B";
     };
 
     # The JianyueLab gateway, as an OpenAI-compatible provider.
@@ -75,13 +78,25 @@ let
     # so the credential stays in ~/.openclaw/.env where sops renders it and
     # never lands in this world-readable config.
     #
-    # models is intentionally absent: fill it once `just llm-models` has
-    # populated home/jhl/common/core/llm/models-api.json, then set
-    # agents.defaults.model.primary to one of those ids.
     models.providers.jianyuelab = {
       baseUrl = "https://llm-api.jianyuelab.net/v1";
       api = "openai-completions";
       apiKey = "\${JIANYUELAB_API_KEY}";
+
+      # Catalogue read from the same file `just llm-models` refreshes for Zed
+      # and opencode, so one command keeps all three harnesses current and
+      # there is no second list to forget.
+      #
+      # Only id and name are stated. The schema also takes contextWindow,
+      # maxTokens, reasoning and input, but guessing those per model is worse
+      # than letting OpenClaw apply its own defaults -- a wrong contextWindow
+      # truncates silently.
+      models =
+        map (id: {
+          inherit id;
+          name = id;
+        })
+        (builtins.fromJSON (builtins.readFile ../../core/llm/models-api.json));
     };
 
     # Pin the runtime, or OpenAI silently routes through the Codex harness.
