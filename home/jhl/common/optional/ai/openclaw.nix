@@ -133,6 +133,42 @@ let
     # another line in the .env template for a capability that is incidental.
     tools.web.search.provider = "duckduckgo";
 
+    # iMessage. The gateway spawns `imsg rpc` and speaks JSON-RPC over stdio --
+    # no daemon, no port -- so this only has to say where the binary and the
+    # Messages database are.
+    #
+    # cliPath is /opt/homebrew, not the /usr/local the upstream docs show:
+    # that example is an Intel path and this is Apple Silicon.
+    #
+    # dmPolicy mirrors telegram. iMessage defaults to pairing upstream too,
+    # but stating it keeps both channels reading the same way.
+    #
+    # WARNING: three things here are **not** declarable and have to be done
+    #     once, interactively, on the Air itself -- not over ssh:
+    #
+    #       1. Messages.app signed in with an Apple ID.
+    #       2. Full Disk Access for the process context that runs the gateway
+    #          (it reads chat.db).
+    #       3. Automation permission for Messages.app (it sends through it).
+    #
+    #     Permissions are granted per process context, and upstream is
+    #     explicit that an ssh context does not work: sends fail with
+    #     AppleEvents -1743 because macOS records the grant against
+    #     /usr/libexec/sshd-keygen-wrapper, which System Settings offers no
+    #     toggle for. The gateway already runs as a LaunchAgent in the user's
+    #     gui session, which is a supported context -- but the grant still has
+    #     to be triggered from a local session, e.g. `imsg chats --limit 1`.
+    #
+    #     Advanced actions (react, edit, unsend, threaded reply, effects,
+    #     polls, group ops) additionally need SIP disabled. Plain send and
+    #     receive do not, and that is what this config is scoped to.
+    channels.imessage = {
+      enabled = true;
+      cliPath = "/opt/homebrew/bin/imsg";
+      dbPath = "${config.home.homeDirectory}/Library/Messages/chat.db";
+      dmPolicy = "pairing";
+    };
+
     channels.telegram = {
       enabled = true;
 

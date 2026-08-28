@@ -66,7 +66,21 @@ let
   sopsFile = "${inputs.nix-secrets}/secrets/shared.yaml";
   user = config.hostSpec.username;
 in {
-  darwinHomebrew.brews = ["openclaw-cli"];
+  darwinHomebrew = {
+    # imsg is the iMessage bridge OpenClaw speaks JSON-RPC to over stdio.
+    # BlueBubbles support was removed upstream; imsg is the only path now.
+    taps = [
+      {
+        name = "steipete/tap";
+        trusted = true;
+      }
+    ];
+
+    brews = [
+      "openclaw-cli"
+      "imsg"
+    ];
+  };
 
   # Same eval-time pre-flight as llm.nix and wakatime.nix: sops leaves key
   # names in cleartext, so a substring search turns "not filled in yet" from
