@@ -68,6 +68,32 @@
       "age-plugin-yubikey"
       "ssh-askpass"
       "ykman"
+
+      # Backing tools for the docx/pdf/pptx/xlsx skills, which
+      # home/jhl/common/core/claude.nix links on every machine. In core rather
+      # than dev-extras.nix for exactly that reason: the skills are fleet-wide,
+      # so tools that only some machines have would make them advertise
+      # capabilities they cannot deliver -- and the failure surfaces as a
+      # confusing shell error mid-task, not as a missing skill.
+      #
+      #   pandoc   docx -> markdown, the "read a Word file" path
+      #   qpdf     command-line merge/split/rotate/encrypt
+      #   poppler  provides pdftotext
+      #
+      # uv is the odd one out and the reason there is no python3.withPackages
+      # anywhere: the skills need openpyxl, pandas, pypdf and markitdown, all
+      # of which nixpkgs has -- but home/jhl/common/core/darwin/darwin.nix
+      # prepends /opt/homebrew/bin to PATH, so a nix python would never win a
+      # bare `python3` lookup. Shadowing Homebrew's python@3.14 is not an
+      # option either: awscli, openssh, ykman and ldns all depend on it. So the
+      # modules are fetched per-invocation instead:
+      #
+      #   uv run --with openpyxl,pandas python script.py
+      #   uvx markitdown deck.pptx
+      "pandoc"
+      "qpdf"
+      "poppler"
+      "uv"
     ];
   };
 }

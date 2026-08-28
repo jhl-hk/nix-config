@@ -65,11 +65,11 @@ let
     # enable things (academy-guide, discernment-nudge) that were never chosen.
     #
     # They shell out to pandoc/pdftotext/qpdf and, through uv, to openpyxl,
-    # pandas, pypdf and markitdown.
-    # so these are inert until it is. Those tools live in
-    # hosts/common/optional/darwin/dev-extras.nix, which jhlsMacBookAir does
-    # not import -- the skills are linked fleet-wide but only actually work on
-    # the machines that take that file.
+    # pandas, pypdf and markitdown. Those brews sit in
+    # hosts/common/core/darwin/apps.nix rather than dev-extras.nix precisely
+    # because this list is fleet-wide: a skill offered on a machine that
+    # cannot run it fails mid-task with a shell error instead of simply not
+    # being there.
     docx = "${inputs.anthropic-skills}/skills/docx";
     pdf = "${inputs.anthropic-skills}/skills/pdf";
     pptx = "${inputs.anthropic-skills}/skills/pptx";

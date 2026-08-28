@@ -42,10 +42,6 @@
       "awscli" # AWS CLI
       "rclone"
       "cloudflare-wrangler" # Cloudflare Workers/R2 CLI
-      "pandoc"
-      "qpdf"
-      "poppler"
-      "uv"
       "gemini-cli"
       "opencode"
     ];
