@@ -447,4 +447,36 @@ llm-models-one SECRET HOST OUT:
     fi
 
 # Refresh every gateway's model list
-llm-models: (llm-models-one "llm" "llm.jianyuelab.net" "home/jhl/common/core/llm/models.json") (llm-models-one "llm_api" "llm-api.jianyuelab.net" "home/jhl/common/core/llm/models-api.json")
+#
+# A loop rather than just-dependencies. Dependencies abort the whole recipe on
+# the first failure, so one dead gateway stopped every later one from being
+# refreshed too -- the healthy endpoint silently kept a stale list. Each
+# endpoint is independent, so a failure should only cost that endpoint.
+#
+# Exits non-zero only when *every* endpoint failed: one gateway down is a
+# warning, all of them down is worth failing over.
+llm-models:
+    #!/usr/bin/env bash
+    set -uo pipefail
+    ok=0
+    failed=()
+    while read -r secret host out; do
+        [ -n "$secret" ] || continue
+        if {{ just_executable() }} llm-models-one "$secret" "$host" "$out"; then
+            ok=$((ok + 1))
+        else
+            failed+=("$host")
+        fi
+    done <<-SPECS
+        llm      llm.jianyuelab.net      home/jhl/common/core/llm/models.json
+        llm_api  llm-api.jianyuelab.net  home/jhl/common/core/llm/models-api.json
+    SPECS
+
+    if [ ${#failed[@]} -gt 0 ]; then
+        printf '\n⚠️  not refreshed: %s\n' "${failed[*]}"
+        printf '   their committed model lists are unchanged\n\n'
+    fi
+    if [ "$ok" -eq 0 ]; then
+        echo "❌ every gateway failed; nothing was refreshed" >&2
+        exit 1
+    fi
