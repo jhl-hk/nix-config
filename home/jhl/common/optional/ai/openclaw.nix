@@ -63,70 +63,74 @@ let
       # dmPolicy = "pairing" and requires a mention in groups. Narrow this to
       # a subdirectory if that ever stops being the trade you want.
       workspace = "${config.home.homeDirectory}/Documents";
-      # provider/model. Points at the JianyueLab gateway declared below rather
-      # than openai/*, so turns bill against the portal and land in its meter.
-      # Ornith is only on that endpoint; llm.jianyuelab.net does not list it.
-      model.primary = "jianyuelab/Ornith-1.5-35B-A3B";
+      # Same model on both gateways, primary first. Failover is per model
+      # ref, so the pair names one ref per endpoint.
+      #
+      # NOTE: this is not Ornith-1.5-35B-A3B, and cannot be. That model is
+      # served only by llm-api, which is the *fallback* here -- a primary ref
+      # naming it would point at a model the primary provider does not list.
+      # gpt-5.6-sol is on both, so it is the only choice that survives either
+      # gateway being the one that answers. To run Ornith instead, llm-api has
+      # to become the primary and llm the fallback; the two requests are
+      # mutually exclusive.
+      model = {
+        primary = "jianyuelab/gpt-5.6-sol";
+        fallbacks = ["jianyuelab-api/gpt-5.6-sol"];
+      };
     };
 
-    # The JianyueLab gateway, as an OpenAI-compatible provider.
+    # Two gateways, one logical provider pair: llm.jianyuelab.net first,
+    # llm-api.jianyuelab.net as the fallback.
     #
-    # api = "openai-completions" picks the wire format; baseUrl carries the
-    # /v1 because that is where this gateway serves it (verified: /v1/models
-    # answers, /models does not). apiKey is a secret reference rather than a
-    # value, so the credential stays in ~/.openclaw/.env where sops renders it
-    # and never lands in this world-readable config.
+    # They stay two providers rather than one because they do not share a
+    # credential -- verified: the llm key returns 401 against llm-api.
+    # Failover in OpenClaw happens at the model-ref level
+    # (agents.defaults.model.fallbacks), not by merging providers, so two
+    # entries here is the shape that expresses it.
     #
-    models.providers.jianyuelab = {
-      baseUrl = "https://llm-api.jianyuelab.net/v1";
-      api = "openai-completions";
-      # A secret **reference**, not a value and not a "${VAR}" string. The
-      # schema takes either a plain string or {source, provider, id}, and a
-      # string is used verbatim -- writing "${JIANYUELAB_API_KEY}" sends those
-      # 22 characters to the gateway as the bearer token, which answers 401.
-      # Confirmed the hard way: the same key works from `just llm-models`.
-      #
-      # source = "env" resolves at request time from the gateway process
-      # environment, which ~/.openclaw/.env populates and sops renders.
-      apiKey = {
-        source = "env";
-        provider = "default";
-        id = "JIANYUELAB_API_KEY";
+    # Each reads the model list `just llm-models` refreshes for its own
+    # endpoint. They are not the same list: llm-api additionally serves
+    # Ornith-1.5-35B-A3B and deepseek-v4-flash.
+    models.providers = {
+      jianyuelab = {
+        baseUrl = "https://llm.jianyuelab.net/v1";
+        api = "openai-completions";
+        apiKey = {
+          source = "env";
+          provider = "default";
+          id = "JIANYUELAB_API_KEY";
+        };
+        models =
+          map (id: {
+            inherit id;
+            name = id;
+          })
+          (builtins.fromJSON (builtins.readFile ../../core/llm/models.json));
       };
 
-      # Catalogue read from the same file `just llm-models` refreshes for Zed
-      # and opencode, so one command keeps all three harnesses current and
-      # there is no second list to forget.
-      #
-      # Only id and name are stated. The schema also takes contextWindow,
-      # maxTokens, reasoning and input, but guessing those per model is worse
-      # than letting OpenClaw apply its own defaults -- a wrong contextWindow
-      # truncates silently.
-      models =
-        map (id: {
-          inherit id;
-          name = id;
-        })
-        (builtins.fromJSON (builtins.readFile ../../core/llm/models-api.json));
-    };
+      jianyuelab-api = {
+        baseUrl = "https://llm-api.jianyuelab.net/v1";
+        api = "openai-completions";
+        apiKey = {
+          source = "env";
+          provider = "default";
+          id = "JIANYUELAB_FALLBACK_API_KEY";
+        };
+        models =
+          map (id: {
+            inherit id;
+            name = id;
+          })
+          (builtins.fromJSON (builtins.readFile ../../core/llm/models-api.json));
+      };
 
-    # Pin the runtime, or OpenAI silently routes through the Codex harness.
-    # From the config schema's own description of agentRuntime.id:
-    #
-    #   "OpenAI on the official endpoint defaults to the Codex harness when
-    #    omitted."
-    #
-    # That harness is a separate plugin, and a broken one here: it fails to
-    # register with `Cannot read properties of undefined (reading
-    # 'openSyncKeyedStore')`, after which a Telegram turn sits in
-    # state=processing until the channel gives up 300s later. The symptom is
-    # a bot that receives messages and never answers -- no error reaches the
-    # user, and `openclaw status` only hints at it through a Runtime column
-    # reading "OpenAI Codex".
-    #
-    # An API key wants the plain inference loop anyway; the Codex harness is
-    # for ChatGPT/Codex OAuth setups.
-    models.providers.openai.agentRuntime.id = "openclaw";
+      # Pinned, or OpenAI silently routes through the Codex harness. From the
+      # schema's own description of agentRuntime.id: "OpenAI on the official
+      # endpoint defaults to the Codex harness when omitted." That harness is
+      # a separate plugin and was broken here; a turn would sit in
+      # state=processing until the channel gave up 300s later.
+      openai.agentRuntime.id = "openclaw";
+    };
 
     # Web search. duckduckgo needs no key, which is the whole reason to pick
     # it here -- every other provider would mean another sops secret and

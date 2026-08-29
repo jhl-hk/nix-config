@@ -133,7 +133,8 @@ in {
   sops.templates."openclaw-env" = {
     content = ''
       OPENAI_API_KEY=${config.sops.placeholder."openai/api_key"}
-      JIANYUELAB_API_KEY=${config.sops.placeholder."llm_api/api_key"}
+      JIANYUELAB_API_KEY=${config.sops.placeholder."llm/api_key"}
+      JIANYUELAB_FALLBACK_API_KEY=${config.sops.placeholder."llm_api/api_key"}
       TELEGRAM_BOT_TOKEN=${config.sops.placeholder."openclaw/telegram_bot_token"}
     '';
     owner = user;
