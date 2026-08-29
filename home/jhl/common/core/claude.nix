@@ -55,7 +55,17 @@ let
   # better than letting `claude plugin install` re-clone HEAD at runtime --
   # flake.lock pins the version and a fresh machine needs no network for them.
   inputSkills = {
+    # The whole JianyueLab/skills repo, not a chosen subset: every skill in it
+    # is about this org's own platform, so there is nothing there that would
+    # not be wanted. Re-check after `nix flake update jianyuelab-skills` --
+    # a skill added upstream does not appear until it is named here.
     web-account-sdk = "${inputs.jianyuelab-skills}/web-account-sdk";
+    jianyuelab-passport = "${inputs.jianyuelab-skills}/jianyuelab-passport";
+    jianyuelab-ui = "${inputs.jianyuelab-skills}/jianyuelab-ui";
+    jianyuelab-go-backend = "${inputs.jianyuelab-skills}/jianyuelab-go-backend";
+    passport-go-sdk = "${inputs.jianyuelab-skills}/passport-go-sdk";
+    passport-http-api = "${inputs.jianyuelab-skills}/passport-http-api";
+    passport-compliance = "${inputs.jianyuelab-skills}/passport-compliance";
     jianyuelab-docs = "${inputs.jianyuelab-docs}/skills/jianyuelab-docs";
 
     # The four document-processing skills, replacing the document-skills
