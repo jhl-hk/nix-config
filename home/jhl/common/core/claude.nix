@@ -54,37 +54,46 @@ let
   # no hooks is only a bag of skill directories, and linking them is strictly
   # better than letting `claude plugin install` re-clone HEAD at runtime --
   # flake.lock pins the version and a fresh machine needs no network for them.
-  inputSkills = {
-    # The whole JianyueLab/skills repo, not a chosen subset: every skill in it
-    # is about this org's own platform, so there is nothing there that would
-    # not be wanted. Re-check after `nix flake update jianyuelab-skills` --
-    # a skill added upstream does not appear until it is named here.
-    web-account-sdk = "${inputs.jianyuelab-skills}/web-account-sdk";
-    jianyuelab-passport = "${inputs.jianyuelab-skills}/jianyuelab-passport";
-    jianyuelab-ui = "${inputs.jianyuelab-skills}/jianyuelab-ui";
-    jianyuelab-go-backend = "${inputs.jianyuelab-skills}/jianyuelab-go-backend";
-    passport-go-sdk = "${inputs.jianyuelab-skills}/passport-go-sdk";
-    passport-http-api = "${inputs.jianyuelab-skills}/passport-http-api";
-    passport-compliance = "${inputs.jianyuelab-skills}/passport-compliance";
-    jianyuelab-docs = "${inputs.jianyuelab-docs}/skills/jianyuelab-docs";
+  # Enumerate every skill directory under a path, keyed by directory name.
+  #
+  # The predicate is "contains a SKILL.md", not "is a directory": a repo can
+  # grow a .github or a scripts/ next to its skills, and linking one of those
+  # into ~/.claude/skills would be a silently broken entry rather than an
+  # error. Directories are the only candidates; readDir also reports the
+  # repo's loose files.
+  scanSkills = base:
+    lib.mapAttrs (name: _: "${base}/${name}")
+    (lib.filterAttrs
+      (name: type: type == "directory" && builtins.pathExists "${base}/${name}/SKILL.md")
+      (builtins.readDir base));
 
-    # The four document-processing skills, replacing the document-skills
-    # plugin. This list mirrors the "skills" array of that plugin's entry in
-    # the upstream marketplace.json -- the repo holds 19 skills and the plugin
-    # exposed only these, so linking the whole skills/ directory would quietly
-    # enable things (academy-guide, discernment-nudge) that were never chosen.
+  inputSkills =
+    # Scanned, not listed. These are this org's own multi-skill repos, so
+    # anything added upstream is wanted here by definition -- and listing each
+    # path by hand meant a skill could sit unlinked indefinitely with nothing
+    # to signal it. That is exactly what happened: the repo reached seven
+    # entries while this file still named one.
     #
-    # They shell out to pandoc/pdftotext/qpdf and, through uv, to openpyxl,
-    # pandas, pypdf and markitdown. Those brews sit in
-    # hosts/common/core/darwin/apps.nix rather than dev-extras.nix precisely
-    # because this list is fleet-wide: a skill offered on a machine that
-    # cannot run it fails mid-task with a shell error instead of simply not
-    # being there.
-    docx = "${inputs.anthropic-skills}/skills/docx";
-    pdf = "${inputs.anthropic-skills}/skills/pdf";
-    pptx = "${inputs.anthropic-skills}/skills/pptx";
-    xlsx = "${inputs.anthropic-skills}/skills/xlsx";
-  };
+    # `nix flake update jianyuelab-skills` is now the whole workflow.
+    scanSkills "${inputs.jianyuelab-skills}"
+    // scanSkills "${inputs.jianyuelab-docs}/skills"
+    // {
+      # Anthropic's repo stays explicit. It holds 19 skills and only these four
+      # are wanted -- scanning it would quietly enable academy-guide,
+      # discernment-nudge and the rest. This list mirrors the "skills" array of
+      # the document-skills entry in its marketplace.json.
+      #
+      # They shell out to pandoc/pdftotext/qpdf and, through uv, to openpyxl,
+      # pandas, pypdf and markitdown. Those brews sit in
+      # hosts/common/core/darwin/apps.nix rather than dev-extras.nix precisely
+      # because this list is fleet-wide: a skill offered on a machine that
+      # cannot run it fails mid-task with a shell error instead of simply not
+      # being there.
+      docx = "${inputs.anthropic-skills}/skills/docx";
+      pdf = "${inputs.anthropic-skills}/skills/pdf";
+      pptx = "${inputs.anthropic-skills}/skills/pptx";
+      xlsx = "${inputs.anthropic-skills}/skills/xlsx";
+    };
 
   # -- Plugins ------------------------------------------------------------
   #
