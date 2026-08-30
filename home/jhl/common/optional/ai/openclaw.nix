@@ -154,6 +154,41 @@ let
           })
           (builtins.fromJSON (builtins.readFile ../../core/llm/models-api.json));
       };
+
+      # Ornith on a longer leash. Same endpoint and same credential as
+      # jianyuelab-api -- the only thing that differs is the timeout, and
+      # timeouts are per provider: models[] has baseUrl, headers, params and
+      # compat, but no timeout field, so a slow model cannot be given its own
+      # ceiling any other way.
+      #
+      # Splitting it out keeps the fast path fast. Raising jianyuelab-api to
+      # 900 instead would make every gpt-5.6-sol call wait a quarter hour
+      # before giving up on a wedged request.
+      #
+      # WARNING: this only helps outside Telegram. That channel's polling
+      #     handler abandons a turn at 300s regardless of what the provider
+      #     allows -- observed as "handler timed out after 300.04s", which
+      #     takes the whole lane down and not just the one turn. Use this from
+      #     the TUI or `openclaw agent --model`, not from a chat.
+      #
+      # Ornith is a 35B MoE: 64-77s just to first token on a trivial reply,
+      # and a multi-step task ran past 240s. Slow, not broken.
+      jianyuelab-slow = {
+        baseUrl = "https://llm-api.jianyuelab.net/v1";
+        api = "openai-completions";
+        apiKey = {
+          source = "env";
+          provider = "default";
+          id = "JIANYUELAB_FALLBACK_API_KEY";
+        };
+        timeoutSeconds = 900;
+        models = [
+          {
+            id = "Ornith-1.5-35B-A3B";
+            name = "Ornith-1.5-35B-A3B (long timeout)";
+          }
+        ];
+      };
     };
 
     # Web search. duckduckgo needs no key, which is the whole reason to pick
