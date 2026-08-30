@@ -56,6 +56,10 @@ let
   # asserts it back on the next switch -- so change it here instead.
   settings = {
     agents.defaults = {
+      # AGENTS.md is a read-only symlink from nix (see home.file below), so
+      # the seeding pass must not try to create or rewrite it.
+      skipBootstrap = true;
+
       # ~/Documents rather than the default ~/.openclaw/workspace: the agent
       # is meant to work on real files, and on this machine that is where they
       # are -- nix-config included.
@@ -66,19 +70,33 @@ let
       # dmPolicy = "pairing" and requires a mention in groups. Narrow this to
       # a subdirectory if that ever stops being the trade you want.
       workspace = "${config.home.homeDirectory}/Documents";
-      # Same model on both gateways, primary first. Failover is per model
-      # ref, so the pair names one ref per endpoint.
+      # Ornith is the default, and it goes through jianyuelab-slow so it gets
+      # the 900s ceiling. That is only safe because Telegram is gone: that
+      # channel abandoned a turn at 300s and took the whole lane with it,
+      # which capped how long any default model could take. iMessage has no
+      # equivalent -- imsg is an stdio RPC stream, not long polling, so the
+      # schema has probeTimeoutMs and hook timeouts but nothing that kills a
+      # turn in progress.
       #
-      # NOTE: this is not Ornith-1.5-35B-A3B, and cannot be. That model is
-      # served only by llm-api, which is the *fallback* here -- a primary ref
-      # naming it would point at a model the primary provider does not list.
-      # gpt-5.6-sol is on both, so it is the only choice that survives either
-      # gateway being the one that answers. To run Ornith instead, llm-api has
-      # to become the primary and llm the fallback; the two requests are
-      # mutually exclusive.
+      # Expect 60-80s for even a trivial reply; it is a 35B MoE. The fallbacks
+      # are gpt-5.6-luna on either gateway, so a failed Ornith run answers
+      # in seconds rather than not at all.
       model = {
-        primary = "jianyuelab/gpt-5.6-sol";
-        fallbacks = ["jianyuelab-api/gpt-5.6-sol"];
+        primary = "jianyuelab-slow/Ornith-1.5-35B-A3B";
+        fallbacks = [
+          "jianyuelab/gpt-5.6-luna"
+          "jianyuelab-api/gpt-5.6-luna"
+        ];
+      };
+
+      # Override allowlist. Without it `--model` is refused with "not allowed
+      # for agent" and no hint as to which setting is refusing -- the schema
+      # calls this field a "Configured model catalog and allowlist", and it
+      # takes provider/* wildcards.
+      models = {
+        "jianyuelab/*" = {};
+        "jianyuelab-api/*" = {};
+        "jianyuelab-slow/*" = {};
       };
     };
 
@@ -232,8 +250,10 @@ let
       dmPolicy = "pairing";
     };
 
+    # Abandoned in favour of iMessage. The secret and the .env line stay so
+    # that flipping this back is one word, not another sops edit.
     channels.telegram = {
-      enabled = true;
+      enabled = false;
 
       # The bot token is deliberately absent: it arrives as TELEGRAM_BOT_TOKEN
       # from ~/.openclaw/.env, rendered by sops. Writing it here would put a
@@ -348,5 +368,47 @@ in {
         [ -e "$l" ] || rm -f "$l"
       done
     fi
+  '';
+
+  # AGENTS.md -- the workspace file OpenClaw loads at the start of every
+  # session (docs/concepts/agent-workspace.md: "Operating instructions for the
+  # agent ... Good place for rules").
+  #
+  # It exists because iMessage cannot render anything. Unlike whatsapp and
+  # zalo, channels.imessage has no markdown or chunkMode option -- the schema
+  # simply does not offer one -- so asterisks, fences and pipe tables arrive as
+  # literal characters in the bubble. The fix is to stop the model emitting
+  # them, not to post-process.
+  #
+  # WARNING: home.file is a read-only store symlink, so the agent cannot edit
+  #     its own AGENTS.md any more. That is why skipBootstrap is set below:
+  #     without it OpenClaw tries to seed this file when missing, and the
+  #     bootstrap ritual would fight the symlink. Change the rules here and
+  #     rebuild. Same trade ./wakatime.nix takes for ~/.wakatime.cfg.
+  home.file."Documents/AGENTS.md".text = ''
+    # Operating instructions
+
+    ## Output format
+
+    Replies reach the user over **iMessage**, which renders no markup at all.
+    Write plain text.
+
+    - No `**bold**`, `_italic_`, `# headings`, or `> quotes` -- the characters
+      show up verbatim.
+    - No fenced code blocks or pipe tables. For code, indent it and keep it
+      short; for tabular data, use one `key: value` per line.
+    - No footnote or link syntax. Put a bare URL on its own line.
+    - Keep paragraphs short. A phone bubble is narrow and there is no
+      horizontal scrolling.
+
+    Long answers are fine when the question needs one -- brevity is not the
+    goal, legibility on a phone is.
+
+    ## Workspace
+
+    This workspace is ~/Documents, which holds real work rather than a
+    scratch directory: nix-src/ is the machine configuration for three Macs.
+    Read before writing, and prefer showing a diff over editing in place when
+    a change is not obviously safe.
   '';
 }
