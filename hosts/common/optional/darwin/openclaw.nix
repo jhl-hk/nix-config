@@ -53,8 +53,6 @@
 #  Filling in the ciphertext:
 #    just sops-edit shared
 #
-#      openai:
-#          api_key: sk-xxxxxxxx
 #      openclaw:
 #          telegram_bot_token: "123456:ABCDEF..."
 #
@@ -89,21 +87,13 @@ in {
     {
       assertion =
         builtins.pathExists sopsFile
-        && lib.hasInfix "telegram_bot_token:" (builtins.readFile sopsFile)
-        # Matched with its parent and its indentation, not as a bare
-        # substring: `api_key:` on its own is already satisfied by the llm and
-        # wakatime sections, so a plain hasInfix would pass while
-        # openai/api_key does not exist. sops writes nested keys at four
-        # spaces, which is what makes this exact form reliable.
-        && lib.hasInfix "openai:\n    api_key:" (builtins.readFile sopsFile);
+        && lib.hasInfix "telegram_bot_token:" (builtins.readFile sopsFile);
       message = ''
         hosts/common/optional/darwin/openclaw.nix is imported, but
         secrets/shared.yaml has no openclaw.telegram_bot_token yet.
 
           just sops-edit shared
 
-            openai:
-                api_key: sk-xxxxxxxx
             openclaw:
                 telegram_bot_token: "123456:ABCDEF..."
 
@@ -112,17 +102,10 @@ in {
         Then cd ../nix-secrets && git add -A && git commit && git push
         and back here run just update-nix-secrets.
 
-        Bot token comes from @BotFather; the OpenAI key from
-        https://platform.openai.com/api-keys
+        Bot token comes from @BotFather.
       '';
     }
   ];
-
-  sops.secrets."openai/api_key" = {
-    inherit sopsFile;
-    owner = user;
-    mode = "0400";
-  };
 
   sops.secrets."openclaw/telegram_bot_token" = {
     inherit sopsFile;
@@ -132,7 +115,6 @@ in {
 
   sops.templates."openclaw-env" = {
     content = ''
-      OPENAI_API_KEY=${config.sops.placeholder."openai/api_key"}
       JIANYUELAB_API_KEY=${config.sops.placeholder."llm/api_key"}
       JIANYUELAB_FALLBACK_API_KEY=${config.sops.placeholder."llm_api/api_key"}
       TELEGRAM_BOT_TOKEN=${config.sops.placeholder."openclaw/telegram_bot_token"}

@@ -47,10 +47,13 @@ let
 
   configPath = "${config.home.homeDirectory}/.openclaw/openclaw.json";
 
-  # Model ref is provider/model. openai/gpt-5.6-sol is what a fresh OpenAI
-  # API-key setup selects upstream; the bare openai/gpt-5.6 alias resolves to
-  # the same model. Change it with `openclaw models set <provider/model>` and
-  # this merge will assert it back on the next switch -- so change it here.
+  # Everything routes through the JianyueLab gateways; there is no direct
+  # OpenAI provider. That also retires the agentRuntime pin that used to be
+  # needed here -- OpenAI on its official endpoint defaults to the Codex
+  # harness, but nothing addresses that endpoint any more.
+  #
+  # Change the model with `openclaw models set <provider/model>` and the merge
+  # asserts it back on the next switch -- so change it here instead.
   settings = {
     agents.defaults = {
       # ~/Documents rather than the default ~/.openclaw/workspace: the agent
@@ -100,6 +103,20 @@ let
           provider = "default";
           id = "JIANYUELAB_API_KEY";
         };
+
+        # Ornith-1.5-35B-A3B measured 77s to first reply on this gateway --
+        # a 35B MoE is simply slow to start, not broken, and the default
+        # idle timeout cut it off mid-run.
+        #
+        # 240 and not higher on purpose: Telegram's polling handler gives up
+        # at 300s (observed: "handler timed out after 300.04s"), so a model
+        # allowed past that would take the whole lane down with it rather
+        # than failing one turn.
+        #
+        # This is the only ceiling that exists. The timeout error also names
+        # agents.defaults.timeoutSeconds, but no agents.* timeout key is in
+        # this version's config schema -- do not go looking for it.
+        timeoutSeconds = 240;
         models =
           map (id: {
             inherit id;
@@ -116,6 +133,20 @@ let
           provider = "default";
           id = "JIANYUELAB_FALLBACK_API_KEY";
         };
+
+        # Ornith-1.5-35B-A3B measured 77s to first reply on this gateway --
+        # a 35B MoE is simply slow to start, not broken, and the default
+        # idle timeout cut it off mid-run.
+        #
+        # 240 and not higher on purpose: Telegram's polling handler gives up
+        # at 300s (observed: "handler timed out after 300.04s"), so a model
+        # allowed past that would take the whole lane down with it rather
+        # than failing one turn.
+        #
+        # This is the only ceiling that exists. The timeout error also names
+        # agents.defaults.timeoutSeconds, but no agents.* timeout key is in
+        # this version's config schema -- do not go looking for it.
+        timeoutSeconds = 240;
         models =
           map (id: {
             inherit id;
@@ -123,13 +154,6 @@ let
           })
           (builtins.fromJSON (builtins.readFile ../../core/llm/models-api.json));
       };
-
-      # Pinned, or OpenAI silently routes through the Codex harness. From the
-      # schema's own description of agentRuntime.id: "OpenAI on the official
-      # endpoint defaults to the Codex harness when omitted." That harness is
-      # a separate plugin and was broken here; a turn would sit in
-      # state=processing until the channel gave up 300s later.
-      openai.agentRuntime.id = "openclaw";
     };
 
     # Web search. duckduckgo needs no key, which is the whole reason to pick

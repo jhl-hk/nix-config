@@ -472,6 +472,22 @@ llm-models:
         llm_api  llm-api.jianyuelab.net  home/jhl/common/core/llm/models-api.json
     SPECS
 
+    # Record which endpoint the three editors should talk to. They render one
+    # provider each from llm.providers and none of them has a fallback field,
+    # so the choice has to be made here, at refresh time, rather than at
+    # request time. Preference order is the order of the specs above: the
+    # first endpoint that refreshed wins.
+    for spec in "llm https://llm.jianyuelab.net/v1 /run/secrets/llm/api_key home/jhl/common/core/llm/models.json" \
+                "llm_api https://llm-api.jianyuelab.net/v1 /run/secrets/llm_api/api_key home/jhl/common/core/llm/models-api.json"; do
+        set -- $spec
+        case " ${failed[*]:-} " in *" $(printf '%s' "$2" | sed -E 's#https://([^/]+)/.*#\1#') "*) continue ;; esac
+        nix run nixpkgs#jq -- -n --arg u "$2" --arg k "$3" --slurpfile m "$4" \
+            '{apiUrl: $u, apiKeyFile: $k, models: $m[0]}' \
+            > home/jhl/common/core/llm/active.json
+        echo "→ editors will use $2"
+        break
+    done
+
     if [ ${#failed[@]} -gt 0 ]; then
         printf '\n⚠️  not refreshed: %s\n' "${failed[*]}"
         printf '   their committed model lists are unchanged\n\n'

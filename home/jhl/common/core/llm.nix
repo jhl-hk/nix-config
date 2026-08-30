@@ -80,56 +80,36 @@ let
 in {
   llm.defaultProvider = "JianyueLab";
 
-  llm.providers.JianyueLab = {
-    apiUrl = "https://llm.jianyuelab.net/v1";
-    models = builtins.fromJSON (builtins.readFile ./llm/models.json);
+  # One provider, not two. Zed, opencode and pi each render a single
+  # api_url/baseURL per provider and none of them has a fallback field, so a
+  # second provider would be a second thing to pick from a menu, not a
+  # failover. The choice is made at refresh time instead: `just llm-models`
+  # probes both gateways and writes the first one that answered into
+  # llm/active.json, along with its key path and its own model list.
+  #
+  # Preference is llm.jianyuelab.net, falling back to llm-api.jianyuelab.net.
+  # It follows that the two lists are not interchangeable -- llm-api serves
+  # Ornith-1.5-35B-A3B and deepseek-v4-flash, llm does not -- which is why the
+  # models come out of the same file as the URL rather than from a fixed path.
+  #
+  # Not request-time failover: a gateway that dies after a rebuild stays
+  # selected until the next `just llm-models`. Real failover would have to
+  # live in front of both hosts, not in three editor configs.
+  llm.providers.JianyueLab = let
+    active = builtins.fromJSON (builtins.readFile ./llm/active.json);
+  in {
+    inherit (active) apiUrl models apiKeyFile;
 
-    # Pinned rather than left to the option default. That default is "the first
-    # entry of the sorted list", which is a fact about the alphabet, not a
-    # choice -- it silently moved from codex-auto-review to deepseek-v4-flash
-    # the moment the gateway retired a model. Naming it here makes every
-    # consumer (pi, opencode, Zed's default_model / commit_message_model /
-    # edit_predictions) agree, and makes a change to it a diff.
-    # deepseek-v4-flash until this endpoint stopped serving it; verified
-    # against the refreshed models.json, which now has nine ids and not that
-    # one. A defaultModel naming a model the provider does not offer makes Zed
-    # and opencode drop their default-model config silently, so it is worth
-    # re-checking after every `just llm-models`.
+    # Pinned rather than left to the option default, which is "the first entry
+    # of the sorted list" -- a fact about the alphabet, not a choice. It moved
+    # on its own once already when the gateway retired a model.
     defaultModel = "gpt-5.6-sol";
 
     # The name contains capitals, so the default will not do. Zed computes
     #   format!("{}_API_KEY", id).to_case(Case::UpperSnake)
-    # and convert_case cuts at the e->L lower-to-upper boundary, giving
-    # JIANYUE_LAB rather than JIANYUELAB.
-    # See the file header of modules/home/llm.nix for how to verify this.
+    # and convert_case cuts at the e->L boundary, giving JIANYUE_LAB rather
+    # than JIANYUELAB. See the header of modules/home/llm.nix.
     envVar = "JIANYUE_LAB_API_KEY";
-  };
-
-  # The second gateway. Same shape, different host and credential -- and a
-  # different key name, so llm/api_key and llm_api/api_key are two separate
-  # sops secrets, declared together in
-  # hosts/common/optional/darwin/llm.nix.
-  #
-  # models-api.json starts as [] and stays that way until `just llm-models`
-  # can reach the endpoint. That is deliberate: the module treats an empty
-  # list as "skip this provider entirely", so a machine that has never
-  # refreshed it generates no half-configured provider for Zed or opencode
-  # rather than one pointing at zero models.
-  llm.providers.JianyueLabAPI = {
-    apiUrl = "https://llm-api.jianyuelab.net/v1";
-    models = builtins.fromJSON (builtins.readFile ./llm/models-api.json);
-
-    # Set explicitly for the reason the file header spells out: Zed derives
-    # this name itself and convert_case splits at lower->upper boundaries, so
-    # a name with capitals never matches the plain-toUpper default.
-    envVar = "JIANYUELAB_API_KEY";
-
-    # Its own secret; see the option's description in modules/home/llm.nix.
-    apiKeyFile = "/run/secrets/llm_api/api_key";
-
-    # Same pin as the other gateway. This endpoint additionally serves
-    # Ornith-1.5-35B-A3B and deepseek-v4-flash, which the other one does not.
-    defaultModel = "gpt-5.6-sol";
   };
 
   # Terminal: this is the path for opencode and for zed started from a shell
