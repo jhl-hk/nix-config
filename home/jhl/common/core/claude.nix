@@ -30,12 +30,7 @@ let
   #
   # pi reads the same directory (see home/jhl/common/core/pi.nix), so anything
   # added here shows up in both harnesses.
-  #
-  # apple-design is vendored, not written here: it comes from
-  # https://github.com/emilkowalski/skills (MIT, LICENSE kept beside it).
-  # Update it by copying the file again -- there is no upstream tracking.
   skills = [
-    "apple-design"
     "nix-config"
     "rir-apis"
   ];
@@ -77,6 +72,11 @@ let
     # `nix flake update jianyuelab-skills` is now the whole workflow.
     scanSkills "${inputs.jianyuelab-skills}"
     // scanSkills "${inputs.jianyuelab-docs}/skills"
+    # emilkowalski/skills, scanned for the same reason: it is a single-purpose
+    # library (animation and interface-design taste) where every skill is
+    # wanted, and apple-design here replaces the hand-copied vendored version
+    # that used to sit in claude/skills/.
+    // scanSkills "${inputs.emil-skills}/skills"
     // {
       # Anthropic's repo stays explicit. It holds 19 skills and only these four
       # are wanted -- scanning it would quietly enable academy-guide,

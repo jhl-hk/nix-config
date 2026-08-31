@@ -37,6 +37,22 @@
         "type": "github"
       }
     },
+    "emil-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787304752,
+        "narHash": "sha256-VNTgOF9nKz+kkwVvuchepbi0q++2/PfT/gQpplpQcMc=",
+        "owner": "emilkowalski",
+        "repo": "skills",
+        "rev": "d23d7f88a2e21c9e4b1418c7abe420f5c1052ba7",
+        "type": "github"
+      },
+      "original": {
+        "owner": "emilkowalski",
+        "repo": "skills",
+        "type": "github"
+      }
+    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -152,6 +168,7 @@
       "inputs": {
         "anthropic-skills": "anthropic-skills",
         "darwin": "darwin",
+        "emil-skills": "emil-skills",
         "home-manager": "home-manager",
         "jianyuelab-docs": "jianyuelab-docs",
         "jianyuelab-skills": "jianyuelab-skills",

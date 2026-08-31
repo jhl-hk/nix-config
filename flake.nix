@@ -86,6 +86,18 @@
       url = "github:anthropics/skills";
       flake = false;
     };
+
+    # emilkowalski/skills -- design/animation taste for UI work (MIT, public).
+    #
+    # apple-design used to be vendored under claude/skills/ from this repo,
+    # copied by hand with no upstream tracking. As an input the whole set is
+    # scanned instead, so `nix flake update emil-skills` picks up both edits
+    # to the existing skills and any new ones, and the license stays with the
+    # source rather than being re-published here.
+    emil-skills = {
+      url = "github:emilkowalski/skills";
+      flake = false;
+    };
   };
 
   outputs = inputs @ {
