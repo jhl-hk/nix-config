@@ -3,11 +3,11 @@
     "anthropic-skills": {
       "flake": false,
       "locked": {
-        "lastModified": 1787332253,
-        "narHash": "sha256-nVid8vENmLDh7ffDqh+bJbEWtXcVltA0qa2rItmniZM=",
+        "lastModified": 1788287438,
+        "narHash": "sha256-xaxkXFpzH4s2OIOcZqPy+HzfRAy2HbKpagjMhY+uinA=",
         "owner": "anthropics",
         "repo": "skills",
-        "rev": "3b3fad96af16a10759d930941b4520ba0c40edae",
+        "rev": "53048666b05b4799081517d00e09e0a2dd688678",
         "type": "github"
       },
       "original": {
@@ -77,10 +77,10 @@
     "jianyuelab-docs": {
       "flake": false,
       "locked": {
-        "lastModified": 1787373830,
-        "narHash": "sha256-RJDiTXWSKZ5YnpeLJ95rKZNeoLARQmv69kp9a8XF9Y8=",
+        "lastModified": 1788148350,
+        "narHash": "sha256-9jZtaOqVXvDWrIHRDMi+Fe5BgXbjG50D0qfNjRMvyI4=",
         "ref": "main",
-        "rev": "21e16cbc4686404dac09a7d5ce05b70f5ab9bbaa",
+        "rev": "5e17a82dd37f6b770963e4995da11ab0a830c691",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/JianyueLab/Docs.git"
