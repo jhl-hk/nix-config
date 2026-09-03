@@ -38,10 +38,12 @@ in {
     NIX_SSH_AGENT="/opt/homebrew/bin/ssh-agent"
 
     # Fixed socket path: survives restarts and is reachable by root too
-    SSH_AUTH_SOCK="$HOME/.ssh/ssh-agent.sock"
-    export SSH_AUTH_SOCK
+    NIX_SSH_SOCK="$HOME/.ssh/ssh-agent.sock"
 
     _ssh_agent_start() {
+      SSH_AUTH_SOCK="$NIX_SSH_SOCK"
+      export SSH_AUTH_SOCK
+
       if [ -S "$SSH_AUTH_SOCK" ]; then
         # `ssh-add -l` exits 2 only when it cannot reach the agent; a live
         # agent with no keys loaded exits 1. Testing only for success would
@@ -75,7 +77,19 @@ in {
       command ssh "$@"
     }
 
-    _ssh_agent_start
+    # `ssh -A` into this Mac arrives with SSH_AUTH_SOCK already pointing at the
+    # socket sshd made for the forwarded agent. Claiming the fixed path here
+    # would swap a populated agent for a local empty one, and onward auth from
+    # this host then fails with "The agent has no identities" -- forwarding
+    # itself is fine, the variable was just being overwritten.
+    #
+    # The three tests are the three ways there is nothing to adopt: not an ssh
+    # session at all; an ssh session the client opened without -A, where sshd
+    # leaves SSH_AUTH_SOCK unset; or a nested shell that already picked up the
+    # local agent, which still wants the liveness check below.
+    if [ -z "$SSH_CONNECTION" ] || [ ! -S "$SSH_AUTH_SOCK" ] || [ "$SSH_AUTH_SOCK" = "$NIX_SSH_SOCK" ]; then
+      _ssh_agent_start
+    fi
 
     alias ssh-list="$NIX_SSH_ADD -l"
     alias ssh-clear="$NIX_SSH_ADD -D"
