@@ -49,6 +49,7 @@
       "datagrip"
 
       # Editors
+      "antigravity" # Google's agentic IDE
       "cursor"
       "microsoft-office"
       "typora" # Markdown editor

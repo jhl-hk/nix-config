@@ -97,13 +97,34 @@ in {
   # live in front of both hosts, not in three editor configs.
   llm.providers.JianyueLab = let
     active = builtins.fromJSON (builtins.readFile ./llm/active.json);
-  in {
-    inherit (active) apiUrl models apiKeyFile;
 
     # Pinned rather than left to the option default, which is "the first entry
     # of the sorted list" -- a fact about the alphabet, not a choice. It moved
     # on its own once already when the gateway retired a model.
-    defaultModel = "gpt-5.6-sol";
+    pinnedDefault = "gpt-5.6-sol";
+  in {
+    inherit (active) apiUrl apiKeyFile;
+
+    # Unioned in rather than taken from the refresh alone. Both gateways
+    # stopped listing gpt-5.6-sol in /v1/models while still serving it, and
+    # "not listed" is not the same as "not callable".
+    #
+    # This matters far out of proportion to one id: zed.nix, opencode.nix and
+    # pi.nix all gate their default on `lib.elem defaultModel models`, so an
+    # id missing here makes all three silently write no default at all. That
+    # is how Zed's AI commit generator vanished -- commit_message_model sits
+    # inside the same `lib.optionalAttrs hasDefault` as default_model.
+    #
+    # It also re-enables the hand-picked ids checked against this list:
+    # zed's commitModelId and opencode's agentModels.plan, both gpt-5.6-sol.
+    #
+    # If calls to this model ever start failing, delete the union rather than
+    # working around it downstream -- the guard exists to keep an unusable id
+    # out of three editor configs, and this line is the one thing overriding
+    # it.
+    models = lib.unique (active.models ++ [pinnedDefault]);
+
+    defaultModel = pinnedDefault;
 
     # The name contains capitals, so the default will not do. Zed computes
     #   format!("{}_API_KEY", id).to_case(Case::UpperSnake)

@@ -12,6 +12,7 @@
     ./common/core
     ./common/optional/editors/zed.nix
     ./common/optional/editors/typora.nix
+    ./common/optional/ai/antigravity.nix
 
     # Bash + flyline. zsh stays the login shell; this only affects `bash`.
     # Needs hosts/common/optional/darwin/flyline.nix on the system side.
