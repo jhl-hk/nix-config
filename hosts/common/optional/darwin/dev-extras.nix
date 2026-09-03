@@ -43,7 +43,6 @@
       "rclone"
       "cloudflare-wrangler" # Cloudflare Workers/R2 CLI
       "gemini-cli"
-      "opencode"
     ];
   };
 }

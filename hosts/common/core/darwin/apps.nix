@@ -69,6 +69,16 @@
       "ssh-askpass"
       "ykman"
 
+      # In core for the same reason as the block below, and it got there the
+      # same way: home/jhl/common/core/opencode.nix generates
+      # ~/.config/opencode/opencode.json on every machine, so while this brew
+      # sat in dev-extras.nix jhlsMacBookAir carried a fully configured agent
+      # with no binary to run it. A fleet-wide config needs a fleet-wide tool.
+      #
+      # Homebrew rather than nixpkgs is deliberate -- see the "Why not
+      # programs.opencode" section in that file for what a nix copy breaks.
+      "opencode"
+
       # Backing tools for the docx/pdf/pptx/xlsx skills, which
       # home/jhl/common/core/claude.nix links on every machine. In core rather
       # than dev-extras.nix for exactly that reason: the skills are fleet-wide,
