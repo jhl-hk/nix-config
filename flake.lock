@@ -1,5 +1,21 @@
 {
   "nodes": {
+    "alireza-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1787752382,
+        "narHash": "sha256-ehAXxfKTvK0QZrSkUfweQdTud7NTvQermM+jJF2ggV0=",
+        "owner": "alirezarezvani",
+        "repo": "claude-skills",
+        "rev": "19392f7a08264ed00486a251f5b2098321771f94",
+        "type": "github"
+      },
+      "original": {
+        "owner": "alirezarezvani",
+        "repo": "claude-skills",
+        "type": "github"
+      }
+    },
     "anthropic-skills": {
       "flake": false,
       "locked": {
@@ -50,6 +66,22 @@
       "original": {
         "owner": "emilkowalski",
         "repo": "skills",
+        "type": "github"
+      }
+    },
+    "grc-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1788625721,
+        "narHash": "sha256-KNw2P3O32MCi4PoiyEpxJlOdW9xXYM2Sb7qM0PJXqmw=",
+        "owner": "Sushegaad",
+        "repo": "Claude-Skills-Governance-Risk-and-Compliance",
+        "rev": "f47afba773c01222b69296be8f6701657dedb9f0",
+        "type": "github"
+      },
+      "original": {
+        "owner": "Sushegaad",
+        "repo": "Claude-Skills-Governance-Risk-and-Compliance",
         "type": "github"
       }
     },
@@ -164,17 +196,36 @@
         "type": "github"
       }
     },
+    "privacy-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1773691611,
+        "narHash": "sha256-G5Vh/KW0rdAtfanLMBA+UISLT4Ir1giKVEzyJ1T5joI=",
+        "owner": "mukul975",
+        "repo": "Privacy-Data-Protection-Skills",
+        "rev": "9b2ef9eae161c00a17241d42a388571321b33e9f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mukul975",
+        "repo": "Privacy-Data-Protection-Skills",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
+        "alireza-skills": "alireza-skills",
         "anthropic-skills": "anthropic-skills",
         "darwin": "darwin",
         "emil-skills": "emil-skills",
+        "grc-skills": "grc-skills",
         "home-manager": "home-manager",
         "jianyuelab-docs": "jianyuelab-docs",
         "jianyuelab-skills": "jianyuelab-skills",
         "nix-secrets": "nix-secrets",
         "nixpkgs": "nixpkgs",
         "nixpkgs-darwin": "nixpkgs-darwin",
+        "privacy-skills": "privacy-skills",
         "sops-nix": "sops-nix"
       }
     },

@@ -98,6 +98,46 @@
       url = "github:emilkowalski/skills";
       flake = false;
     };
+
+    # -- Privacy / compliance skills ----------------------------------------
+    #
+    # Three public marketplaces, all hookless, so they follow the same rule as
+    # anthropic-skills above: taken as inputs and linked directly rather than
+    # installed by `claude plugin install`, which would re-clone HEAD at
+    # runtime instead of honouring flake.lock.
+    #
+    # None of them is a flat skills/ directory -- the first two nest under
+    # plugins/<plugin>/skills/<skill>, the third under <team>/skills/<skill> --
+    # so claude.nix reaches past each repo root rather than scanning it. Read
+    # the scanning comments there before bumping any of these: how much of each
+    # repo is wanted is the whole question.
+
+    # 283 privacy skills across 21 plugins (Apache-2.0). Only the
+    # gdpr-compliance-skills plugin is taken -- 18 of the 283. The other 20
+    # plugins are re-cuts of the same pool (healthcare, us-state, children's
+    # privacy, ...) and scanning the repo would enable all of it.
+    privacy-skills = {
+      url = "github:mukul975/Privacy-Data-Protection-Skills";
+      flake = false;
+    };
+
+    # One skill per compliance framework, 33 of them (MIT): GDPR, ISO 27001,
+    # SOC 2, EU AI Act, HIPAA, PCI, NIST, WCAG and the rest. Scanned whole --
+    # the framework a question lands on is not knowable in advance, and each
+    # skill is inert until its own name comes up.
+    grc-skills = {
+      url = "github:Sushegaad/Claude-Skills-Governance-Risk-and-Compliance";
+      flake = false;
+    };
+
+    # 400+ skills across 100 plugins (MIT), of which exactly one is wanted:
+    # ra-qm-team/skills/gdpr-dsgvo-expert, which covers German BDSG on top of
+    # GDPR and ships DPIA/DSAR scripts. Named by hand in claude.nix; do not
+    # scan this input.
+    alireza-skills = {
+      url = "github:alirezarezvani/claude-skills";
+      flake = false;
+    };
   };
 
   outputs = inputs @ {

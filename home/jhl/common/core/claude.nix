@@ -33,6 +33,12 @@ let
   skills = [
     "nix-config"
     "rir-apis"
+    # Vendored from github/awesome-copilot rather than taken as an input like
+    # every other third-party skill here: that repo is a 105 MiB checkout of
+    # 100 Copilot plugins and this is three files inside it. See
+    # claude/skills/gdpr-compliant/UPSTREAM.md for the commit, the MIT notice
+    # and the two local fixes to re-check when bumping it.
+    "gdpr-compliant"
   ];
 
   # Skills that cannot be vendored, because this repo is public and they are
@@ -62,6 +68,23 @@ let
       (name: type: type == "directory" && builtins.pathExists "${base}/${name}/SKILL.md")
       (builtins.readDir base));
 
+  # Same, one level up, for the marketplace layout: plugins/<plugin>/skills/.
+  #
+  # Flattening is safe because the skill name -- the directory name, which is
+  # what lands in ~/.claude/skills -- is what Claude Code addresses; the plugin
+  # a skill was filed under is packaging, not identity. A collision between two
+  # plugins would silently drop one, so `//` here is the same bet the merge in
+  # inputSkills already makes across repos.
+  #
+  # The `skills` guard is not decorative: these repos carry docs/ and .github/
+  # under plugins/ siblings, and readDir reports those too.
+  scanMarketplace = base:
+    lib.foldl' (acc: name: acc // scanSkills "${base}/plugins/${name}/skills") {}
+    (lib.attrNames
+      (lib.filterAttrs
+        (name: type: type == "directory" && builtins.pathExists "${base}/plugins/${name}/skills")
+        (builtins.readDir "${base}/plugins")));
+
   inputSkills =
     # Scanned, not listed. These are this org's own multi-skill repos, so
     # anything added upstream is wanted here by definition -- and listing each
@@ -77,7 +100,31 @@ let
     # wanted, and apple-design here replaces the hand-copied vendored version
     # that used to sit in claude/skills/.
     // scanSkills "${inputs.emil-skills}/skills"
+    # -- Privacy / compliance ------------------------------------------------
+    #
+    # Deliberately asymmetric, because the three repos are asymmetric. See the
+    # input comments in flake.nix for the sizes involved.
+    #
+    # grc-skills is scanned whole: 33 skills, one per compliance framework
+    # (GDPR, ISO 27001, SOC 2, EU AI Act, HIPAA, PCI, NIST, WCAG, ...). Which
+    # one a question needs is not knowable in advance and none of them fires
+    # unless its framework is named, so upstream adding a framework is wanted
+    # here by definition -- the emil-skills argument.
+    #
+    # privacy-skills is scanned **one plugin deep**, not at the repo root. The
+    # root holds 283 skills; gdpr-compliance-skills is 18 of them and the rest
+    # are re-cuts for domains this fleet does not touch. Scanning the root
+    # would be the failure the anthropic-skills comment below describes,
+    # fifteen times over.
+    // scanMarketplace "${inputs.grc-skills}"
+    // scanSkills "${inputs.privacy-skills}/plugins/gdpr-compliance-skills/skills"
     // {
+      # One skill out of 400+. Explicit for the same reason as the Anthropic
+      # entries: nothing else in that repo is wanted. It goes past GDPR into
+      # German BDSG and carries scripts/ for DPIA generation and DSAR deadline
+      # tracking, which is why it earns a slot next to the 18 above.
+      gdpr-dsgvo-expert = "${inputs.alireza-skills}/ra-qm-team/skills/gdpr-dsgvo-expert";
+
       # Anthropic's repo stays explicit. It holds 19 skills and only these four
       # are wanted -- scanning it would quietly enable academy-guide,
       # discernment-nudge and the rest. This list mirrors the "skills" array of

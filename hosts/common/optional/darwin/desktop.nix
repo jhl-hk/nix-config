@@ -73,6 +73,7 @@
 
       # Browsers
       "google-chrome"
+      "firefox"
 
       "google-drive"
       "windows-app"
