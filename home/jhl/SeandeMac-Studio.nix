@@ -10,5 +10,6 @@
     ./common/optional/editors/zed.nix
     ./common/optional/editors/typora.nix
     ./common/optional/ai/antigravity.nix
+    ./common/optional/ai/harness.nix
   ];
 }

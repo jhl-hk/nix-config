@@ -2,7 +2,6 @@
   "apiUrl": "https://llm.jianyuelab.net/v1",
   "apiKeyFile": "/run/secrets/llm/api_key",
   "models": [
-    "Ornith-1.5-35B-A3B",
     "deepseek-v4-flash",
     "gpt-5.3-codex-spark",
     "gpt-5.5",
