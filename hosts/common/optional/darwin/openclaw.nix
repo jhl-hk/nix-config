@@ -114,9 +114,19 @@ in {
   };
 
   sops.templates."openclaw-env" = {
+    # One JianyueLab key, deliberately.
+    #
+    # JIANYUELAB_FALLBACK_API_KEY used to be rendered here for the llm-api
+    # provider. Both are gone, for the reason measured in the home-side file:
+    # OpenClaw ignores `apiKey.id` and sends one key to every provider, so a
+    # second key in this file is a second thing it can pick wrong -- which is
+    # exactly what it did, sending the llm-api key to the llm endpoint and
+    # getting 401 on every turn since 2026-08-31.
+    #
+    # The ciphertext it came from (llm_api/api_key in shared.yaml) is left
+    # alone; nothing here needs deleting to put this back, only a line.
     content = ''
       JIANYUELAB_API_KEY=${config.sops.placeholder."llm/api_key"}
-      JIANYUELAB_FALLBACK_API_KEY=${config.sops.placeholder."llm_api/api_key"}
       TELEGRAM_BOT_TOKEN=${config.sops.placeholder."openclaw/telegram_bot_token"}
     '';
     owner = user;
