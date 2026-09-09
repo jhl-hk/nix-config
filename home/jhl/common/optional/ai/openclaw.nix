@@ -119,18 +119,16 @@ let
       #
       # So this is a workaround, not a fix, and the fix is upstream's. Until
       # then the default sits on the gateway that works.
-      # gpt-5.6-sol rather than qwen-flashnext. The flash model was picked
-      # while the gateway was still broken and speed was the only thing being
-      # measured; once messages actually reached it, it could not hold a
-      # conversation. Asked "who are you" over iMessage it answered about an
-      # infinite echo loop it had invented -- the gateway log shows three
-      # self-messages dropped in twenty-five minutes, which is the echo guard
-      # working, not a loop.
+      # qwen-flashnext, chosen deliberately. This is the one consumer that
+      # does not follow ../../core/llm.nix's gpt-5.6-sol pin, and that is the
+      # point rather than an oversight -- do not "align" it without asking.
       #
-      # sol is what ../../core/llm.nix pins for Zed, opencode and pi, so this
-      # stops being the one consumer on a different model.
+      # One measurement worth leaving here, because the name suggests the
+      # opposite: on this gateway flashnext was **slower** than sol on a
+      # trivial prompt, 52s against 15s, one sample each. Latency is not the
+      # reason to prefer it.
       model = {
-        primary = "jianyuelab-api/gpt-5.6-sol";
+        primary = "jianyuelab-api/qwen-flashnext";
         fallbacks = [
           "jianyuelab-api/gpt-5.6-luna"
         ];
