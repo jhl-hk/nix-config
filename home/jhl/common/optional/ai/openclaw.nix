@@ -70,47 +70,59 @@ let
       # dmPolicy = "pairing" and requires a mention in groups. Narrow this to
       # a subdirectory if that ever stops being the trade you want.
       workspace = "${config.home.homeDirectory}/Documents";
-      # -- One gateway only, and that is forced ------------------------------
+      # qwen-flashnext on the ordinary 240s lane, not jianyuelab-slow. That
+      # provider exists solely to give Ornith-1.5-35B-A3B a 900s ceiling and
+      # its models[] lists that one id, so it is not a route for anything
+      # else -- a "jianyuelab-slow/qwen-flashnext" ref would name a model the
+      # provider does not carry.
       #
-      # OpenClaw ignores `apiKey.id`. Proven on jhlsMacBookAir, not inferred:
-      # pointing a local echo server at a provider showed it sending a key of
-      # 51 bytes / sha1 4410c65e, which is the llm-api key's value and not the
-      # JIANYUELAB_API_KEY the config named. Then setting the *working*
-      # provider's id to the key that is wrong for its own endpoint left it
-      # working -- so the field is not read at all. One key goes to every
-      # provider.
+      # This replaces Ornith as the default, which is a straight speed trade:
+      # Ornith is a 35B MoE that needed 64-77s just to reach a first token on
+      # a trivial reply. It stays reachable on demand with
       #
-      # Ruled out along the way, each by inspection on that machine: a
-      # `secrets` block, a top-level `env` block, launchctl setenv, the
-      # launchd plist's EnvironmentVariables, a duplicate provider definition,
-      # a malformed .env (213 bytes, 3 lines, values are plain [A-Za-z0-9_-]),
-      # and a stored auth profile (`openclaw models auth list` has only
-      # openai:api-key). Giving each provider a distinct `apiKey.provider`
-      # alias plus a matching `secrets.providers` entry changed nothing.
+      #   openclaw agent --model jianyuelab-slow/Ornith-1.5-35B-A3B
       #
-      # Hence the shape of this file: OpenClaw can reach exactly one gateway,
-      # so llm-api is gone from it entirely -- provider, allowlist entry and
-      # fallbacks. The sops template in
-      # hosts/common/optional/darwin/openclaw.nix stops rendering
-      # JIANYUELAB_FALLBACK_API_KEY for the same reason: one key in the
-      # environment is one key it can pick wrong.
+      # and that -- not the default -- is now the only reason the slow
+      # provider and its allowlist entry are still here. The 300s Telegram
+      # ceiling those comments keep referring to no longer binds anything
+      # either, since that channel is gone.
       #
-      # What this costs, stated plainly:
+      # -- Everything routes through llm-api, and that is not a preference ---
       #
-      #   * No cross-gateway failover. It never worked anyway -- OpenClaw's
-      #     failover decision for an auth error is `surface_error`, not
-      #     `fallback_model`, so an llm-api fallback could not have rescued a
-      #     401 on the primary.
-      #   * The 900s lane is gone with its provider. That existed only for
-      #     Ornith-1.5-35B-A3B, which the gateway has since retired: absent
-      #     from /v1/models, and a call returns 502.
+      # A ref under `jianyuelab` returns 401 from inside OpenClaw no matter
+      # what the config says, while `jianyuelab-api` answers normally from the
+      # same process. The key is not the problem: curl with the very value in
+      # ~/.openclaw/.env returns 200 against llm.jianyuelab.net.
       #
-      # Fallbacks stay inside this one provider, which still buys something
-      # for 5xx and timeouts even though it cannot help with auth.
+      # This was chased to exhaustion on jhlsMacBookAir on 2026-09-09 and the
+      # cause was never found. Pointing a local echo server at the provider
+      # caught OpenClaw sending a key that was not the one `apiKey.id` named,
+      # and setting the *working* provider's id to a key wrong for its own
+      # endpoint left it working -- so `apiKey.id` is not read at all.
+      #
+      # Ruled out, each by inspection on that machine: a `secrets` block, a
+      # top-level `env` block, launchctl setenv, the launchd plist's
+      # EnvironmentVariables, a duplicate provider definition, a malformed
+      # .env, a stored auth profile, distinct `apiKey.provider` aliases with
+      # matching `secrets.providers` entries, every stale openclaw.json backup,
+      # and a stale agent-level ~/.openclaw/agents/main/agent/models.json that
+      # really did point `jianyuelab` at the wrong gateway -- deleting it made
+      # OpenClaw regenerate a correct one, and the 401 survived that too.
+      #
+      # Reducing the config to one provider and one key in .env did not fix it
+      # either. Worse, it took the gateway down: OpenClaw validates every
+      # secret ref at startup, and the stale providers that its additive merge
+      # cannot remove still referenced the deleted variable, so the service
+      # crash-looped with SECRETS_RELOADER_DEGRADED. If llm-api is ever
+      # removed from here again, prune ~/.openclaw/openclaw.json by hand in
+      # the same change.
+      #
+      # So this is a workaround, not a fix, and the fix is upstream's. Until
+      # then the default sits on the gateway that works.
       model = {
-        primary = "jianyuelab/qwen-flashnext";
+        primary = "jianyuelab-api/qwen-flashnext";
         fallbacks = [
-          "jianyuelab/gpt-5.6-luna"
+          "jianyuelab-api/gpt-5.6-luna"
         ];
       };
 
@@ -120,16 +132,23 @@ let
       # takes provider/* wildcards.
       models = {
         "jianyuelab/*" = {};
+        "jianyuelab-api/*" = {};
+        "jianyuelab-slow/*" = {};
       };
     };
 
-    # One provider, one gateway. llm-api used to sit beside this as a second
-    # provider and a failover target; see the comment above `model` for the
-    # measurement that removed it.
+    # Two gateways, one logical provider pair: llm.jianyuelab.net first,
+    # llm-api.jianyuelab.net as the fallback.
     #
-    # The model list comes from what `just llm-models` refreshes for this
-    # endpoint. llm/models-api.json is still generated by that command and is
-    # still read by other consumers -- it is simply no longer read here.
+    # They stay two providers rather than one because they do not share a
+    # credential -- verified: the llm key returns 401 against llm-api.
+    # Failover in OpenClaw happens at the model-ref level
+    # (agents.defaults.model.fallbacks), not by merging providers, so two
+    # entries here is the shape that expresses it.
+    #
+    # Each reads the model list `just llm-models` refreshes for its own
+    # endpoint. They are not the same list: llm-api additionally serves
+    # Ornith-1.5-35B-A3B and deepseek-v4-flash.
     models.providers = {
       jianyuelab = {
         baseUrl = "https://llm.jianyuelab.net/v1";
@@ -159,6 +178,71 @@ let
             name = id;
           })
           (builtins.fromJSON (builtins.readFile ../../core/llm/models.json));
+      };
+
+      jianyuelab-api = {
+        baseUrl = "https://llm-api.jianyuelab.net/v1";
+        api = "openai-completions";
+        apiKey = {
+          source = "env";
+          provider = "default";
+          id = "JIANYUELAB_FALLBACK_API_KEY";
+        };
+
+        # Ornith-1.5-35B-A3B measured 77s to first reply on this gateway --
+        # a 35B MoE is simply slow to start, not broken, and the default
+        # idle timeout cut it off mid-run.
+        #
+        # 240 and not higher on purpose: Telegram's polling handler gives up
+        # at 300s (observed: "handler timed out after 300.04s"), so a model
+        # allowed past that would take the whole lane down with it rather
+        # than failing one turn.
+        #
+        # This is the only ceiling that exists. The timeout error also names
+        # agents.defaults.timeoutSeconds, but no agents.* timeout key is in
+        # this version's config schema -- do not go looking for it.
+        timeoutSeconds = 240;
+        models =
+          map (id: {
+            inherit id;
+            name = id;
+          })
+          (builtins.fromJSON (builtins.readFile ../../core/llm/models-api.json));
+      };
+
+      # Ornith on a longer leash. Same endpoint and same credential as
+      # jianyuelab-api -- the only thing that differs is the timeout, and
+      # timeouts are per provider: models[] has baseUrl, headers, params and
+      # compat, but no timeout field, so a slow model cannot be given its own
+      # ceiling any other way.
+      #
+      # Splitting it out keeps the fast path fast. Raising jianyuelab-api to
+      # 900 instead would make every gpt-5.6-sol call wait a quarter hour
+      # before giving up on a wedged request.
+      #
+      # WARNING: this only helps outside Telegram. That channel's polling
+      #     handler abandons a turn at 300s regardless of what the provider
+      #     allows -- observed as "handler timed out after 300.04s", which
+      #     takes the whole lane down and not just the one turn. Use this from
+      #     the TUI or `openclaw agent --model`, not from a chat.
+      #
+      # Ornith is a 35B MoE: 64-77s just to first token on a trivial reply,
+      # and a multi-step task ran past 240s. Slow, not broken.
+      jianyuelab-slow = {
+        baseUrl = "https://llm-api.jianyuelab.net/v1";
+        api = "openai-completions";
+        apiKey = {
+          source = "env";
+          provider = "default";
+          id = "JIANYUELAB_FALLBACK_API_KEY";
+        };
+        timeoutSeconds = 900;
+        models = [
+          {
+            id = "Ornith-1.5-35B-A3B";
+            name = "Ornith-1.5-35B-A3B (long timeout)";
+          }
+        ];
       };
     };
 
