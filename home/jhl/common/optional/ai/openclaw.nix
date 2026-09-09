@@ -70,19 +70,28 @@ let
       # dmPolicy = "pairing" and requires a mention in groups. Narrow this to
       # a subdirectory if that ever stops being the trade you want.
       workspace = "${config.home.homeDirectory}/Documents";
-      # Ornith is the default, and it goes through jianyuelab-slow so it gets
-      # the 900s ceiling. That is only safe because Telegram is gone: that
-      # channel abandoned a turn at 300s and took the whole lane with it,
-      # which capped how long any default model could take. iMessage has no
-      # equivalent -- imsg is an stdio RPC stream, not long polling, so the
-      # schema has probeTimeoutMs and hook timeouts but nothing that kills a
-      # turn in progress.
+      # qwen-flashnext on the ordinary 240s lane, not jianyuelab-slow. That
+      # provider exists solely to give Ornith-1.5-35B-A3B a 900s ceiling and
+      # its models[] lists that one id, so it is not a route for anything
+      # else -- a "jianyuelab-slow/qwen-flashnext" ref would name a model the
+      # provider does not carry.
       #
-      # Expect 60-80s for even a trivial reply; it is a 35B MoE. The fallbacks
-      # are gpt-5.6-luna on either gateway, so a failed Ornith run answers
-      # in seconds rather than not at all.
+      # This replaces Ornith as the default, which is a straight speed trade:
+      # Ornith is a 35B MoE that needed 64-77s just to reach a first token on
+      # a trivial reply. It stays reachable on demand with
+      #
+      #   openclaw agent --model jianyuelab-slow/Ornith-1.5-35B-A3B
+      #
+      # and that -- not the default -- is now the only reason the slow
+      # provider and its allowlist entry are still here. The 300s Telegram
+      # ceiling those comments keep referring to no longer binds anything
+      # either, since that channel is gone.
+      #
+      # Fallbacks are left as they were: gpt-5.6-luna on either gateway, so a
+      # failed primary still answers rather than not at all. They are already
+      # a cross-gateway chain, so they survive one endpoint being down.
       model = {
-        primary = "jianyuelab-slow/Ornith-1.5-35B-A3B";
+        primary = "jianyuelab/qwen-flashnext";
         fallbacks = [
           "jianyuelab/gpt-5.6-luna"
           "jianyuelab-api/gpt-5.6-luna"
