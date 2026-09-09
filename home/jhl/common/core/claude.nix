@@ -33,6 +33,7 @@ let
   skills = [
     "nix-config"
     "rir-apis"
+    "conserving-context"
     # Vendored from github/awesome-copilot rather than taken as an input like
     # every other third-party skill here: that repo is a 105 MiB checkout of
     # 100 Copilot plugins and this is three files inside it. See
