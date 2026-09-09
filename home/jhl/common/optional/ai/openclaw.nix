@@ -87,13 +87,64 @@ let
       # ceiling those comments keep referring to no longer binds anything
       # either, since that channel is gone.
       #
-      # Fallbacks are left as they were: gpt-5.6-luna on either gateway, so a
-      # failed primary still answers rather than not at all. They are already
-      # a cross-gateway chain, so they survive one endpoint being down.
+      # -- WARNING: this default is known-broken as of 2026-09-09 -----------
+      #
+      # The `jianyuelab` provider does not authenticate from inside OpenClaw.
+      # Measured on jhlsMacBookAir: every ref under it returns 401, for any
+      # model, going back to 2026-08-31 in the gateway log, while
+      # jianyuelab-api answers normally from the same process and the same
+      # ~/.openclaw/.env. The key itself is fine -- curl with the .env value
+      # against llm.jianyuelab.net returns 200.
+      #
+      # It is set here anyway, by explicit instruction, so that the default
+      # rides the primary gateway rather than the fallback one. Expect 401 in
+      # iMessage until the cause below is found. `jianyuelab-api/qwen-flashnext`
+      # is the ref that was verified working, if this needs to be backed out:
+      #
+      #   openclaw agent --agent main --session-key probe \
+      #     --model jianyuelab-api/qwen-flashnext -m "say ok"   ->  ok
+      #   ...              --model jianyuelab/qwen-flashnext    ->  401
+      #
+      # -- What the cause is NOT ---------------------------------------------
+      #
+      # An earlier version of this comment blamed the three providers sharing
+      # `apiKey.provider = "default"`, claiming their credentials collapsed
+      # into one. That is wrong, and reading OpenClaw 2026.7.1 disproves it:
+      #
+      #   canResolveEnvSecretRefInReadOnlyPath()  (model-auth-*.js)
+      #     cfg.secrets.providers[<apiKey.provider>]  -- a *secrets* provider,
+      #     not a model one. Absent, it falls back to comparing against
+      #     DEFAULT_SECRET_PROVIDER_ALIAS, which is the literal "default", so
+      #     the check passes. Each model provider then reads its own
+      #     `apiKey.id` straight out of process.env. Nothing is shared and
+      #     nothing collapses.
+      #
+      # So the question is only why process.env lacks a usable
+      # JIANYUELAB_API_KEY in the gateway while JIANYUELAB_FALLBACK_API_KEY
+      # resolves. Two candidates, neither confirmed -- both need the Air,
+      # which was unreachable over ssh when this was written:
+      #
+      #   1. a `secrets.providers.*.allowlist` in the on-disk openclaw.json
+      #      (written by OpenClaw, not by nix) that omits the one id;
+      #   2. OpenClaw's login-shell env import (`getShellPathFromLoginShell`)
+      #      picking up one variable and not the other -- both are exported
+      #      from .zshrc by ../../core/jyl-usage.nix and ../../core/llm.nix,
+      #      which a non-interactive login shell may not source.
+      #
+      # Check first: `grep -A6 '"secrets"' ~/.openclaw/openclaw.json` on the
+      # Air, then whether the gateway process has the variable at all.
+      #
+      # -- Why fallbacks cannot rescue this ---------------------------------
+      #
+      # OpenClaw's failover decision for an auth error is `surface_error`, not
+      # `fallback_model` (seen in the gateway log), so a 401 on the primary is
+      # reported to the channel rather than retried down the list. The
+      # fallbacks below are still worth having for 5xx and timeouts, and they
+      # sit on jianyuelab-api precisely because that provider does resolve.
       model = {
         primary = "jianyuelab/qwen-flashnext";
         fallbacks = [
-          "jianyuelab/gpt-5.6-luna"
+          "jianyuelab-api/qwen-flashnext"
           "jianyuelab-api/gpt-5.6-luna"
         ];
       };
