@@ -119,8 +119,18 @@ let
       #
       # So this is a workaround, not a fix, and the fix is upstream's. Until
       # then the default sits on the gateway that works.
+      # gpt-5.6-sol rather than qwen-flashnext. The flash model was picked
+      # while the gateway was still broken and speed was the only thing being
+      # measured; once messages actually reached it, it could not hold a
+      # conversation. Asked "who are you" over iMessage it answered about an
+      # infinite echo loop it had invented -- the gateway log shows three
+      # self-messages dropped in twenty-five minutes, which is the echo guard
+      # working, not a loop.
+      #
+      # sol is what ../../core/llm.nix pins for Zed, opencode and pi, so this
+      # stops being the one consumer on a different model.
       model = {
-        primary = "jianyuelab-api/qwen-flashnext";
+        primary = "jianyuelab-api/gpt-5.6-sol";
         fallbacks = [
           "jianyuelab-api/gpt-5.6-luna"
         ];
@@ -285,6 +295,22 @@ let
       cliPath = "/opt/homebrew/bin/imsg";
       dbPath = "${config.home.homeDirectory}/Library/Messages/chat.db";
       dmPolicy = "pairing";
+
+      # Groups off, stated rather than implied. Leaving this unset does not
+      # mean "no group support": groupPolicy defaults to "allowlist", and an
+      # allowlist with nothing in it drops every group message while logging a
+      # paragraph about it on each start. Same behaviour, minus the warning.
+      #
+      # The alternative is "open" (or an allowlist via groupAllowFrom), and
+      # that is a real decision, not a formality: agents.defaults.workspace is
+      # ~/Documents, so admitting a group means any participant in it can
+      # drive an agent that reads and writes those files. dmPolicy = "pairing"
+      # above is the same caution applied to direct messages.
+      #
+      # To open it later: set groupPolicy = "open" with
+      # groups."*".requireMention = true, the shape channels.telegram below
+      # already uses, or list handles in groupAllowFrom.
+      groupPolicy = "disabled";
     };
 
     # Abandoned in favour of iMessage. The secret and the .env line stay so
