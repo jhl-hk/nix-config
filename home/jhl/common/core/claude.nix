@@ -20,9 +20,15 @@
 #  activation time. Only hook-carrying plugins remain plugins -- see the
 #  comment above `marketplaces` below for why, and for what that costs.
 #
-#  CLAUDE.md and memory stay out of nix entirely: home.file produces read-only
-#  store symlinks and Claude Code writes those files itself. settings.json is
-#  the same, which is why it is merged rather than linked.
+#  Memory stays out of nix entirely: home.file produces read-only store
+#  symlinks and Claude Code writes those files itself. settings.json is the
+#  same, which is why it is merged rather than linked.
+#
+#  CLAUDE.md is the exception, linked read-only from nix-secrets. It is worth
+#  giving up the `#` append shortcut to have one instruction file across all
+#  three machines with a rollback point. It lives in nix-secrets rather than
+#  here because it names the self-hosted git host and the internal project
+#  layout, and this repo is public.
 #
 #############################################################
 let
@@ -202,6 +208,9 @@ in {
       )
       skills
     )
+    // {
+      ".claude/CLAUDE.md".source = "${inputs.nix-secrets}/claude/CLAUDE.md";
+    }
     // lib.mapAttrs' (
       name: source:
         lib.nameValuePair ".claude/skills/${name}" {inherit source;}
