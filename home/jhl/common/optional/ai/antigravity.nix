@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -32,7 +33,13 @@
 #  before its brew moved to core: a fully configured agent and nothing to run.
 #
 #############################################################
-{
+let
+  # The antigravity-cli cask from hosts/common/optional/darwin/dev-extras.nix.
+  # Spelled out rather than resolved through PATH: an activation script does
+  # not get the interactive shell's PATH, so /opt/homebrew/bin is not on it.
+  # Same reasoning, and same shape, as openclawBin in ./openclaw.nix.
+  agyBin = "/opt/homebrew/bin/agy";
+in {
   # Safe as a read-only store symlink, unlike its neighbours in
   # ~/.gemini/config/: config.json and mcp_config.json are written back by the
   # app, but skills.json is user-authored -- the docs present it as a file you
@@ -111,6 +118,88 @@
         [ -L "$l" ] || continue
         [ -e "$l" ] || rm -f "$l"
       done
+    fi
+  '';
+
+  # -- jyl-usage -----------------------------------------------------------
+  #
+  # Reports agy's token spend to the llm-web portal. agy burns a Google
+  # subscription that never crosses the gateway's /v1 proxy, so without this
+  # none of it appears in the portal beside the metered traffic -- the same
+  # gap the plugin already closes for Claude Code, which claude.nix declares
+  # as a marketplace entry.
+  #
+  # An activation script rather than a file, because there is nothing
+  # declarative to write. `agy plugin install` does real work: it converts
+  # commands into skills and registers hooks, then records the result in
+  # ~/.gemini/config/import_manifest.json. Dropping a copy into
+  # ~/.gemini/config/plugins/ by hand is **not** equivalent and does not
+  # register.
+  #
+  # Installed from the flake input, not from the working copy at
+  # ~/Documents/Dev/JianyueLab/claude-plugin. The clone is unmanaged user
+  # state that need not exist on a given machine, and pinning through
+  # flake.lock is what makes SeandeMac-Studio get the same commit as this one.
+  # Verified that a read-only source works -- install copies out of it, so a
+  # store path is a legal target.
+  #
+  # -- Why the stamp file --------------------------------------------------
+  #
+  # The installer takes a full snapshot copy of the source and, per upstream's
+  # own design notes, a later change to the source is invisible until it is
+  # re-run. Re-running is safe and idempotent, but it copies the whole tree,
+  # so doing it on every switch would be pure waste. The stamp records which
+  # store path is currently installed; a lock bump changes the path and
+  # triggers exactly one reinstall.
+  #
+  # Delete the stamp to force a reinstall.
+  #
+  # The stamp alone is not enough to decide, which is why the condition below
+  # checks the install itself as well. Something emptied
+  # ~/.gemini/config/plugins/ and reset import_manifest.json to
+  # {"imports": null} on 2026-09-09 -- cause never identified. A stamp-only
+  # test would have read that as "already installed from this store path" and
+  # skipped, leaving the plugin gone until the next lock bump. Requiring the
+  # installed plugin.json to exist as well means a switch repairs it.
+  #
+  # -- What this does not manage ------------------------------------------
+  #
+  # The credentials. The reporter reads JYL_USAGE_BASE_URL and JYL_API_KEY
+  # from the environment, exported into zsh by
+  # home/jhl/common/core/jyl-usage.nix, which is core and so reaches every
+  # machine. agy is a CLI started from a terminal, so its hooks inherit the
+  # shell's environment and that is the whole story -- there is no
+  # Dock-launched case to cover here, unlike Zed in ./llm.nix.
+  #
+  # Worth knowing anyway: the reporter is inert **and silent** when it has no
+  # key, so absence of errors is not evidence it works. Read the log:
+  #
+  #   tail -1 ~/.gemini/jyl-usage/log
+  #
+  # A run that worked reads "N accepted"; "spooled" means it could not upload.
+  home.activation.agyJylUsage = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    src="${inputs.jianyuelab-plugins}"
+    stamp="${config.home.homeDirectory}/.local/state/agy-jyl-usage.nixsrc"
+    installed="${config.home.homeDirectory}/.gemini/config/plugins/jyl-usage/plugin.json"
+
+    if [[ -v DRY_RUN ]]; then
+      echo "antigravity.nix: would install jyl-usage into agy from $src"
+    elif [ ! -x ${agyBin} ]; then
+      # The binary is the antigravity-cli cask in dev-extras.nix. A machine
+      # that imports this file but has not yet run the Homebrew half is a
+      # normal intermediate state, not an error.
+      echo "antigravity.nix: ${agyBin} is not installed, skipping jyl-usage" >&2
+    elif [ "$(cat "$stamp" 2>/dev/null)" = "$src" ] && [ -f "$installed" ]; then
+      : # installed from this exact store path, and still present
+    elif ${agyBin} plugin install "$src" >/dev/null 2>&1; then
+      mkdir -p "$(dirname "$stamp")"
+      echo "$src" > "$stamp"
+      echo "antigravity.nix: installed jyl-usage into agy"
+    else
+      # Deliberately not fatal. A failed plugin install should not take a
+      # whole switch down with it -- the stamp stays unwritten, so the next
+      # activation retries rather than silently considering it done.
+      echo "antigravity.nix: 'agy plugin install' failed, jyl-usage not installed" >&2
     fi
   '';
 }

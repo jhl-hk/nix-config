@@ -71,6 +71,23 @@
       flake = false;
     };
 
+    # The jyl-usage plugin, for **Antigravity only** -- see the activation
+    # block in home/jhl/common/optional/ai/antigravity.nix.
+    #
+    # Claude Code gets the same repo by a different route: claude.nix names it
+    # as a *marketplace* and Claude Code clones HEAD at runtime. That is not
+    # duplication to clean up, it is two consumers with two mechanisms -- one
+    # has a plugin installer that resolves marketplaces, the other takes a
+    # directory. The consequence is worth knowing: this input is pinned by
+    # flake.lock while the Claude Code copy is not, so the two can sit on
+    # different commits until `nix flake update jianyuelab-plugins`.
+    #
+    # Private, hence SSH, like the two inputs above.
+    jianyuelab-plugins = {
+      url = "git+ssh://git@github.com/JianyueLab/claude-plugin.git?ref=main&shallow=1";
+      flake = false;
+    };
+
     # Anthropic's skills repo, for the four document-processing skills
     # (docx/pdf/pptx/xlsx). Public, so no SSH and no touch on `nix flake update`.
     #
