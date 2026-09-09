@@ -101,31 +101,7 @@ let
     # wanted, and apple-design here replaces the hand-copied vendored version
     # that used to sit in claude/skills/.
     // scanSkills "${inputs.emil-skills}/skills"
-    # -- Privacy / compliance ------------------------------------------------
-    #
-    # Deliberately asymmetric, because the three repos are asymmetric. See the
-    # input comments in flake.nix for the sizes involved.
-    #
-    # grc-skills is scanned whole: 33 skills, one per compliance framework
-    # (GDPR, ISO 27001, SOC 2, EU AI Act, HIPAA, PCI, NIST, WCAG, ...). Which
-    # one a question needs is not knowable in advance and none of them fires
-    # unless its framework is named, so upstream adding a framework is wanted
-    # here by definition -- the emil-skills argument.
-    #
-    # privacy-skills is scanned **one plugin deep**, not at the repo root. The
-    # root holds 283 skills; gdpr-compliance-skills is 18 of them and the rest
-    # are re-cuts for domains this fleet does not touch. Scanning the root
-    # would be the failure the anthropic-skills comment below describes,
-    # fifteen times over.
-    // scanMarketplace "${inputs.grc-skills}"
-    // scanSkills "${inputs.privacy-skills}/plugins/gdpr-compliance-skills/skills"
     // {
-      # One skill out of 400+. Explicit for the same reason as the Anthropic
-      # entries: nothing else in that repo is wanted. It goes past GDPR into
-      # German BDSG and carries scripts/ for DPIA generation and DSAR deadline
-      # tracking, which is why it earns a slot next to the 18 above.
-      gdpr-dsgvo-expert = "${inputs.alireza-skills}/ra-qm-team/skills/gdpr-dsgvo-expert";
-
       # Anthropic's repo stays explicit. It holds 19 skills and only these four
       # are wanted -- scanning it would quietly enable academy-guide,
       # discernment-nudge and the rest. This list mirrors the "skills" array of
@@ -141,6 +117,33 @@ let
       pdf = "${inputs.anthropic-skills}/skills/pdf";
       pptx = "${inputs.anthropic-skills}/skills/pptx";
       xlsx = "${inputs.anthropic-skills}/skills/xlsx";
+    };
+
+  # -- Privacy / compliance, opt-in ------------------------------------------
+  #
+  # 52 skills across three repos, kept out of the default set for one measured
+  # reason: a skill costs its description in the system prompt on **every**
+  # turn whether or not it fires. These 52 are ~6k tokens per turn, and an
+  # audit of 114 local sessions found not one of them invoked even once.
+  #
+  # That is a statement about this fleet, not about the skills -- no
+  # compliance work happens here. Turn them on with
+  # `claudeComplianceSkills.enable = true;` in a host's home file when it
+  # does, and they come back exactly as they were.
+  #
+  # Asymmetric scanning, because the three repos are asymmetric; see the input
+  # comments in flake.nix for the sizes involved. grc-skills is scanned whole
+  # (33 skills, one per framework -- which one a question needs is not
+  # knowable in advance). privacy-skills is scanned **one plugin deep**, not
+  # at the repo root: the root holds 283 skills, gdpr-compliance-skills is 18
+  # of them and the rest are re-cuts for domains this fleet does not touch.
+  # alireza-skills contributes exactly one, which goes past GDPR into German
+  # BDSG and carries scripts/ for DPIA generation and DSAR deadline tracking.
+  complianceSkills =
+    scanMarketplace "${inputs.grc-skills}"
+    // scanSkills "${inputs.privacy-skills}/plugins/gdpr-compliance-skills/skills"
+    // {
+      gdpr-dsgvo-expert = "${inputs.alireza-skills}/ra-qm-team/skills/gdpr-dsgvo-expert";
     };
 
   # -- Plugins ------------------------------------------------------------
@@ -183,7 +186,13 @@ let
 
   settingsPath = "${config.home.homeDirectory}/.claude/settings.json";
 in {
-  home.file =
+  options.claudeComplianceSkills.enable = lib.mkEnableOption ''
+    the privacy/compliance skill set (GDPR, ISO, SOC 2, NIST, HIPAA, ...).
+    Off by default: 52 skills that cost their descriptions in the system
+    prompt every turn and were invoked zero times across 114 local sessions
+  '';
+
+  config.home.file =
     lib.listToAttrs (
       map (
         name:
@@ -197,7 +206,8 @@ in {
       name: source:
         lib.nameValuePair ".claude/skills/${name}" {inherit source;}
     )
-    inputSkills;
+    (inputSkills
+      // lib.optionalAttrs config.claudeComplianceSkills.enable complianceSkills);
 
   # settings.json cannot be a home.file: Claude Code writes theme, effortLevel,
   # autoMode and tui back into it, and a store symlink is read-only. So nix
@@ -210,7 +220,7 @@ in {
   # states what must be present, not what must be absent. The flip side is
   # that removing a plugin here does *not* uninstall it; run
   # `claude plugin uninstall <name>@<marketplace>` for that.
-  home.activation.claudePlugins = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  config.home.activation.claudePlugins = lib.hm.dag.entryAfter ["writeBoundary"] ''
     settings="${settingsPath}"
 
     # home-manager marks DRY_RUN_CMD deprecated and gates on DRY_RUN itself.
