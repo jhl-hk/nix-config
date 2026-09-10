@@ -70,6 +70,71 @@
 let
   cfg = config.llm;
 
+  # Mirrors harness's own loader rules (skill/parse.go) so a skill it would
+  # reject never lands in the directory -- otherwise every start prints one
+  # "skill failed to load" line per offender. Verified against harness 0.7.0:
+  # frontmatter is strictly `key: value` per line with no continuations, the
+  # only keys are name and description, name matches ^[a-z0-9][a-z0-9-]*$, and
+  # the body caps at 32 KiB.
+  skillSync = pkgs.writeText "harness-skill-sync.py" ''
+    import os, re, shutil, sys
+
+    src, dst = sys.argv[1], sys.argv[2]
+    NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
+    ALLOWED = {"name", "description"}
+    MAX_BODY = 32 * 1024
+
+    def rejected(path):
+        try:
+            text = open(path, encoding="utf-8").read()
+        except (OSError, UnicodeDecodeError) as e:
+            return str(e)
+        m = re.match(r"---\n(.*?)\n---\n?(.*)", text, re.S)
+        if not m:
+            return "no frontmatter"
+        fm, body = m.group(1), m.group(2)
+        keys = {}
+        for line in fm.split("\n"):
+            if not line.strip():
+                continue
+            if ":" not in line or line[:1].isspace():
+                return "frontmatter line is not key: value"
+            k, v = line.split(":", 1)
+            keys[k.strip()] = v.strip()
+        extra = set(keys) - ALLOWED
+        if extra:
+            return "unrecognized key: " + ", ".join(sorted(extra))
+        if not NAME.match(keys.get("name", "")):
+            return "name does not match harness pattern"
+        if len(body.encode("utf-8")) > MAX_BODY:
+            return "body exceeds 32 KiB"
+        return None
+
+    took, left = [], []
+    for name in sorted(os.listdir(src)):
+        d = os.path.join(src, name)
+        f = os.path.join(d, "SKILL.md")
+        if not os.path.isfile(f):
+            continue
+        why = rejected(f)
+        if why:
+            left.append((name, why))
+            continue
+        shutil.copytree(d, os.path.join(dst, name), symlinks=False)
+        took.append(name)
+
+    for root, dirs, files in os.walk(dst):
+        for n in dirs + files:
+            try:
+                os.chmod(os.path.join(root, n), 0o755 if n in dirs else 0o644)
+            except OSError:
+                pass
+
+    print("harness skills: linked %d, skipped %d" % (len(took), len(left)))
+    for name, why in left:
+        print("  skipped %s -- %s" % (name, why))
+  '';
+
   # Same gate the other three consumers use: a provider whose model list has
   # never been refreshed is skipped rather than written out empty.
   active = lib.filterAttrs (_: p: p.models != []) cfg.providers;
@@ -106,4 +171,36 @@ in {
     {
       source = (pkgs.formats.toml {}).generate "harness-config.toml" settings;
     };
+
+  # -- Skills -------------------------------------------------------------
+  #
+  # harness indexes every skill's frontmatter into the preamble of *every*
+  # request and fetches bodies on demand with read_skill -- the same split
+  # Claude Code uses, so the standing cost is the descriptions, not the bodies.
+  #
+  # Copied, not linked, and this is the whole reason there is a script here.
+  # harness resolves each skill path and rejects anything landing outside its
+  # skills directory (its README calls a repo-supplied skill "prompt injection
+  # with a nice name"). Every nix-managed path is a /nix/store symlink, so the
+  # obvious home.file wiring fails all 32 with "resolved outside of base".
+  #
+  # Source is ~/.claude/skills, already the fleet's shared directory: pi reads
+  # it through settings.skills, antigravity through ~/.gemini/config/skills.json,
+  # openclaw relinks it. harness becomes the fourth reader of one set, so
+  # claudeComplianceSkills.enable gates its preamble too.
+  #
+  # The copies are regenerated wholesale each activation, so edits made in the
+  # destination are not preserved -- ~/.claude/skills is the only source.
+  home.activation.harnessSkills = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    src="$HOME/.claude/skills"
+    dst="$HOME/Library/Application Support/harness/skills"
+
+    if [[ -v DRY_RUN ]]; then
+      echo "harness.nix: would sync skills from $src into $dst"
+    elif [ -d "$src" ]; then
+      rm -rf "$dst"
+      mkdir -p "$dst"
+      ${pkgs.python3}/bin/python3 ${skillSync} "$src" "$dst"
+    fi
+  '';
 }
