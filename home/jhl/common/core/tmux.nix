@@ -6,8 +6,8 @@
 #  tmux itself is installed by Homebrew (see hosts/common/darwin/apps.nix), so
 #  package = null and this only manages ~/.config/tmux/tmux.conf.
 #
-#  Scroll behaviour: scrolling up enters copy-mode directly and moves a **full
-#  page** at a time, rather than tmux's default of 5 lines.
+#  Scroll behaviour: scrolling up enters copy-mode directly and moves **one
+#  line** at a time, rather than tmux's default of 5.
 #
 #############################################################
 {
@@ -25,27 +25,27 @@
       # startup when this is off, because its multi-line input is Shift+Enter.
       set -g extended-keys on
 
-      # ---- wheel = page ---------------------------------------------------
+      # ---- wheel = one line -----------------------------------------------
       # Scrolling up in normal mode:
       #   - if the pane runs a fullscreen program (vim / less and friends, which
       #     use the alternate screen) or is already in copy-mode
       #     -> forward the event as-is (send -M)
-      #   - otherwise enter copy-mode and page up immediately
+      #   - otherwise enter copy-mode and scroll up one line
       # copy-mode -e: leaves copy-mode automatically when scrolled back to the
       # bottom
       bind -n WheelUpPane if -F "#{||:#{pane_in_mode},#{mouse_any_flag}}" {
         send -M
       } {
         copy-mode -e
-        send -X page-up
+        send -X scroll-up
       }
 
-      # Inside copy-mode: one wheel notch = one full page (overrides the
-      # default scroll-up/down of 5 lines)
-      bind -T copy-mode    WheelUpPane   send -X page-up
-      bind -T copy-mode    WheelDownPane send -X page-down
-      bind -T copy-mode-vi WheelUpPane   send -X page-up
-      bind -T copy-mode-vi WheelDownPane send -X page-down
+      # Inside copy-mode: one wheel notch = one line. scroll-up/down move a
+      # single line unless given -N, so this overrides tmux's default of 5.
+      bind -T copy-mode    WheelUpPane   send -X scroll-up
+      bind -T copy-mode    WheelDownPane send -X scroll-down
+      bind -T copy-mode-vi WheelUpPane   send -X scroll-up
+      bind -T copy-mode-vi WheelDownPane send -X scroll-down
     '';
   };
 }
