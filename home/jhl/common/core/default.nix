@@ -43,6 +43,7 @@ in {
     ./starship.nix
     ./zoxide.nix
     ./tmux.nix
+    ./agent-instructions.nix
     ./claude.nix
     ./cloudflare.nix
     ./jyl-usage.nix
