@@ -190,6 +190,27 @@ let
     "superpowers@superpowers-dev" = true;
   };
 
+  # -- Plain settings keys -------------------------------------------------
+  #
+  # Scalars merged into settings.json alongside the two plugin maps below.
+  # Everything else in that file -- theme, effortLevel, autoMode, tui,
+  # permissions, hooks -- is left to Claude Code and to hand edits.
+  managedSettings = {
+    # When the conversation approaches this many tokens, Claude Code summarises
+    # the history instead of letting the window fill. A tuning knob, not a
+    # safety net: the 1M-context models have far more room than this, and
+    # compaction always costs detail, so the question is how long a session
+    # should run before it starts forgetting specifics.
+    #
+    # 500k is deliberate rather than default -- it was set by hand on this
+    # machine and is recorded here so the other two get it too.
+    #
+    # Note this is the one key nix is *authoritative* about (see the merge
+    # below): changing it through Claude Code's own UI gets reverted on the
+    # next switch. Change it here.
+    autoCompactWindow = 500000;
+  };
+
   settingsPath = "${config.home.homeDirectory}/.claude/settings.json";
 in {
   options.claudeComplianceSkills.enable = lib.mkEnableOption ''
@@ -220,16 +241,24 @@ in {
 
   # settings.json cannot be a home.file: Claude Code writes theme, effortLevel,
   # autoMode and tui back into it, and a store symlink is read-only. So nix
-  # merges its two keys in at activation time instead and leaves the rest of
-  # the file alone.
+  # merges its keys in at activation time instead and leaves the rest of the
+  # file alone.
   #
-  # The merge is **additive** (`+`), not authoritative: an entry added by hand
-  # with `claude plugin install` survives the next switch rather than being
-  # reverted. That matches how skills are linked one at a time above -- nix
-  # states what must be present, not what must be absent. The flip side is
-  # that removing a plugin here does *not* uninstall it; run
-  # `claude plugin uninstall <name>@<marketplace>` for that.
-  config.home.activation.claudePlugins = lib.hm.dag.entryAfter ["writeBoundary"] ''
+  # Two different merge semantics here, and the difference matters:
+  #
+  #   extraKnownMarketplaces / enabledPlugins -- **additive** (`+` into the
+  #     existing map). An entry added by hand with `claude plugin install`
+  #     survives the next switch rather than being reverted. That matches how
+  #     skills are linked one at a time above: nix states what must be
+  #     present, not what must be absent. The flip side is that removing a
+  #     plugin here does *not* uninstall it; run
+  #     `claude plugin uninstall <name>@<marketplace>` for that.
+  #
+  #   managedSettings -- **authoritative** (`. + $s`, so it wins over the
+  #     file). These are single values with one right answer, and an additive
+  #     merge would be a no-op on them: the key already exists, so `//` would
+  #     keep whatever is on disk and nix would never actually set anything.
+  config.home.activation.claudeSettings = lib.hm.dag.entryAfter ["writeBoundary"] ''
     settings="${settingsPath}"
 
     # home-manager marks DRY_RUN_CMD deprecated and gates on DRY_RUN itself.
@@ -237,18 +266,20 @@ in {
     # but never the redirection, so `$DRY_RUN_CMD echo '{}' > "$f"` writes the
     # literal text `echo {}` into the file on a dry run. Gate the whole block.
     if [[ -v DRY_RUN ]]; then
-      echo "claude.nix: would merge plugin keys into $settings"
+      echo "claude.nix: would merge managed keys into $settings"
     else
       mkdir -p "$(dirname "$settings")"
       [ -s "$settings" ] || echo '{}' > "$settings"
 
       if ! ${pkgs.jq}/bin/jq -e . "$settings" >/dev/null 2>&1; then
-        echo "claude.nix: $settings is not valid JSON, skipping plugin merge" >&2
+        echo "claude.nix: $settings is not valid JSON, skipping the merge" >&2
       elif ${pkgs.jq}/bin/jq \
         --argjson m ${lib.escapeShellArg (builtins.toJSON marketplaces)} \
         --argjson p ${lib.escapeShellArg (builtins.toJSON enabledPlugins)} \
+        --argjson s ${lib.escapeShellArg (builtins.toJSON managedSettings)} \
         '.extraKnownMarketplaces = ((.extraKnownMarketplaces // {}) + $m)
-         | .enabledPlugins = ((.enabledPlugins // {}) + $p)' \
+         | .enabledPlugins = ((.enabledPlugins // {}) + $p)
+         | . + $s' \
         "$settings" > "$settings.nix-tmp"; then
         mv "$settings.nix-tmp" "$settings"
       else
