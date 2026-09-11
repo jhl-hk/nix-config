@@ -16,6 +16,9 @@
     "hosts/common/optional/darwin/cloudflare.nix"
     "hosts/common/optional/darwin/wakatime.nix"
 
+    # Needs the `codex` cask from desktop.nix above -- keep the pair.
+    "hosts/common/optional/darwin/codex.nix"
+
     # Installs the library only. The `enable -f` that makes it do anything
     # is in home/jhl/common/optional/shell/flyline.nix -- keep the pair.
     "hosts/common/optional/darwin/flyline.nix"

@@ -245,7 +245,9 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-darwin": "nixpkgs-darwin",
         "privacy-skills": "privacy-skills",
-        "sops-nix": "sops-nix"
+        "sops-nix": "sops-nix",
+        "wakatime-antigravity": "wakatime-antigravity",
+        "wakatime-codex": "wakatime-codex"
       }
     },
     "sops-nix": {
@@ -265,6 +267,38 @@
       "original": {
         "owner": "Mic92",
         "repo": "sops-nix",
+        "type": "github"
+      }
+    },
+    "wakatime-antigravity": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1788188365,
+        "narHash": "sha256-DpcjikQNsrn6NmJwAnIwM2naHeoM5qYn8KQHa5phzRQ=",
+        "owner": "wakatime",
+        "repo": "antigravity-wakatime",
+        "rev": "463526c52ba95a652929244b80277885f0a76a3a",
+        "type": "github"
+      },
+      "original": {
+        "owner": "wakatime",
+        "repo": "antigravity-wakatime",
+        "type": "github"
+      }
+    },
+    "wakatime-codex": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1781616533,
+        "narHash": "sha256-xzUudO+3DCPiJMzMzKODY5X6T/32XvKIJ1OXGN/uLvs=",
+        "owner": "wakatime",
+        "repo": "codex-cli-wakatime",
+        "rev": "a0218436d549915c521287b9436782891e75e856",
+        "type": "github"
+      },
+      "original": {
+        "owner": "wakatime",
+        "repo": "codex-cli-wakatime",
         "type": "github"
       }
     }

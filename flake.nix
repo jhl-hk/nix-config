@@ -88,6 +88,32 @@
       flake = false;
     };
 
+    # WakaTime's Antigravity plugin -- heartbeats for agy, the way
+    # claude-code-wakatime and opencode-wakatime already cover their harnesses.
+    # Public, MIT-adjacent (BSD-3), so no SSH.
+    #
+    # An input rather than `agy plugin install <url>`: agy 1.2.0's installer
+    # only accepts a directory ("install target must be a directory"), and
+    # taking the URL form would re-clone HEAD at runtime instead of honouring
+    # flake.lock. Same reasoning as jianyuelab-plugins above, which this sits
+    # beside in ~/.gemini/config/plugins/.
+    #
+    # flake = false: a plain content tree, so the input is just a store path.
+    wakatime-antigravity = {
+      url = "github:wakatime/antigravity-wakatime";
+      flake = false;
+    };
+
+    # The same, for Codex CLI. Note the repo is itself a *marketplace* -- it
+    # carries .agents/plugins/marketplace.json declaring one plugin -- so
+    # hosts/common/optional/darwin/codex.nix points Codex at this store path
+    # as a local marketplace rather than letting it clone the git one into
+    # ~/.codex/.tmp/marketplaces, which flake.lock could not pin.
+    wakatime-codex = {
+      url = "github:wakatime/codex-cli-wakatime";
+      flake = false;
+    };
+
     # Anthropic's skills repo, for the four document-processing skills
     # (docx/pdf/pptx/xlsx). Public, so no SSH and no touch on `nix flake update`.
     #

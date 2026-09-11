@@ -39,6 +39,33 @@ let
   # not get the interactive shell's PATH, so /opt/homebrew/bin is not on it.
   # Same reasoning, and same shape, as openclawBin in ./openclaw.nix.
   agyBin = "/opt/homebrew/bin/agy";
+
+  # WakaTime's plugin, with one patch applied -- see the activation block at
+  # the bottom of this file for why it is not installed straight from the
+  # input.
+  #
+  # Upstream's scripts/run resolves node three ways in order: $NODE_BIN, then
+  # `command -v node`, then `nix run nixpkgs#nodejs`. A hook inherits the
+  # environment of whatever started Antigravity, so from a terminal the second
+  # branch finds Homebrew's node and all is well -- but the desktop app
+  # (the `antigravity` cask, launched from the Dock) has neither node nor nix
+  # on its PATH, and the hook dies with exit 127 into a log nobody reads.
+  #
+  # Seeding NODE_BIN with := rather than replacing the chain keeps upstream's
+  # own escape hatch working: an explicitly exported NODE_BIN still wins.
+  wakatimePlugin =
+    pkgs.runCommand "antigravity-cli-wakatime" {
+      src = inputs.wakatime-antigravity;
+    } ''
+      cp -r "$src" "$out"
+      chmod -R u+w "$out"
+
+      # Kept to a single line on purpose: a multi-line replacement inside a
+      # Nix indented string is at the mercy of both de-indentation and the
+      # formatter -- the trap the README's "column 0" note describes.
+      substituteInPlace "$out/scripts/run" \
+        --replace-fail 'if [ -n "''${NODE_BIN:-}" ]' ': "''${NODE_BIN:=${pkgs.nodejs}/bin/node}"; if [ -n "''${NODE_BIN:-}" ]'
+    '';
 in {
   # Safe as a read-only store symlink, unlike its neighbours in
   # ~/.gemini/config/: config.json and mcp_config.json are written back by the
@@ -200,6 +227,52 @@ in {
       # whole switch down with it -- the stamp stays unwritten, so the next
       # activation retries rather than silently considering it done.
       echo "antigravity.nix: 'agy plugin install' failed, jyl-usage not installed" >&2
+    fi
+  '';
+
+  # -- WakaTime ------------------------------------------------------------
+  #
+  # Heartbeats for agy, closing the last gap in the set: opencode.nix and
+  # claude.nix already declare their harnesses' WakaTime plugins, and Zed has
+  # its extension. All four feed one account.
+  #
+  # Installed exactly like jyl-usage above -- same installer, same stamp, same
+  # non-fatal failure -- because it is a native Antigravity plugin: root-level
+  # plugin.json and hooks.json, no conversion needed. Its two hooks are
+  # PreInvocation and a PostToolUse matching the three file-writing tools.
+  #
+  # -- What this does NOT get you ------------------------------------------
+  #
+  # The nixpkgs wakatime-cli. Unlike opencode-wakatime, this plugin never
+  # consults PATH: it hardcodes ~/.wakatime/wakatime-cli-<os>-<arch> and, on
+  # the first invocation of each session, checks the GitHub releases API and
+  # overwrites that file when the version string differs from the latest tag.
+  # So agy's heartbeats go through a self-downloading, self-updating CLI that
+  # nix does not manage, and pointing the path at the nixpkgs build would only
+  # get it clobbered -- its `--version` prints a bare "2.14.5", which never
+  # equals a "v"-prefixed tag.
+  #
+  # That is tolerable rather than ideal: the binary is the only unmanaged
+  # part, and ~/.wakatime.cfg from home/jhl/common/core/wakatime.nix still
+  # supplies the key to it. Both builds read settings.api_key_vault_cmd, so
+  # the sops indirection holds either way.
+  home.activation.agyWakatime = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    src="${wakatimePlugin}"
+    stamp="${config.home.homeDirectory}/.local/state/agy-wakatime.nixsrc"
+    installed="${config.home.homeDirectory}/.gemini/config/plugins/antigravity-cli-wakatime/plugin.json"
+
+    if [[ -v DRY_RUN ]]; then
+      echo "antigravity.nix: would install antigravity-cli-wakatime into agy from $src"
+    elif [ ! -x ${agyBin} ]; then
+      echo "antigravity.nix: ${agyBin} is not installed, skipping wakatime" >&2
+    elif [ "$(cat "$stamp" 2>/dev/null)" = "$src" ] && [ -f "$installed" ]; then
+      : # installed from this exact store path, and still present
+    elif ${agyBin} plugin install "$src" >/dev/null 2>&1; then
+      mkdir -p "$(dirname "$stamp")"
+      echo "$src" > "$stamp"
+      echo "antigravity.nix: installed antigravity-cli-wakatime into agy"
+    else
+      echo "antigravity.nix: 'agy plugin install' failed, wakatime not installed" >&2
     fi
   '';
 }

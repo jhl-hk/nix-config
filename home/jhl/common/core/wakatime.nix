@@ -4,16 +4,30 @@
 #  wakatime-cli configuration
 #
 #  ~/.wakatime.cfg is the one file every WakaTime consumer on these machines
-#  reads, because they all shell out to the same wakatime-cli:
+#  reads, because they all shell out to some wakatime-cli:
 #
 #    opencode      opencode-wakatime plugin, declared in opencode.nix
-#    Claude Code   claude-code-wakatime, installed through Claude's plugin
-#                  marketplace -- user state, not managed here
+#    Claude Code   claude-code-wakatime, declared as a marketplace + enabled
+#                  plugin in claude.nix
+#    Antigravity   antigravity-cli-wakatime, installed by the activation block
+#                  in optional/ai/antigravity.nix
+#    Codex CLI     codex-cli-wakatime, declared in /etc/codex/config.toml by
+#                  hosts/common/optional/darwin/codex.nix
 #    Zed           the wakatime extension in optional/editors/zed.nix
 #    wakatime cask the menu-bar app from apps.nix
 #
-#  wakatime-cli itself comes from nixpkgs via opencode.nix; both plugins run
-#  `which wakatime-cli` and skip their own download when it resolves.
+#  -- Which wakatime-cli each one gets -----------------------------------
+#
+#  Not one binary, two. opencode-wakatime resolves `which wakatime-cli` and so
+#  uses the nixpkgs build that opencode.nix puts on PATH. The Antigravity and
+#  Codex plugins do not look at PATH at all: both hardcode
+#  ~/.wakatime/wakatime-cli-<os>-<arch>, download it on first use, and
+#  overwrite it whenever its version differs from the latest GitHub tag.
+#
+#  That split is deliberate and not worth closing -- the Codex plugin calls
+#  `--sync-ai-heartbeats`, a flag nixpkgs' 2.14.5 does not have, and a symlink
+#  into the store would be replaced by the next update check anyway. Both
+#  binaries read the same settings below, so the key reaches all of them.
 #
 #  -- Why this file can be nix-managed at all ----------------------------
 #

@@ -11,6 +11,9 @@
     "hosts/common/optional/darwin/llm.nix"
     "hosts/common/optional/darwin/cloudflare.nix"
     "hosts/common/optional/darwin/wakatime.nix"
+
+    # Needs the `codex` cask from desktop.nix above -- keep the pair.
+    "hosts/common/optional/darwin/codex.nix"
   ];
 
   hostSpec = {
