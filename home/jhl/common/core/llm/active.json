@@ -2,7 +2,9 @@
   "apiUrl": "https://llm.jianyuelab.net/v1",
   "apiKeyFile": "/run/secrets/llm/api_key",
   "models": [
+    "cheap",
     "deepseek-v4-flash",
+    "expen",
     "gpt-5.3-codex-spark",
     "gpt-5.5",
     "gpt-5.6-luna",
