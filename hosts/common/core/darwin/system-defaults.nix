@@ -33,7 +33,7 @@
         autohide = true;
         show-recents = true;
         launchanim = true;
-        orientation = "bottom";
+        orientation = "right";
       };
 
       # Finder settings
@@ -66,26 +66,39 @@
       #   18 = always show in the menu bar  (= 16 | 2)
       #   24 = explicitly set to hidden     (= 16 | 8)
       # nix-darwin's system.defaults.controlcenter.* only ever writes 18 or 24,
-      # so using it would flip Sound/Display/NowPlaying from "show when active"
-      # to "always in the menu bar". Hence the raw values here. Module state
-      # lives in the ByHost plist, at the same path nix-darwin itself uses when
-      # writing controlcenter.
+      # and it covers just 7 of these keys, so it cannot express the 8 / 2 this
+      # machine actually uses. Hence the raw values here. Module state lives in
+      # the ByHost plist, at the same path nix-darwin itself uses when writing
+      # controlcenter.
       CustomUserPreferences = {
+        # Captured from jhlsMacBookPro on 2026-09-11. The menu bar is kept
+        # almost empty on purpose: the modules live in Control Center and only
+        # Screen Mirroring is allowed to surface while it is active.
         "~${config.system.primaryUser}/Library/Preferences/ByHost/com.apple.controlcenter" = {
-          Sound = 2;
-          Display = 2;
-          NowPlaying = 2;
           Bluetooth = 8;
+          Display = 8;
           FocusModes = 8;
+          NowPlaying = 8;
+          ScreenMirroring = 2;
+          Sound = 8;
           Spotlight = 8;
+          Timer = 8;
           VoiceControl = 8;
+          WiFi = 8;
           UserSwitcher = 24;
+          ShowSuggestions = 1; # Control Center > Show Suggestions
         };
 
-        # This key does not live in the ByHost domain
+        # These keys do not live in the ByHost domain
         "com.apple.controlcenter" = {
           AutoHideMenuBarOption = 3; # 0 = always, 1 = desktop only, 2 = fullscreen only, 3 = never
         };
+
+        # Input-source menu (the flag / ABC indicator)
+        "com.apple.TextInputMenu".visible = true;
+
+        # Siri stays out of the menu bar
+        "com.apple.Siri".StatusMenuVisible = false;
 
         NSGlobalDomain = {
           AppleMenuBarVisibleInFullscreen = true;
