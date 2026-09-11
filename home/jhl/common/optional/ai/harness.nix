@@ -70,69 +70,47 @@
 let
   cfg = config.llm;
 
-  # Mirrors harness's own loader rules (skill/parse.go) so a skill it would
-  # reject never lands in the directory -- otherwise every start prints one
-  # "skill failed to load" line per offender. Verified against harness 0.7.0:
-  # frontmatter is strictly `key: value` per line with no continuations, the
-  # only keys are name and description, name matches ^[a-z0-9][a-z0-9-]*$, and
-  # the body caps at 32 KiB.
+  # Plain copier, no validation. harness 27.0.7 accepts every skill in the
+  # fleet -- 46/46 load with no errors, including the ones its 0.7.0 loader
+  # rejected over folded YAML descriptions, unknown frontmatter keys and the
+  # 32 KiB body cap. The prefilter that used to live here existed only to keep
+  # those rejects from printing a failure line per skill at every start; now it
+  # would do the opposite job, excluding skills harness is willing to load.
   skillSync = pkgs.writeText "harness-skill-sync.py" ''
-    import os, re, shutil, sys
+    import glob, os, shutil, sys
 
-    src, dst = sys.argv[1], sys.argv[2]
-    NAME = re.compile(r"^[a-z0-9][a-z0-9-]*$")
-    ALLOWED = {"name", "description"}
-    MAX_BODY = 32 * 1024
+    home, dst = sys.argv[1], sys.argv[2]
 
-    def rejected(path):
-        try:
-            text = open(path, encoding="utf-8").read()
-        except (OSError, UnicodeDecodeError) as e:
-            return str(e)
-        m = re.match(r"---\n(.*?)\n---\n?(.*)", text, re.S)
-        if not m:
-            return "no frontmatter"
-        fm, body = m.group(1), m.group(2)
-        keys = {}
-        for line in fm.split("\n"):
-            if not line.strip():
+    # Two sources, because "the skills Claude Code has" is two directories.
+    # The shared one is what pi, antigravity and openclaw also read; the
+    # superpowers plugin keeps its own under plugins/cache and is reachable
+    # only by glob, the version segment being whatever is installed.
+    sources = [os.path.join(home, ".claude", "skills")]
+    sources += sorted(glob.glob(os.path.join(home, ".claude", "plugins", "cache", "*", "*", "*", "skills")))
+
+    seen, count = set(), 0
+    for src in sources:
+        if not os.path.isdir(src):
+            continue
+        for name in sorted(os.listdir(src)):
+            d = os.path.join(src, name)
+            if name in seen or not os.path.isfile(os.path.join(d, "SKILL.md")):
                 continue
-            if ":" not in line or line[:1].isspace():
-                return "frontmatter line is not key: value"
-            k, v = line.split(":", 1)
-            keys[k.strip()] = v.strip()
-        extra = set(keys) - ALLOWED
-        if extra:
-            return "unrecognized key: " + ", ".join(sorted(extra))
-        if not NAME.match(keys.get("name", "")):
-            return "name does not match harness pattern"
-        if len(body.encode("utf-8")) > MAX_BODY:
-            return "body exceeds 32 KiB"
-        return None
-
-    took, left = [], []
-    for name in sorted(os.listdir(src)):
-        d = os.path.join(src, name)
-        f = os.path.join(d, "SKILL.md")
-        if not os.path.isfile(f):
-            continue
-        why = rejected(f)
-        if why:
-            left.append((name, why))
-            continue
-        shutil.copytree(d, os.path.join(dst, name), symlinks=False)
-        took.append(name)
+            # First source wins: the hand-managed shared set outranks a
+            # plugin that happens to ship the same name.
+            shutil.copytree(d, os.path.join(dst, name), symlinks=False)
+            seen.add(name)
+            count += 1
 
     for root, dirs, files in os.walk(dst):
-        for n in dirs + files:
-            try:
-                os.chmod(os.path.join(root, n), 0o755 if n in dirs else 0o644)
-            except OSError:
-                pass
+        for n in dirs:
+            try: os.chmod(os.path.join(root, n), 0o755)
+            except OSError: pass
+        for n in files:
+            try: os.chmod(os.path.join(root, n), 0o644)
+            except OSError: pass
 
-    print("harness skills: linked %d, skipped %d" % (len(took), len(left)))
-    for name, why in left:
-        print("  skipped %s -- %s" % (name, why))
+    print("harness skills: %d from %d source(s)" % (count, len(sources)))
   '';
 
   # Same gate the other three consumers use: a provider whose model list has
@@ -178,29 +156,36 @@ in {
   # request and fetches bodies on demand with read_skill -- the same split
   # Claude Code uses, so the standing cost is the descriptions, not the bodies.
   #
-  # Copied, not linked, and this is the whole reason there is a script here.
+  # Copied, not linked, and that is the whole reason a script is involved.
   # harness resolves each skill path and rejects anything landing outside its
   # skills directory (its README calls a repo-supplied skill "prompt injection
   # with a nice name"). Every nix-managed path is a /nix/store symlink, so the
-  # obvious home.file wiring fails all 32 with "resolved outside of base".
+  # obvious home.file wiring fails every skill with "resolved outside of base".
+  # That check is deliberate and should stay; copying is the caller's job.
   #
-  # Source is ~/.claude/skills, already the fleet's shared directory: pi reads
-  # it through settings.skills, antigravity through ~/.gemini/config/skills.json,
-  # openclaw relinks it. harness becomes the fourth reader of one set, so
-  # claudeComplianceSkills.enable gates its preamble too.
+  # Both of Claude Code's skill directories are synced: the shared
+  # ~/.claude/skills that pi, antigravity and openclaw also read, plus the
+  # superpowers plugin's own set under plugins/cache. Keeping only the first
+  # would mean harness silently lacks the brainstorming / TDD / debugging
+  # workflows that every other harness here has.
+  #
+  # Two consequences worth knowing. claudeComplianceSkills.enable gates the
+  # shared half, so harness's preamble shrinks and grows with it. And the
+  # superpowers skills cross-reference each other as `superpowers:<name>`,
+  # a Claude Code plugin namespace that does not exist here -- their
+  # methodology carries over, those particular links do not.
   #
   # The copies are regenerated wholesale each activation, so edits made in the
-  # destination are not preserved -- ~/.claude/skills is the only source.
+  # destination do not survive; the sources are the only source.
   home.activation.harnessSkills = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    src="$HOME/.claude/skills"
     dst="$HOME/Library/Application Support/harness/skills"
 
     if [[ -v DRY_RUN ]]; then
-      echo "harness.nix: would sync skills from $src into $dst"
-    elif [ -d "$src" ]; then
+      echo "harness.nix: would sync skills into $dst"
+    else
       rm -rf "$dst"
       mkdir -p "$dst"
-      ${pkgs.python3}/bin/python3 ${skillSync} "$src" "$dst"
+      ${pkgs.python3}/bin/python3 ${skillSync} "$HOME" "$dst"
     fi
   '';
 }
