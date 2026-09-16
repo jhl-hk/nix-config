@@ -56,11 +56,11 @@
     "emil-skills": {
       "flake": false,
       "locked": {
-        "lastModified": 1787304752,
-        "narHash": "sha256-VNTgOF9nKz+kkwVvuchepbi0q++2/PfT/gQpplpQcMc=",
+        "lastModified": 1789487530,
+        "narHash": "sha256-/t+rEm8Qk+mQW4jpUpI78s+WXlb8e77lZipRtHtX398=",
         "owner": "emilkowalski",
         "repo": "skills",
-        "rev": "d23d7f88a2e21c9e4b1418c7abe420f5c1052ba7",
+        "rev": "85e8e2363b713506e1d5b6e07a0eb2da66be1bc3",
         "type": "github"
       },
       "original": {
@@ -72,11 +72,11 @@
     "grc-skills": {
       "flake": false,
       "locked": {
-        "lastModified": 1788625721,
-        "narHash": "sha256-KNw2P3O32MCi4PoiyEpxJlOdW9xXYM2Sb7qM0PJXqmw=",
+        "lastModified": 1789433141,
+        "narHash": "sha256-kWupjPrHwcPLiGaoPSh8g8B0hCNkDtaaOIsTiN9Kz2s=",
         "owner": "Sushegaad",
         "repo": "Claude-Skills-Governance-Risk-and-Compliance",
-        "rev": "f47afba773c01222b69296be8f6701657dedb9f0",
+        "rev": "34832771581acef8751b25f284dcf270dc5e40c0",
         "type": "github"
       },
       "original": {
@@ -92,11 +92,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1788642154,
-        "narHash": "sha256-sPpQFVaFTDqO/4vvCAhuAhqTgqN/ygu+9eJcs5eB0js=",
+        "lastModified": 1789267039,
+        "narHash": "sha256-LWiBv9yAYFi2LPbUhDGHPGKYskJQjj2fw12OlyO1uQo=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "fd0956c99c41ae3c13a73a638f1f7e963aebc4ab",
+        "rev": "ec172013fa62135f58fb58dd17ae9651e8f39727",
         "type": "github"
       },
       "original": {
@@ -127,10 +127,10 @@
     "jianyuelab-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1788919247,
-        "narHash": "sha256-hZCMjUqcKWYCLqPXek769g+lt6SUMIIvQzqVWsDW16I=",
+        "lastModified": 1789309123,
+        "narHash": "sha256-cE0zoF5RgdNa+KNs5LxqIMdCYJ8RoTAoKQdvObr22dE=",
         "ref": "main",
-        "rev": "2cdbdca439015606bd7dc2f0171f994afde004a7",
+        "rev": "da6c4877d38714816d3db6949f28003e4f998ee9",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/JianyueLab/claude-plugin.git"
@@ -167,10 +167,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1789024218,
-        "narHash": "sha256-efLkKu4cWjlpCDpA71WbPKWcUFN+FEVrNf73gBCqlKg=",
+        "lastModified": 1789518172,
+        "narHash": "sha256-zPcSjtZM2wEYBuRw1fPhp+lXE/MOximFZWI7QQgD/Fo=",
         "ref": "main",
-        "rev": "5b5f0457ac38066d04b046781e710c806aa70b34",
+        "rev": "632eb183c6b3bcf02484232d223578f6d423b268",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/jhl-hk/nix-secrets.git"
@@ -184,11 +184,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1789073787,
-        "narHash": "sha256-xfX/toC2QV707s06GbP4II/TxYF0fNQj7s5/LClNDKc=",
+        "lastModified": 1789370336,
+        "narHash": "sha256-6RSEDHIWQtesQKWSu5qRai8L2h4KgCgMEfJHstW99G4=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "aff8a0b28396750446e5537a96461bc4facdb287",
+        "rev": "c7def046b9a883d46974757852106483d741586f",
         "type": "github"
       },
       "original": {
@@ -200,11 +200,11 @@
     },
     "nixpkgs-darwin": {
       "locked": {
-        "lastModified": 1789090104,
-        "narHash": "sha256-aYuIOkjWlA2YvXzx9NVgwHtGZqA+J6G7Dt3wbuuGwlg=",
+        "lastModified": 1789155820,
+        "narHash": "sha256-cTHZTeYRV42p62ss3ZEFnBXrW3WpLgDpYWYyat4V2b8=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "b378e416ccd4a9d27aba331c8f51a7c985dea1a0",
+        "rev": "8029b6c369415ee1ef02a86f352806348f104db9",
         "type": "github"
       },
       "original": {
