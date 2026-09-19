@@ -96,8 +96,8 @@ in
 A host turns it on by setting the option — no import:
 
 ```nix
-# hosts/darwin/SeandeMac-Studio/default.nix
-darwinHomebrew.macosBeta = true;
+# hosts/darwin/jhlsMacBookPro/default.nix
+darwinYubikey.enable = true;
 ```
 
 **Use `listOf` when several modules should contribute.** The module system concatenates definitions from every module, which is exactly how `hosts/common/core/darwin/apps.nix` supplies the fleet-wide cask list while `hosts/common/optional/darwin/steam.nix` appends one more. `attrsOf` merges by key the same way (`masApps`).
@@ -211,7 +211,7 @@ One machine only — make an optional file (Recipe 1) that appends to the same l
 Three things to know:
 
 - **`trusted = true` on non-official taps.** Homebrew 6.0 turned on `HOMEBREW_REQUIRE_TAP_TRUST`; a tap has to be trusted before activation can load its formulae. `trusted` emits `trusted: true` into the Brewfile, which `brew bundle` applies before the fetch phase — no manual `brew trust` on a new machine.
-- **`masApps` is skipped on seed builds.** `modules/hosts/darwin/homebrew/` wraps it in `lib.optionalAttrs (!cfg.macosBeta)`. Run `just check-beta` on the machine to find out which it is; set `darwinHomebrew.macosBeta = true;` in the host file if it's a seed. `SeandeMac-Studio` currently is.
+- **`masApps` does not go through `brew bundle` at all.** `modules/hosts/darwin/homebrew/mas.nix` installs them from a `postActivation` script, after matching `sw_vers -buildVersion` against the seed-build shape (`26A5388g` yes, `26A428` no) — so a machine on a seed build skips them with no flag to set, and a failing App Store install can no longer abort the Brewfile and silently cancel the zap cleanup. It is **install-only**: deleting a line from `masApps` leaves the app on disk. `just check-beta` shows what the check currently decides. The SoftwareUpdate `CatalogURL` is not the signal — enrollment in the seed programme is not the same as running a seed, and `jhlsMacBookPro` is enrolled while on release software.
 - **`onActivation.cleanup = "zap"`.** Anything not declared is uninstalled on the next switch.
 
 ## Recipe 7: add a host

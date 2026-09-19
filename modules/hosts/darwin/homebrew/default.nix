@@ -15,31 +15,25 @@
 #  definitions from anywhere -- any number of optional files can append without
 #  knowing about each other.
 #
+#  masApps is declared here but installed by ./mas.nix, outside brew bundle.
+#  That file carries the why; the short version is that mas has to be decided
+#  at activation time (seed builds cannot use it) and must not be able to
+#  abort the Brewfile.
+#
 #############################################################
 let
   cfg = config.darwinHomebrew;
   inherit (lib) mkOption types;
 in {
+  # Siblings inside modules/hosts/darwin/homebrew/ are NOT picked up by
+  # scanPaths -- it stops at this directory's default.nix. Name them here.
+  imports = [./mas.nix];
+
   options.darwinHomebrew = {
     enable = mkOption {
       type = types.bool;
       default = true;
       description = "Let nix-darwin manage Homebrew.";
-    };
-
-    macosBeta = mkOption {
-      type = types.bool;
-      default = false;
-      description = ''
-        This machine runs a macOS beta / seed build.
-
-        Nix evaluates purely and cannot see the host's OS version, so this has
-        to be declared rather than detected. Run `just check-beta` on the
-        machine to find out which kind it is.
-
-        mas installs from the Mac App Store are unreliable on seed builds, so
-        turning this on drops masApps entirely from the generated Brewfile.
-      '';
     };
 
     taps = mkOption {
@@ -74,7 +68,11 @@ in {
       description = ''
         Mac App Store apps: key is the display name, value is the App ID.
         Requires signing in to an Apple ID first (`mas signin your@email.com`).
-        Ignored entirely when macosBeta = true.
+
+        Installed by ./mas.nix at activation time, not by brew bundle, so a
+        machine on a macOS seed build skips them automatically and a failed
+        install cannot take the rest of the Brewfile down with it. Also
+        install-only: dropping an entry here does not uninstall the app.
       '';
     };
   };
@@ -94,7 +92,10 @@ in {
 
       inherit (cfg) taps brews casks;
 
-      masApps = lib.optionalAttrs (!cfg.macosBeta) cfg.masApps;
+      # Deliberately empty: ./mas.nix owns the App Store apps. Handing them
+      # to brew bundle is what let a single failing `mas upgrade` skip the
+      # zap cleanup for every tap, brew and cask.
+      masApps = {};
     };
   };
 }

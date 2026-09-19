@@ -66,7 +66,7 @@ just check          # nix flake check --all-systems; really builds every machine
 just diff           # git diff, excluding flake.lock
 just update         # update flake inputs, and brew on macOS
 just fmt            # format with alejandra
-just check-beta     # report whether this machine is on a macOS seed build (macOS only)
+just check-beta     # what the activation-time seed check decides about masApps (macOS only)
 just clean          # clean up old generations
 
 nix develop         # dev shell: sops / age / ssh-to-age / just / gum / alejandra / deadnix

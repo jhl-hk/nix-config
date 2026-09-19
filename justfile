@@ -148,23 +148,35 @@ clean:
 fmt:
     nix fmt
 
-# Report whether this machine is on a macOS beta (drives darwinHomebrew.macosBeta)
+# Show what the activation-time seed check will decide about masApps
+#
+# Diagnostic only -- nothing to set afterwards. The same build-number rule
+# lives in modules/hosts/darwin/homebrew/mas.nix and runs on every switch;
+# keep the two in step if either changes.
 check-beta:
     #!/usr/bin/env bash
     set -euo pipefail
     if [ "$(uname -s)" != "Darwin" ]; then
-        echo "not a Mac; darwinHomebrew.macosBeta does not apply here"
+        echo "not a Mac; the App Store apps do not apply here"
         exit 0
     fi
     build=$(sw_vers -buildVersion)
-    catalog=$(defaults read /Library/Preferences/com.apple.SoftwareUpdate.plist CatalogURL 2>/dev/null || true)
     printf 'macOS %s (%s)\n' "$(sw_vers -productVersion)" "$build"
-    if [[ "$catalog" == *seed* ]]; then
-        printf 'beta: yes -- enrolled in a seed catalog\n'
-        printf 'set `darwinHomebrew.macosBeta = true;` for this host\n'
+    # Release builds carry a 2-3 digit trailing number (26A428); seeds carry
+    # four digits starting at 5, usually with a letter (26A5388g).
+    if [[ "$build" =~ ^[0-9]+[A-Z][5-9][0-9]{3}[a-z]?$ ]]; then
+        printf 'seed build: yes -- masApps are skipped on this machine\n'
     else
-        printf 'beta: no -- release software update catalog\n'
-        printf 'leave `darwinHomebrew.macosBeta` unset for this host\n'
+        printf 'seed build: no -- masApps are installed on this machine\n'
+    fi
+    # Enrollment is a separate thing and deliberately not the signal: a Mac
+    # can sit on the seed catalog while running release software, which is
+    # exactly what jhlsMacBookPro does.
+    catalog=$(defaults read /Library/Preferences/com.apple.SoftwareUpdate.plist CatalogURL 2>/dev/null || true)
+    if [[ "$catalog" == *seed* ]]; then
+        printf 'seed programme: enrolled (not used by the check above)\n'
+    else
+        printf 'seed programme: not enrolled\n'
     fi
 
 # ==========

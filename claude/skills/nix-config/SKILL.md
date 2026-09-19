@@ -183,7 +183,7 @@ just check          # nix flake check --all-systems (the checks output really bu
                     # each on the system it belongs to: Macs on aarch64-darwin, Arch on x86_64-linux)
 just diff           # git diff minus flake.lock
 just update         # nix flake update + brew update/upgrade
-just check-beta     # is this Mac on a seed build? (drives darwinHomebrew.macosBeta; macOS only)
+just check-beta     # is this Mac on a seed build? (what mas.nix decides; macOS only)
 just sops-edit shared   # edit ../nix-secrets/secrets/shared.yaml
 just rekey          # re-encrypt every secrets/*.yaml after editing .sops.yaml
 nix develop         # shell with sops, age, ssh-to-age, just, gum, alejandra, deadnix

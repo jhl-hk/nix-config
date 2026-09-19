@@ -133,6 +133,6 @@ Note the mix: `hostSpec` from the argument, `config.sshKeys` from the HM option 
 
 Add to `hostSpec` only when (a) at least two modules read it and (b) it is genuine cross-host metadata — identity, topology, or a coarse capability tier — rather than a per-feature toggle.
 
-A switch that exactly one module reads belongs to that module as `options.<module>.<x>`, so ownership stays next to the consumer. `sshKeys.primary` (`modules/home/ssh-keys.nix`), `darwinHomebrew.macosBeta`, and `darwinWallpaper` are all deliberately *not* in hostSpec for this reason.
+A switch that exactly one module reads belongs to that module as `options.<module>.<x>`, so ownership stays next to the consumer. `sshKeys.primary` (`modules/home/ssh-keys.nix`), `darwinYubikey.enable`, and `darwinWallpaper` are all deliberately *not* in hostSpec for this reason.
 
 When the new field is a free-shape tree from secrets, keep the type `attrsOf anything` and document the expected leaf shape in the option `description` so consumers can defend with `or { }`.

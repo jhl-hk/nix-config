@@ -92,7 +92,7 @@ That line is not cosmetic. Flake source tracking **ignores untracked files entir
 | `just update` | `nix flake update` + `brew update && brew upgrade`. |
 | `just clean` | `sudo nix-collect-garbage -d` + `mo clean` (the `mole` disk cleaner from Homebrew). |
 | `just fmt` | `nix fmt` — alejandra over the tree. |
-| `just check-beta` | Reads `sw_vers` and the SoftwareUpdate `CatalogURL`; reports whether this Mac is on a seed catalog and therefore whether `darwinHomebrew.macosBeta` should be set. Nix evaluates purely and cannot detect this, which is why it has to be declared per host. |
+| `just check-beta` | Diagnostic only, nothing to set afterwards: applies the same build-number rule as `modules/hosts/darwin/homebrew/mas.nix` to `sw_vers -buildVersion` and reports whether this Mac's `masApps` will be installed or skipped on the next switch. Also prints seed-programme enrollment, which is deliberately *not* what the rule looks at. Keep the two copies of the regex in step. |
 | `just llm-models` | GETs `/v1/models` with the key decrypted straight out of `shared.yaml` (no rebuild needed first) and writes the sorted, deduplicated id list to `home/jhl/common/core/llm/models.json`, which `home/jhl/common/core/llm.nix` `readFile`s. Flake evaluation has no network, so the list cannot be fetched at build time — generating a file keeps it declarative: in git, diffable, revertable. **Already runs on every `just rebuild`** via `llm-models-soft`; run it by hand to see the full list, or to get the real error when the automatic refresh is quietly warning. |
 
 ## Secrets

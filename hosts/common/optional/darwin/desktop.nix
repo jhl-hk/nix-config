@@ -14,9 +14,14 @@
 #     state you care about should be backed up first.
 #
 #  masApps needs an Apple ID signed in (`mas signin your@email.com`) and is
-#  skipped entirely on seed builds; see darwinHomebrew.macosBeta. `mas`
-#  itself stays in core, so the CLI is available even where no App Store
-#  titles are declared -- move it here too if that ever looks like waste.
+#  skipped automatically on seed builds -- modules/hosts/darwin/homebrew/mas.nix
+#  installs these outside brew bundle and checks sw_vers first. `mas` itself
+#  stays in core, so the CLI is available even where no App Store titles are
+#  declared -- move it here too if that ever looks like waste.
+#
+#  The JetBrains IDEs used to be in the lists below and are now their own
+#  optional, hosts/common/optional/darwin/jetbrains.nix, imported by no
+#  host. Add them back there, not here, so a machine can decline them.
 #
 #############################################################
 {
@@ -26,42 +31,36 @@
       "font-maple-mono" # Maple Mono Font
       "font-source-han-sans-vf"
 
-      "notchnook"
-      "alt-tab"
       "claude"
 
       # Development Tools
       "1password"
       "arduino-ide"
       "balenaetcher"
-      "bartender"
-      "intellij-idea"
       "rustdesk"
       "stats" # System status monitor
       "sublime-text" # Text editor
-      "syncthing-app"
       "termius" # SSH client
-      "visual-studio-code"
       "wireshark-app"
       "winbox" # Router management
       "yubico-authenticator" # YubiKey authenticator
       "wakatime"
-      "datagrip"
 
       # Editors
       "antigravity" # Google's agentic IDE
-      "cursor"
-      "microsoft-office"
+      # Office apps one by one: the microsoft-office suite cask always
+      # installs OneNote too, with no way to leave it out.
+      "microsoft-word"
+      "microsoft-excel"
+      "microsoft-powerpoint"
+      "microsoft-outlook"
       "typora" # Markdown editor
       "zed" # Code editor
-      "webstorm"
-      "goland"
       "mactex"
       "dbeaver-community"
 
       # Communication
       "discord"
-      "lark"
       "qq"
       "teamspeak-client"
       "telegram"
@@ -84,6 +83,7 @@
       # AI
       "claude-code"
       "codex"
+      "grok-build" # config inherited from ~/.claude, see home/jhl/common/core/grok.nix
       "grammarly-desktop"
 
       "notion" # Documentation
@@ -92,13 +92,15 @@
     ];
 
     # Requires signing in to an Apple ID first: mas signin your@email.com
-    # Skipped entirely on seed builds; see darwinHomebrew.macosBeta
+    # Install-only, and skipped on seed builds: see
+    # modules/hosts/darwin/homebrew/mas.nix. Deleting a line here does not
+    # uninstall the app.
     masApps = {
       # "Yubico Authenticator" = 1497506650;  # YubiKey Auth App
       "Infuse" = 1136220934; # Video Player
       "Apple Configurator" = 1037126344;
-      "Line" = 539883307;
       "Xcode" = 497799835;
+      "Line" = 539883307;
       "Texifier - LaTeX Editor" = 458866234;
       "MoneyWiz 2026 Personal Finance" = 1511185140;
     };

@@ -45,6 +45,7 @@ in {
     ./tmux.nix
     ./agent-instructions.nix
     ./claude.nix
+    ./grok.nix
     ./cloudflare.nix
     ./jyl-usage.nix
     ./llm.nix

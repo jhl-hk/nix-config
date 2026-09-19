@@ -13,6 +13,7 @@
 #
 #    hosts/common/optional/darwin/desktop.nix     GUI apps + Mac App Store
 #    hosts/common/optional/darwin/dev-extras.nix  the rest of the CLI toolbox
+#    hosts/common/optional/darwin/jetbrains.nix   the JetBrains IDEs (no host)
 #
 #  jhlsMacBookAir imports neither, which is the whole point of the split --
 #  core is what every machine gets, so anything one machine can live without

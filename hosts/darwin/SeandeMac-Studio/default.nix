@@ -7,6 +7,7 @@
 {
   imports = map lib.custom.relativeToRoot [
     "hosts/common/optional/darwin/desktop.nix"
+    "hosts/common/optional/darwin/vscode.nix"
     "hosts/common/optional/darwin/dev-extras.nix"
     "hosts/common/optional/darwin/llm.nix"
     "hosts/common/optional/darwin/cloudflare.nix"
@@ -21,8 +22,9 @@
     isMobile = false;
   };
 
-  # macOS 27.0 (26A5388g), on the 27seed track.
-  # mas cannot install on seed builds, so masApps is skipped entirely.
-  # `just check-beta` reports which kind this machine is on right now.
-  darwinHomebrew.macosBeta = true;
+  # This machine runs a seed build (26A5388g at the time of writing), which
+  # mas cannot install into. Nothing to declare for that any more:
+  # modules/hosts/darwin/homebrew/mas.nix reads sw_vers at activation time
+  # and skips the App Store apps by itself. `just check-beta` reports what
+  # that check currently sees.
 }
