@@ -11,6 +11,7 @@
     ./darwin/stats.nix
     ./darwin/ssh-agent.nix
     ./darwin/ghostty.nix
+    ./darwin/git-homebrew.nix
   ];
 
   home.sessionPath = ["/opt/homebrew/bin"];
