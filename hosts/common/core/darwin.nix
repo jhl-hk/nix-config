@@ -94,5 +94,5 @@
 
   # Wallpaper. A plain assignment in a host file overrides it
   # (modules/hosts/darwin/wallpaper).
-  darwinWallpaper = lib.mkDefault (lib.custom.relativeToRoot "assets/bg.jpeg");
+  darwinWallpaper = lib.mkDefault (lib.custom.relativeToRoot "assets/tokai.png");
 }

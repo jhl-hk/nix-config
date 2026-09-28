@@ -81,7 +81,7 @@
       "spotify"
 
       # AI
-      "claude-code"
+      "claude-code@latest"
       "codex"
       "grok-build" # config inherited from ~/.claude, see home/jhl/common/core/grok.nix
       "grammarly-desktop"
