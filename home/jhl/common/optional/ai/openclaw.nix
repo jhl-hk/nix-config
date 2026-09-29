@@ -70,22 +70,14 @@ let
       # dmPolicy = "pairing" and requires a mention in groups. Narrow this to
       # a subdirectory if that ever stops being the trade you want.
       workspace = "${config.home.homeDirectory}/Documents";
-      # qwen-flashnext on the ordinary 240s lane, not jianyuelab-slow. That
-      # provider exists solely to give Ornith-1.5-35B-A3B a 900s ceiling and
-      # its models[] lists that one id, so it is not a route for anything
-      # else -- a "jianyuelab-slow/qwen-flashnext" ref would name a model the
-      # provider does not carry.
+      # Ornith is the default on the ordinary 240s lane. qwen-flashnext is
+      # the fallback on the same gateway; the slow provider below remains a
+      # separate opt-in route for the A3B variant when a longer timeout is
+      # needed.
       #
-      # This replaces Ornith as the default, which is a straight speed trade:
-      # Ornith is a 35B MoE that needed 64-77s just to reach a first token on
-      # a trivial reply. It stays reachable on demand with
-      #
-      #   openclaw agent --model jianyuelab-slow/Ornith-1.5-35B-A3B
-      #
-      # and that -- not the default -- is now the only reason the slow
-      # provider and its allowlist entry are still here. The 300s Telegram
-      # ceiling those comments keep referring to no longer binds anything
-      # either, since that channel is gone.
+      # Telegram's polling handler gives up at 300s, so keeping both the
+      # primary and fallback on the 240s provider prevents one slow turn from
+      # taking the whole lane down with it.
       #
       # -- Everything routes through llm-api, and that is not a preference ---
       #
@@ -118,19 +110,13 @@ let
       # the same change.
       #
       # So this is a workaround, not a fix, and the fix is upstream's. Until
-      # then the default sits on the gateway that works.
-      # qwen-flashnext, chosen deliberately. This is the one consumer that
-      # does not follow ../../core/llm.nix's gpt-5.6-sol pin, and that is the
-      # point rather than an oversight -- do not "align" it without asking.
-      #
-      # One measurement worth leaving here, because the name suggests the
-      # opposite: on this gateway flashnext was **slower** than sol on a
-      # trivial prompt, 52s against 15s, one sample each. Latency is not the
-      # reason to prefer it.
+      # then both routes stay on the gateway that works. This is the one
+      # consumer that intentionally does not follow ../../core/llm.nix's
+      # fleet-wide default.
       model = {
-        primary = "jianyuelab-api/qwen-flashnext";
+        primary = "jianyuelab-api/Ornith-1.5-35B";
         fallbacks = [
-          "jianyuelab-api/gpt-5.6-luna"
+          "jianyuelab-api/qwen-flashnext"
         ];
       };
 

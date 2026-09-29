@@ -33,11 +33,11 @@ hostSpec = {
   inherit isDarwin;
   inherit (inputs.nix-secrets)
     domain email userFullName sshAllowedSigners
-    networking networkInfo serviceInfo;
+    networking networkInfo serviceInfo sshClientsInfo;
 };
 ```
 
-Modules read soft data through `config.hostSpec.<x>` (or the `hostSpec` argument in home scope). A schema not re-exported through `hostSpec` — currently only `sshClientsInfo` — would be read as `inputs.nix-secrets.sshClientsInfo or { }`, but nothing consumes it yet.
+Modules read soft data through `config.hostSpec.<x>` (or the `hostSpec` argument in home scope).
 
 **It is a locked remote input.** Local edits in `../nix-secrets` are invisible to `.#<host>` evaluation until committed, pushed, and re-locked. `just update-nix-secrets` does the fetch/rebase/re-lock and runs automatically before every `just rebuild`; the push is manual.
 
@@ -101,17 +101,17 @@ in ...
 
 ### nix/ssh-clients.nix
 
-Currently `sshClientsInfo = { }`. Each value is a raw multi-line SSH config block, not structured attrs:
+Each value is one Host block as home-manager `programs.ssh.settings` attrs:
 
 ```nix
-sshClientsInfo.<HostAlias> = ''
-  HostName 10.1.10.8
-  User <login>
-  ForwardAgent yes
-'';
+sshClientsInfo.<HostAlias> = {
+  HostName = "10.1.10.8";
+  User = "<login>";
+  SetEnv = { TERM = "xterm-256color"; };  # optional
+};
 ```
 
-Nothing renders these yet. Wiring them up means a new `modules/home/ssh-clients.nix` that writes `~/.ssh/config.d/hosts` and exposes an opt-in list.
+`home/jhl/common/core/ssh.nix` merges it into `programs.ssh.settings` on every host. The `"*"` block is rendered after it.
 
 ## .sops.yaml
 

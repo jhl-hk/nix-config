@@ -41,6 +41,7 @@
       networking
       networkInfo
       serviceInfo
+      sshClientsInfo
       ;
   };
 }

@@ -17,7 +17,7 @@ A single `submodule` option declared in `modules/common/host-spec.nix`, imported
 
 Values land in two places:
 
-- `hosts/common/core/host-spec.nix` sets `username`, `handle`, `isDarwin` literally and `inherit`s `domain`, `email`, `userFullName`, `sshAllowedSigners`, `networking`, `networkInfo`, `serviceInfo` from `inputs.nix-secrets`. Both lanes evaluate this file — the system lanes import it from `core/default.nix`, the standalone lane through `evalHostSpec` — so it must stay a pure `hostSpec` module with no `imports` and no other options.
+- `hosts/common/core/host-spec.nix` sets `username`, `handle`, `isDarwin` literally and `inherit`s `domain`, `email`, `userFullName`, `sshAllowedSigners`, `networking`, `networkInfo`, `serviceInfo`, `sshClientsInfo` from `inputs.nix-secrets`. Both lanes evaluate this file — the system lanes import it from `core/default.nix`, the standalone lane through `evalHostSpec` — so it must stay a pure `hostSpec` module with no `imports` and no other options.
 - Each `hosts/darwin/<Host>/default.nix` sets `hostName` and per-machine flags.
 
 **Home-manager does not import this module.** `hostSpec` reaches HM as a function argument through `home-manager.extraSpecialArgs` in `hosts/common/users/jhl/darwin.nix`, so home modules destructure `{ hostSpec, ... }` at the function head. Do not add `modules/common` to the HM imports — that would create a second, unpopulated declaration.
@@ -44,6 +44,7 @@ Free-shape attrsets kept opaque on purpose, so the public repo never embeds priv
 | `networking` | `attrsOf anything` | `{ }` | Generic network knobs (DNS, port table). |
 | `networkInfo` | `attrsOf anything` | `{ }` | Per-host facts: `networkInfo.hosts.<HostName> = { ip4; gateway4; ... }`. All three Macs are currently DHCP, so the entries exist but are empty — the keys are present so `.hosts.<host>` indexing doesn't throw. |
 | `serviceInfo` | `attrsOf anything` | `{ }` | Per-service endpoint data. Mixes global keys and per-host keys; read with three-level fallback (per-host → global → `{ }`). Currently empty. |
+| `sshClientsInfo` | `attrsOf anything` | `{ }` | SSH Host blocks as `programs.ssh.settings` attrs. Rendered into `~/.ssh/config` by `home/jhl/common/core/ssh.nix`. |
 | `work` | `attrsOf anything` | `{ }` | Employer bundle. Required non-empty when `isWork = true` (asserted). |
 | `persistFolder` | `str` | `""` | impermanence bind-mount root. Only valid empty when impermanence is off (asserted). |
 

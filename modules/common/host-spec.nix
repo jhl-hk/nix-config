@@ -123,6 +123,12 @@ in {
           '';
         };
 
+        sshClientsInfo = mkOption {
+          type = types.attrsOf types.anything;
+          default = {};
+          description = "SSH client host blocks, shaped as sshClientsInfo.<HostAlias> = { HostName; User; ... }. Rendered into ~/.ssh/config.";
+        };
+
         persistFolder = mkOption {
           type = types.str;
           default = "";

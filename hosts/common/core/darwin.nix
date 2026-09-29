@@ -15,6 +15,7 @@
   imports = [
     ./darwin/system-defaults.nix
     ./darwin/apps.nix
+    ./darwin/local-dns.nix
   ];
 
   # nix-darwin wants an **integer**. NixOS wants a string for
