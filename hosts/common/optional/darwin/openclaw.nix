@@ -55,9 +55,16 @@
 #
 #      openclaw:
 #          telegram_bot_token: "123456:ABCDEF..."
+#          matrix_homeserver: "https://matrix.example.org"
+#          matrix_access_token: "syt_..."
 #
 #    Telegram tokens contain a colon, so quote them or the YAML parses the
 #    value as a nested mapping.
+#
+#    The Matrix homeserver is not secret. It sits in sops so the public repo
+#    does not name it. Both arrive as MATRIX_HOMESERVER and
+#    MATRIX_ACCESS_TOKEN, the env names the @openclaw/matrix plugin reads for
+#    its default account.
 #
 #############################################################
 let
@@ -87,15 +94,22 @@ in {
     {
       assertion =
         builtins.pathExists sopsFile
-        && lib.hasInfix "telegram_bot_token:" (builtins.readFile sopsFile);
+        && lib.all (k: lib.hasInfix "${k}:" (builtins.readFile sopsFile)) [
+          "telegram_bot_token"
+          "matrix_homeserver"
+          "matrix_access_token"
+        ];
       message = ''
         hosts/common/optional/darwin/openclaw.nix is imported, but
-        secrets/shared.yaml has no openclaw.telegram_bot_token yet.
+        secrets/shared.yaml is missing one of openclaw.telegram_bot_token,
+        openclaw.matrix_homeserver or openclaw.matrix_access_token.
 
           just sops-edit shared
 
             openclaw:
                 telegram_bot_token: "123456:ABCDEF..."
+                matrix_homeserver: "https://matrix.example.org"
+                matrix_access_token: "syt_..."
 
         Quote the Telegram token -- it contains a colon.
 
@@ -113,11 +127,25 @@ in {
     mode = "0400";
   };
 
+  sops.secrets."openclaw/matrix_homeserver" = {
+    inherit sopsFile;
+    owner = user;
+    mode = "0400";
+  };
+
+  sops.secrets."openclaw/matrix_access_token" = {
+    inherit sopsFile;
+    owner = user;
+    mode = "0400";
+  };
+
   sops.templates."openclaw-env" = {
     content = ''
       JIANYUELAB_API_KEY=${config.sops.placeholder."llm/api_key"}
       JIANYUELAB_FALLBACK_API_KEY=${config.sops.placeholder."llm_api/api_key"}
       TELEGRAM_BOT_TOKEN=${config.sops.placeholder."openclaw/telegram_bot_token"}
+      MATRIX_HOMESERVER=${config.sops.placeholder."openclaw/matrix_homeserver"}
+      MATRIX_ACCESS_TOKEN=${config.sops.placeholder."openclaw/matrix_access_token"}
     '';
     owner = user;
     mode = "0600";

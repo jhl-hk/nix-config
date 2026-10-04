@@ -61,6 +61,7 @@
 
       # Communication
       "discord"
+      "element" # Matrix client
       "qq"
       "teamspeak-client"
       "telegram"

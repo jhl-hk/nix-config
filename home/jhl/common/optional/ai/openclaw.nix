@@ -297,6 +297,31 @@ let
       groupPolicy = "disabled";
     };
 
+    # Matrix, through the @openclaw/matrix plugin (installed below by
+    # home.activation.openclawMatrixPlugin). homeserver and accessToken are
+    # absent on purpose: they arrive as MATRIX_HOMESERVER and
+    # MATRIX_ACCESS_TOKEN from ~/.openclaw/.env, rendered by sops.
+    #
+    # encryption is on because Element encrypts new DMs by default; without
+    # it the bot sees only undecryptable events. Verify the bot's device once
+    # from another session of the same account.
+    #
+    # autoJoin = "always" is what lets a DM invite land at all. Groups stay
+    # off, the same decision as channels.imessage above, so a joined group
+    # room is still ignored.
+    #
+    # pairing means a first-time DM has to be approved by hand:
+    #   openclaw pairing list matrix
+    #   openclaw pairing approve matrix <CODE>
+    channels.matrix = {
+      enabled = true;
+      encryption = true;
+      deviceName = "OpenClaw Gateway";
+      autoJoin = "always";
+      dm.policy = "pairing";
+      groupPolicy = "disabled";
+    };
+
     # Abandoned in favour of iMessage. The secret and the .env line stay so
     # that flipping this back is one word, not another sops edit.
     channels.telegram = {
@@ -339,6 +364,23 @@ in {
         rm -f "$config_path.nix-tmp"
         echo "openclaw.nix: jq merge failed, left $config_path untouched" >&2
       fi
+    fi
+  '';
+
+  # -- Matrix plugin -------------------------------------------------------
+  #
+  # Matrix is a downloadable channel plugin, not part of openclaw-cli.
+  # Installed once; upgrades go through `openclaw plugins` by hand.
+  home.activation.openclawMatrixPlugin = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if [[ -v DRY_RUN ]]; then
+      echo "openclaw.nix: would install @openclaw/matrix if missing"
+    elif [ -x ${openclawBin} ]; then
+      if ! ${openclawBin} plugins list 2>/dev/null | grep -q "matrix"; then
+        ${openclawBin} plugins install @openclaw/matrix \
+          || echo "openclaw.nix: @openclaw/matrix install failed" >&2
+      fi
+    else
+      echo "openclaw.nix: ${openclawBin} is not installed, skipping matrix plugin" >&2
     fi
   '';
 
@@ -437,8 +479,8 @@ in {
 
     ## Output format
 
-    Replies reach the user over **iMessage**, which renders no markup at all.
-    Write plain text.
+    Replies reach the user over **iMessage** or **Matrix**. iMessage renders
+    no markup at all, so write plain text on every channel.
 
     - No `**bold**`, `_italic_`, `# headings`, or `> quotes` -- the characters
       show up verbatim.
