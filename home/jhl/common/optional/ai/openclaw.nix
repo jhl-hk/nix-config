@@ -1,5 +1,6 @@
 {
   config,
+  hostSpec,
   lib,
   pkgs,
   ...
@@ -245,6 +246,19 @@ let
     # another line in the .env template for a capability that is incidental.
     tools.web.search.provider = "duckduckgo";
 
+    # Owner identities, one per channel. A sender missing here is not an
+    # owner: its command-only messages are dropped without a reply, and
+    # owner-only tools such as cron are removed from its turns.
+    #
+    # jq's `*` replaces arrays rather than merging them, so this list is the
+    # whole list. An entry added with `openclaw config` is lost on the next
+    # switch.
+    commands.ownerAllowFrom = [
+      "imessage:${hostSpec.email.user}"
+      "matrix:@jhlhk:jyl.as"
+      "telegram:5714752529"
+    ];
+
     # iMessage. The gateway spawns `imsg rpc` and speaks JSON-RPC over stdio --
     # no daemon, no port -- so this only has to say where the binary and the
     # Messages database are.
@@ -274,8 +288,11 @@ let
     #     Advanced actions (react, edit, unsend, threaded reply, effects,
     #     polls, group ops) additionally need SIP disabled. Plain send and
     #     receive do not, and that is what this config is scoped to.
+    #
+    # Disabled; Matrix is the default channel. The rest of the block stays so
+    # that re-enabling is one word.
     channels.imessage = {
-      enabled = true;
+      enabled = false;
       cliPath = "/opt/homebrew/bin/imsg";
       dbPath = "${config.home.homeDirectory}/Library/Messages/chat.db";
       dmPolicy = "pairing";
@@ -322,7 +339,7 @@ let
       groupPolicy = "disabled";
     };
 
-    # Abandoned in favour of iMessage. The secret and the .env line stay so
+    # Disabled; Matrix is the default channel. The secret and the .env line stay so
     # that flipping this back is one word, not another sops edit.
     channels.telegram = {
       enabled = false;
