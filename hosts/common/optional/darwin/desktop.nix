@@ -84,7 +84,9 @@
       # AI
       "claude-code@latest"
       "codex"
+      "chatgpt"
       "grok-build" # config inherited from ~/.claude, see home/jhl/common/core/grok.nix
+      "grok-bot"
       "grammarly-desktop"
 
       "notion" # Documentation

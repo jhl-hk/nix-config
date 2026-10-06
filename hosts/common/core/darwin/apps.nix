@@ -64,6 +64,7 @@
       "telnet"
       "mas"
       "gh"
+      "tea"
       "tmux"
       "xcodes"
       "age-plugin-yubikey"

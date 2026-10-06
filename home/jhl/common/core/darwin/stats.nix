@@ -68,7 +68,7 @@
     # The sensor keys below are model-specific (TW0P and friends may not exist
     # on another Mac; in that case Stats ignores these keys harmlessly)
     Sensors_sensor = "TW0P";
-    sensor_TW0P = true;
+    sensor_TW0P = false; # AirPort temperature
     sensor_PDTR = true;
     sensor_PPBR = false;
 
