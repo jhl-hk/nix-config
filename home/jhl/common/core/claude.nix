@@ -107,6 +107,8 @@ let
     # wanted, and apple-design here replaces the hand-copied vendored version
     # that used to sit in claude/skills/.
     // scanSkills "${inputs.emil-skills}/skills"
+    # BIRD.skills keeps its skills at the repo root; template/ is a scaffold.
+    // removeAttrs (scanSkills "${inputs.bird-skills}") [ "template" ]
     // {
       # Anthropic's repo stays explicit. It holds 19 skills and only these four
       # are wanted -- scanning it would quietly enable academy-guide,

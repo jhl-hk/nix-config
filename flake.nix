@@ -142,6 +142,12 @@
       flake = false;
     };
 
+    # bird-chinese-community/BIRD.skills -- BIRD / birdcc skills (MIT, public).
+    bird-skills = {
+      url = "github:bird-chinese-community/BIRD.skills";
+      flake = false;
+    };
+
     # -- Privacy / compliance skills ----------------------------------------
     #
     # Three public marketplaces, all hookless, so they follow the same rule as

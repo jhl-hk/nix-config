@@ -32,6 +32,22 @@
         "type": "github"
       }
     },
+    "bird-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1786077565,
+        "narHash": "sha256-v2GHW/RndDfVBM49XSZM1WwRQD1QJFKqzwqy8pJBYjU=",
+        "owner": "bird-chinese-community",
+        "repo": "BIRD.skills",
+        "rev": "2ea2541d533e3fb03449924a04df962bf5957b82",
+        "type": "github"
+      },
+      "original": {
+        "owner": "bird-chinese-community",
+        "repo": "BIRD.skills",
+        "type": "github"
+      }
+    },
     "darwin": {
       "inputs": {
         "nixpkgs": [
@@ -234,6 +250,7 @@
       "inputs": {
         "alireza-skills": "alireza-skills",
         "anthropic-skills": "anthropic-skills",
+        "bird-skills": "bird-skills",
         "darwin": "darwin",
         "emil-skills": "emil-skills",
         "grc-skills": "grc-skills",
