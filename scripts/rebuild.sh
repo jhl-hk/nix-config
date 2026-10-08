@@ -15,11 +15,10 @@
 #
 #   Darwin  hosts/darwin/<Host>/       -> darwinConfigurations.<Host>
 #           the full nix-darwin system, activated with darwin-rebuild
+#   NixOS   hosts/nixos/<Host>/        -> nixosConfigurations.<Host>
+#           detected by /etc/NIXOS, activated with nixos-rebuild
 #   Linux   hosts/home/<Host>/         -> homeConfigurations.<user>@<Host>
 #           standalone home-manager, because the distro owns the system.
-#           NixOS machines would be a third lane; there are none yet, and this
-#           script deliberately does not guess -- a Linux box with hosts/home/
-#           entry is treated as standalone.
 #
 # -- What it does that a bare rebuild line in the justfile cannot -------------
 #
@@ -50,8 +49,8 @@ usage() {
 		  switch      build and activate (default)
 		  build       build only, activate nothing
 		  --trace     pass --show-trace, for debugging evaluation errors
-		  HOSTNAME    a directory name under hosts/darwin/ on macOS, or under
-		              hosts/home/ on Linux (default: this machine)
+		  HOSTNAME    a directory name under hosts/darwin/ on macOS, hosts/nixos/
+		              on NixOS, or hosts/home/ on other Linux (default: this machine)
 	EOF
 }
 
@@ -63,7 +62,13 @@ TRACE=0
 
 case "$(uname -s)" in
 Darwin) LANE="darwin" ;;
-Linux) LANE="home" ;;
+Linux)
+	if [ -e /etc/NIXOS ]; then
+		LANE="nixos"
+	else
+		LANE="home"
+	fi
+	;;
 *)
 	red "Unsupported platform: $(uname -s)"
 	exit 1
@@ -187,6 +192,26 @@ if [ "$LANE" = "darwin" ]; then
 				build ".#darwinConfigurations.$HOST.system"
 			$sudo ./result/sw/bin/darwin-rebuild "${args[@]}"
 		fi
+	fi
+elif [ "$LANE" = "nixos" ]; then
+	if command -v nh >/dev/null 2>&1; then
+		args=(os "$ACTION" . --hostname "$HOST")
+		if [ "$TRACE" -eq 1 ]; then
+			args+=(--show-trace)
+		fi
+		nh "${args[@]}"
+	else
+		args=("$ACTION" --flake ".#$HOST")
+		if [ "$TRACE" -eq 1 ]; then
+			args+=(--show-trace)
+		fi
+		# The installer image may not have flakes enabled yet.
+		export NIX_CONFIG="experimental-features = nix-command flakes"
+		sudo="sudo"
+		if [ "$ACTION" = "build" ]; then
+			sudo="command"
+		fi
+		$sudo nixos-rebuild "${args[@]}"
 	fi
 else
 	# Standalone home-manager. No sudo anywhere on this lane -- it only ever

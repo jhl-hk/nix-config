@@ -3,16 +3,16 @@
 #
 #  NixOS Core
 #
-#  Empty skeleton. There are no NixOS machines yet, so this file is never
-#  evaluated (hosts/common/core/default.nix picks the platform by isDarwin).
-#
-#  When the first NixOS machine arrives, cross-platform things go in
-#  core/default.nix and Linux-only things go here.
+#  Linux-only system baseline. Cross-platform things go in core/default.nix.
 #
 #############################################################
 {
   networking.hostName = config.hostSpec.hostName;
 
+  # users.users.<u>.shell = pkgs.zsh (users/jhl/default.nix) is rejected by
+  # NixOS unless zsh is enabled system-wide.
+  programs.zsh.enable = true;
+
   # NixOS wants a **string**; Darwin wants an integer.
-  system.stateVersion = "25.05";
+  system.stateVersion = "26.05";
 }

@@ -9,8 +9,7 @@
 #
 #  User: jhl -- the NixOS half
 #
-#  Empty skeleton; no NixOS machine imports it yet. Kept structurally in step
-#  with darwin.nix -- edit here when the first Linux machine arrives.
+#  Kept structurally in step with darwin.nix.
 #
 #############################################################
 let

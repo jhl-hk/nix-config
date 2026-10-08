@@ -331,7 +331,6 @@
 
     darwinConfigurations = lib.genAttrs (hostsIn ./hosts/darwin) mkDarwinHost;
 
-    # Empty for now. Drop a directory in hosts/nixos/<Name>/ and it appears.
     nixosConfigurations = lib.genAttrs (hostsIn ./hosts/nixos) mkNixosHost;
 
     # Non-NixOS Linux, home-manager only. Same discovery rule as the two lanes
@@ -371,6 +370,12 @@
             name: cfg: lib.nameValuePair "darwin-${name}" cfg.system
           )
           self.darwinConfigurations
+        )
+        // lib.optionalAttrs (system == "x86_64-linux") (
+          lib.mapAttrs' (
+            name: cfg: lib.nameValuePair "nixos-${name}" cfg.config.system.build.toplevel
+          )
+          self.nixosConfigurations
         )
         // lib.optionalAttrs (system == "x86_64-linux") (
           lib.mapAttrs' (

@@ -1,4 +1,5 @@
 {
+  config,
   lib,
   pkgs,
   ...
@@ -118,5 +119,25 @@ in {
     else
       ${pkgs.python3}/bin/python3 ${skillSync} "$HOME" "$dst"
     fi
+  '';
+
+  # The default provider is the ChatGPT subscription from `codex login`.
+  # `codex --profile jyl` layers this file over the user config and switches
+  # to the JianyueLab gateway. Codex never writes profile files, so a store
+  # symlink is safe here.
+  #
+  # wire_api = "responses" is the only value Codex accepts; `"chat"` makes it
+  # reject the whole file. env_key names the variable llm.nix exports into zsh.
+  home.file.".codex/jyl.config.toml".text = let
+    gateway = config.llm.providers.JianyueLab;
+  in ''
+    model = "${gateway.defaultModel}"
+    model_provider = "jianyuelab"
+
+    [model_providers.jianyuelab]
+    name = "JianyueLab AI Gateway"
+    base_url = "${gateway.apiUrl}"
+    env_key = "${gateway.envVar}"
+    wire_api = "responses"
   '';
 }
