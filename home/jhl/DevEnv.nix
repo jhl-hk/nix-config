@@ -7,5 +7,6 @@
 {
   imports = [
     ./common/core
+    ./common/optional/ai/codex.nix
   ];
 }

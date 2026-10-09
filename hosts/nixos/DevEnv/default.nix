@@ -1,11 +1,19 @@
-{config, ...}:
+{
+  config,
+  lib,
+  ...
+}:
 #############################################################
 #
 #  DevEnv -- NixOS development machine
 #
 #############################################################
 {
-  imports = [./hardware-configuration.nix];
+  imports =
+    [./hardware-configuration.nix]
+    ++ map lib.custom.relativeToRoot [
+      "hosts/common/optional/nixos/dev.nix"
+    ];
 
   hostSpec = {
     hostName = "DevEnv";
