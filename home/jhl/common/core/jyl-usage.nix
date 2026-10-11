@@ -26,7 +26,7 @@
 #  things to rotate instead of one.
 #
 #  Consequently there is no new sops.secrets block and no new assertion --
-#  hosts/common/optional/darwin/llm.nix already declares the ciphertext and
+#  hosts/common/optional/common/llm.nix already declares the ciphertext and
 #  already fails at evaluation time when shared.yaml has no llm.api_key.
 #  This file only reads config.llm.apiKeyFile, so a rename over there moves
 #  this too.

@@ -43,7 +43,7 @@ in {
         && lib.hasInfix "llm:\n    api_key:" (builtins.readFile sopsFile)
         && lib.hasInfix "llm_api:\n    api_key:" (builtins.readFile sopsFile);
       message = ''
-        hosts/common/optional/darwin/llm.nix is imported, but
+        hosts/common/optional/common/llm.nix is imported, but
         secrets/shared.yaml has no llm.api_key yet.
 
           just sops-edit shared

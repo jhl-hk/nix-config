@@ -6,7 +6,7 @@
 #############################################################
 {
   imports = map lib.custom.relativeToRoot [
-    "hosts/common/optional/darwin/llm.nix"
+    "hosts/common/optional/common/llm.nix"
     "hosts/common/optional/darwin/cloudflare.nix"
     "hosts/common/optional/darwin/wakatime.nix"
     "hosts/common/optional/darwin/openclaw.nix"

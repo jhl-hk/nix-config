@@ -54,6 +54,12 @@ rebuild-full: rebuild check
 # Update flake inputs, then rebuild
 rebuild-update: update rebuild
 
+# Switch a remote NixOS host: evaluate here, build and activate there.
+# TARGET is the ssh destination; it defaults to the alias in ~/.ssh/config.
+deploy HOST TARGET=HOST: rebuild-pre
+    nix run nixpkgs#nixos-rebuild-ng -- switch --flake .#{{ HOST }} \
+        --target-host {{ TARGET }} --build-host {{ TARGET }} --sudo
+
 # Check for evaluation errors
 check *ARGS:
     nix flake check --all-systems --show-trace {{ ARGS }}

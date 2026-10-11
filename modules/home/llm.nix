@@ -15,7 +15,7 @@
 #  *which environment variable holds the key*; the value goes through sops:
 #
 #    ciphertext  nix-secrets: llm/api_key
-#    system side hosts/common/optional/darwin/llm.nix decrypts it to
+#    system side hosts/common/optional/common/llm.nix decrypts it to
 #                /run/secrets/llm/api_key
 #    terminal    home/jhl/common/core/llm.nix exports it in zsh
 #    GUI         same file, via a launchd agent running launchctl setenv
@@ -54,7 +54,7 @@
       default = "/run/secrets/llm/api_key";
       description = ''
         Where the decrypted API key lands. Must line up with the sops.secrets
-        key name in hosts/common/optional/darwin/llm.nix -- the two are kept in
+        key name in hosts/common/optional/common/llm.nix -- the two are kept in
         sync by hand, so changing one means changing the other.
       '';
     };

@@ -122,22 +122,50 @@ in {
   '';
 
   # The default provider is the ChatGPT subscription from `codex login`.
-  # `codex --profile jyl` layers this file over the user config and switches
-  # to the JianyueLab gateway. Codex never writes profile files, so a store
-  # symlink is safe here.
+  # `codex --profile jyl` layers ~/.codex/jyl.config.toml over the user config
+  # and switches to the JianyueLab gateway.
+  #
+  # Codex writes that file while the profile is active --
+  # `[projects."<path>"].trust_level` lands there -- so it cannot be a store
+  # symlink. Activation merges the managed keys below into a real file and
+  # keeps everything else Codex wrote.
   #
   # wire_api = "responses" is the only value Codex accepts; `"chat"` makes it
   # reject the whole file. env_key names the variable llm.nix exports into zsh.
-  home.file.".codex/jyl.config.toml".text = let
+  home.activation.codexJylProfile = let
     gateway = config.llm.providers.JianyueLab;
-  in ''
-    model = "${gateway.defaultModel}"
-    model_provider = "jianyuelab"
+    managed = (pkgs.formats.json {}).generate "codex-jyl-profile.json" {
+      model = gateway.defaultModel;
+      model_provider = "jianyuelab";
+      model_providers.jianyuelab = {
+        name = "JianyueLab AI Gateway";
+        base_url = gateway.apiUrl;
+        env_key = gateway.envVar;
+        wire_api = "responses";
+      };
+    };
+    python = pkgs.python3.withPackages (ps: [ps.tomlkit]);
+    merge = pkgs.writeText "codex-jyl-profile.py" ''
+      import json, os, sys, tomlkit
 
-    [model_providers.jianyuelab]
-    name = "JianyueLab AI Gateway"
-    base_url = "${gateway.apiUrl}"
-    env_key = "${gateway.envVar}"
-    wire_api = "responses"
-  '';
+      path, managed = sys.argv[1], json.load(open(sys.argv[2]))
+      # A leftover home.file link from an earlier generation is not ours to keep.
+      if os.path.islink(path):
+          os.unlink(path)
+      doc = tomlkit.parse(open(path).read()) if os.path.exists(path) else tomlkit.document()
+      for k, v in managed.items():
+          doc[k] = v
+      os.makedirs(os.path.dirname(path), exist_ok=True)
+      with open(path + ".tmp", "w") as f:
+          f.write(tomlkit.dumps(doc))
+      os.replace(path + ".tmp", path)
+    '';
+  in
+    lib.hm.dag.entryAfter ["writeBoundary" "linkGeneration"] ''
+      if [[ -v DRY_RUN ]]; then
+        echo "codex.nix: would merge the jyl profile into $HOME/.codex/jyl.config.toml"
+      else
+        ${python}/bin/python3 ${merge} "$HOME/.codex/jyl.config.toml" ${managed}
+      fi
+    '';
 }

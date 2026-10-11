@@ -13,6 +13,7 @@
     [./hardware-configuration.nix]
     ++ map lib.custom.relativeToRoot [
       "hosts/common/optional/nixos/dev.nix"
+      "hosts/common/optional/common/llm.nix"
     ];
 
   hostSpec = {

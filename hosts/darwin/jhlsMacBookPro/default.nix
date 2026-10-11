@@ -12,7 +12,7 @@
     "hosts/common/optional/darwin/desktop.nix"
     "hosts/common/optional/darwin/dev-extras.nix"
     "hosts/common/optional/darwin/steam.nix"
-    "hosts/common/optional/darwin/llm.nix"
+    "hosts/common/optional/common/llm.nix"
     "hosts/common/optional/darwin/cloudflare.nix"
     "hosts/common/optional/darwin/wakatime.nix"
 
