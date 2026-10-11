@@ -55,7 +55,7 @@
   # absent* on Darwin, which is stricter than mkIf and catches unknown-attribute
   # errors at evaluation time.
   linuxModifications = _final: prev:
-    prev.lib.optionalAttrs prev.stdenv.isLinux {
+    prev.lib.optionalAttrs prev.stdenv.hostPlatform.isLinux {
       # e.g.
       # neovim = _final.unstable.neovim;
     };

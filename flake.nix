@@ -25,6 +25,13 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
+    # The Linux lanes evaluate against nixpkgs-unstable. home-manager master
+    # tracks it; release-26.05 trips its deprecation warnings.
+    home-manager-unstable = {
+      url = "github:nix-community/home-manager";
+      inputs.nixpkgs.follows = "nixpkgs";
+    };
+
     sops-nix = {
       url = "github:Mic92/sops-nix";
       inputs.nixpkgs.follows = "nixpkgs";
@@ -195,6 +202,7 @@
     nixpkgs-darwin,
     darwin,
     home-manager,
+    home-manager-unstable,
     ...
   }: let
     inherit (self) outputs;
@@ -263,7 +271,7 @@
           ./hosts/common/core
           ./hosts/nixos/${hostName}
 
-          home-manager.nixosModules.home-manager
+          home-manager-unstable.nixosModules.home-manager
         ];
       };
 
@@ -305,7 +313,7 @@
       };
     in
       lib.nameValuePair "${hostSpec.username}@${hostName}" (
-        home-manager.lib.homeManagerConfiguration {
+        home-manager-unstable.lib.homeManagerConfiguration {
           inherit pkgs;
 
           # This `lib` argument is **not** extraSpecialArgs.lib, and the

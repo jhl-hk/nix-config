@@ -22,7 +22,7 @@ in {
     }
     # Darwin's users.users.<u> has no group / extraGroups / uid attributes;
     # without this gate the Darwin side fails with an unknown-option error.
-    // lib.optionalAttrs pkgs.stdenv.isLinux {
+    // lib.optionalAttrs pkgs.stdenv.hostPlatform.isLinux {
       isNormalUser = true;
       group = "wheel";
       extraGroups = ["wheel"];

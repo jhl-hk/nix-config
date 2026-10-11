@@ -75,7 +75,7 @@ in {
         home = mkOption {
           type = types.str;
           default =
-            if pkgs.stdenv.isLinux
+            if pkgs.stdenv.hostPlatform.isLinux
             then "/home/${config.hostSpec.username}"
             else "/Users/${config.hostSpec.username}";
           description = "User home directory. The default is evaluated lazily inside the submodule, so using pkgs.stdenv here is safe.";
@@ -144,7 +144,7 @@ in {
         isDarwin = mkBoolOpt false ''
           This machine is macOS.
 
-          Read this wherever pkgs.stdenv.isDarwin would trigger infinite
+          Read this wherever pkgs.stdenv.hostPlatform.isDarwin would trigger infinite
           recursion (typically sops, and the platform selection in
           home/<u>/common/core/default.nix).
 
