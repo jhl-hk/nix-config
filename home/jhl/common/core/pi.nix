@@ -74,9 +74,21 @@ let
   #
   # llm.maxTokens is the context window (it is named after Zed's max_tokens);
   # pi keeps the two apart, so the names do not line up one-to-one.
+  #
+  # thinkingLevelMap matches pi's levels to what the gateway accepts. Its 400
+  # names the set: "valid levels: low, medium, high, xhigh, max".
+  #   minimal  not in that set; null hides it from /thinking.
+  #   xhigh    pi only offers these two when the map names them.
+  #   max
+  # off sends no reasoning_effort at all, so it needs no entry.
   toModel = p: id: {
     inherit id;
     reasoning = true;
+    thinkingLevelMap = {
+      minimal = null;
+      xhigh = "xhigh";
+      max = "max";
+    };
     contextWindow = p.maxTokens;
     maxTokens = p.maxOutputTokens;
   };
@@ -115,10 +127,13 @@ let
   # pointing at a model that is not in models.json.
   dflt = config.llm.defaultProvider;
   dfltProvider = active.${dflt} or null;
-  # elem, not just a non-empty check: defaultModel is pinned by hand in
-  # core/llm.nix now, so the gateway retiring that id has to degrade to "no
-  # default written" rather than to a default pointing at nothing.
-  hasDefault = dfltProvider != null && lib.elem dfltProvider.defaultModel dfltProvider.models;
+  # pi's own default, not the shared llm defaultModel that Zed and opencode
+  # also read.
+  dfltModel = "gpt-6.1-sol";
+  # elem, not just a non-empty check: the id is pinned by hand, so the gateway
+  # retiring it has to degrade to "no default written" rather than to a
+  # default pointing at nothing.
+  hasDefault = dfltProvider != null && lib.elem dfltModel dfltProvider.models;
 
   settings =
     {
@@ -129,7 +144,19 @@ let
       # Agent Skills standard -- pointing at that directory is upstream's own
       # advice for sharing skills between harnesses, and it picks up manually
       # installed ones too. ~ is expanded by pi.
-      skills = ["~/.claude/skills"];
+      #
+      # ~/.claude/plugins/synced holds the plugins claude.ai syncs down
+      # (engineering, sales, figma, twilio, ...). It is read through
+      # ~/.pi/agent/claude-plugins, set up in home.file below, for the .ignore
+      # file that sits next to the link there.
+      #
+      # Not covered: Claude Code's built-in skills (compiled into the binary),
+      # plugin commands, and the MCP servers that figma, pdf-viewer and twilio
+      # skills call.
+      skills = [
+        "~/.claude/skills"
+        "~/.pi/agent/claude-plugins"
+      ];
 
       # An anonymous version ping on first run and after every version change.
       # A nix upgrade is a version change, so this would fire on switches.
@@ -146,6 +173,10 @@ let
       #                  manage, so adding one later needs no rebuild.
       #   pi-subagents   delegation to subagents, pi's answer to Claude Code's
       #                  Task tool.
+      #   superpowers    the same skills as the Claude Code plugin in
+      #                  claude.nix, plus an extension that injects
+      #                  using-superpowers at startup and after compaction.
+      #                  Keep the tag in step with the plugin's version.
       #
       # Declared here rather than installed with `pi install`, which wants to
       # write settings.json back and cannot. pi installs whatever is listed
@@ -158,15 +189,16 @@ let
       # half Claude Code's plugins live in.
       #
       # Worth stating plainly, because it is upstream's own warning: a pi
-      # package runs with full system access. These two are third-party code.
+      # package runs with full system access. All three are third-party code.
       packages = [
-        "npm:pi-web-access@0.20.0"
-        "npm:pi-subagents@0.45.2"
+        "npm:pi-web-access@0.38.0"
+        "npm:pi-subagents@0.77.0"
+        "git:github.com/obra/superpowers@v6.3.0"
       ];
     }
     // lib.optionalAttrs hasDefault {
       defaultProvider = dflt;
-      defaultModel = dfltProvider.defaultModel;
+      defaultModel = dfltModel;
     };
 
   toJson = name: value: (pkgs.formats.json {}).generate name value;
@@ -180,6 +212,54 @@ in {
       # this needs no matching entry in settings.extensions. pi loads .ts
       # through jiti, so there is nothing to compile.
       ".pi/agent/extensions/tokens-per-second.ts".source = ./pi/tokens-per-second.ts;
+
+      # pi walks ~/.claude/skills recursively, so it also finds the copies
+      # Claude Desktop syncs into synced/<id>/ and reports a collision for
+      # every name both places carry. The skill loader honours .ignore files
+      # (gitignore syntax); Claude Code does not read this one.
+      ".claude/skills/.ignore".text = ''
+        synced/*/docx/
+        synced/*/pdf/
+        synced/*/pptx/
+        synced/*/xlsx/
+      '';
+
+      # Skills come from three roots, but most sit under ~/.claude/skills, and
+      # models extrapolate that: gpt-6.1-sol read
+      # ~/.claude/skills/brainstorming/SKILL.md, which is in the superpowers
+      # git checkout instead. pi appends this file to its system prompt.
+      #
+      # The second line: gpt-6.1-sol passed model "openai/gpt-5.2-codex" to
+      # the subagent tool, which is no model in this registry. Without the
+      # argument a child inherits the session model.
+      ".pi/agent/APPEND_SYSTEM.md".text = ''
+        Skills live in several directories. To load a skill, read the exact path in its <location> entry in <available_skills>. Never build a skill path from its name.
+        When calling the subagent tool, omit the model argument unless the user names a model. Children inherit the session model.
+      '';
+
+      # Subagents under the names Claude Code uses (Explore, general-purpose).
+      # The global instructions shared with Claude Code ask for those names,
+      # and pi-subagents ships neither. Linked per file so ~/.pi/agent/agents
+      # stays writable for `subagent({ action: "eject" })`.
+      ".pi/agent/agents" = {
+        source = ./pi/agents;
+        recursive = true;
+      };
+
+      # The synced plugin tree, behind an .ignore that pi's skill scan honours.
+      # A "!" pattern in settings.skills is not enough: it disables a skill
+      # after loading, and the name-collision check runs on everything loaded.
+      # The .ignore cannot go inside synced/, which claude.ai owns.
+      #   skills-figquery/  figma's second copy of the names in its skills/
+      #   workflow-skills/  figma skills Claude Code does not load either
+      #   twilio-agent-connect  ships with no description, which pi rejects
+      ".pi/agent/claude-plugins/synced".source =
+        config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.claude/plugins/synced";
+      ".pi/agent/claude-plugins/.ignore".text = ''
+        synced/*/figma/skills-figquery/
+        synced/*/figma/workflow-skills/
+        synced/*/twilio-developer-kit/skills/twilio/twilio-agent-connect/
+      '';
     }
     // lib.optionalAttrs (active != {}) {
       ".pi/agent/models.json".source = toJson "pi-models.json" models;

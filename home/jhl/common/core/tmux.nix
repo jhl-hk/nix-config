@@ -24,6 +24,8 @@
       # sequences instead of collapsing them onto the plain key. pi warns at
       # startup when this is off, because its multi-line input is Shift+Enter.
       set -g extended-keys on
+      # The default format is xterm (CSI 27 ~); pi asks for csi-u.
+      set -g extended-keys-format csi-u
 
       # ---- wheel = one line -----------------------------------------------
       # Scrolling up in normal mode:

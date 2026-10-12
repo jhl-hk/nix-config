@@ -14,7 +14,7 @@
 #  /v1/messages itself.
 #
 #  The gateway serves no claude-* models, so each tier maps to a gateway model.
-#  The default model is the provider's default.
+#  The default model is the Fable tier's.
 #
 #############################################################
 let
@@ -24,15 +24,14 @@ let
     then gateway.apiKeyFile
     else config.llm.apiKeyFile;
   origin = lib.removeSuffix "/v1" gateway.apiUrl;
-  model = gateway.defaultModel;
 
   # Every tier Claude Code knows. An unmapped tier requests a claude-* id the
   # gateway does not serve. _NAME and _DESCRIPTION are what /model shows.
   tiers = {
-    FABLE = "gpt-6.1-sol";
-    OPUS = "gpt-6-sol";
-    SONNET = "gpt-5.6-sol";
-    HAIKU = "gpt-6-astra";
+    FABLE = "gpt-6-astra";
+    OPUS = "gpt-6.1-sol";
+    SONNET = "gpt-6-sol";
+    HAIKU = "gpt-6-terra";
   };
   tierExports = tier: m: ''
     export ANTHROPIC_DEFAULT_${tier}_MODEL="${m}"
@@ -46,7 +45,7 @@ in {
     if [ -r ${keyFile} ]; then
       export ANTHROPIC_BASE_URL="${origin}"
       export ANTHROPIC_AUTH_TOKEN="$(cat ${keyFile})"
-      export ANTHROPIC_MODEL="${model}"
+      export ANTHROPIC_MODEL="${tiers.OPUS}"
     ${lib.concatStrings (lib.mapAttrsToList tierExports tiers)}fi
   '';
 }
