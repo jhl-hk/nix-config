@@ -268,4 +268,36 @@ in {
   home.packages = [pkgs.unstable.pi-coding-agent];
 
   home.sessionVariables.PI_SKIP_VERSION_CHECK = "1";
+
+  # pi-web-access clones GitHub repos for fetch_content into
+  # /tmp/pi-github-repos by default. A relative clonePath resolves against
+  # pi's working directory, so clones land in the project's .temp/ instead.
+  # The clone runtime is deleted when the session exits.
+  #
+  # ~/.pi/web-search.json also holds search-provider keys added by hand, so
+  # this sets one key and leaves the rest of the file alone, as claude.nix
+  # does for Claude Code's settings.json.
+  #
+  # Not covered: PDF extraction writes to $TMPDIR/pi-web-pdf and has no
+  # setting.
+  home.activation.piWebSearch = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    f="${config.home.homeDirectory}/.pi/web-search.json"
+
+    if [[ -v DRY_RUN ]]; then
+      echo "pi.nix: would set githubClone.clonePath in $f"
+    else
+      mkdir -p "$(dirname "$f")"
+      [ -s "$f" ] || echo '{}' > "$f"
+
+      if ! ${pkgs.jq}/bin/jq -e . "$f" >/dev/null 2>&1; then
+        echo "pi.nix: $f is not valid JSON, skipping the merge" >&2
+      elif ${pkgs.jq}/bin/jq '.githubClone.clonePath = ".temp/pi-github-repos"' \
+        "$f" > "$f.nix-tmp"; then
+        mv "$f.nix-tmp" "$f"
+      else
+        rm -f "$f.nix-tmp"
+        echo "pi.nix: jq merge failed, left $f untouched" >&2
+      fi
+    fi
+  '';
 }
