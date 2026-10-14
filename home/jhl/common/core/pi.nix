@@ -89,8 +89,15 @@ let
       xhigh = "xhigh";
       max = "max";
     };
-    contextWindow = p.maxTokens;
+    contextWindow = contextWindows.${id} or p.maxTokens;
     maxTokens = p.maxOutputTokens;
+  };
+
+  # Larger windows than the shared llm.maxTokens, pi only. The gateway reports
+  # no context length, so each value is a probed request size:
+  #   gpt-6.1-sol  700k accepted, 950k rejected with context_too_large
+  contextWindows = {
+    "gpt-6.1-sol" = 700000;
   };
 
   # "$FOO" is pi's environment interpolation, so what lands in the store is the
@@ -137,7 +144,10 @@ let
 
   settings =
     {
-      theme = "dark";
+      # Claude Code look: the theme below plus extensions/claude-ui.ts.
+      # editorPaddingX = 2 leaves the column the "> " prompt is drawn in.
+      theme = "claude";
+      editorPaddingX = 2;
 
       # Skills are not duplicated for pi. claude.nix already links
       # claude/skills/<name> into ~/.claude/skills, and pi implements the same
@@ -212,6 +222,13 @@ in {
       # this needs no matching entry in settings.extensions. pi loads .ts
       # through jiti, so there is nothing to compile.
       ".pi/agent/extensions/tokens-per-second.ts".source = ./pi/tokens-per-second.ts;
+
+      # Claude Code look: welcome header, "> " prompt, status footer, spinner,
+      # and "⏺ Tool(args)" / "⎿ result" rows. The colours are the theme below;
+      # ~/.pi/agent/themes/ is auto-discovered and the file name must match
+      # the theme's "name".
+      ".pi/agent/extensions/claude-ui.ts".source = ./pi/claude-ui.ts;
+      ".pi/agent/themes/claude.json".source = ./pi/themes/claude.json;
 
       # pi walks ~/.claude/skills recursively, so it also finds the copies
       # Claude Desktop syncs into synced/<id>/ and reports a collision for
