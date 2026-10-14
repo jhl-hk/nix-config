@@ -149,6 +149,9 @@ let
       theme = "claude";
       editorPaddingX = 2;
 
+      # Startup thinking level; pi's default is "medium".
+      defaultThinkingLevel = "high";
+
       # Skills are not duplicated for pi. claude.nix already links
       # claude/skills/<name> into ~/.claude/skills, and pi implements the same
       # Agent Skills standard -- pointing at that directory is upstream's own
