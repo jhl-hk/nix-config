@@ -212,7 +212,7 @@ let
       # ceiling any other way.
       #
       # Splitting it out keeps the fast path fast. Raising jianyuelab-api to
-      # 900 instead would make every gpt-5.6-sol call wait a quarter hour
+      # 900 instead would make every gpt-6.1-sol call wait a quarter hour
       # before giving up on a wedged request.
       #
       # WARNING: this only helps outside Telegram. That channel's polling

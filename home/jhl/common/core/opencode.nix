@@ -90,7 +90,7 @@ let
   # first request of that agent, not at startup), an id that is not in the
   # refreshed list is dropped and that agent falls back to the top-level model.
   agentModels = {
-    plan = "gpt-5.6-sol";
+    plan = "gpt-6.1-sol";
     build = "deepseek-v4-flash";
   };
   agent =

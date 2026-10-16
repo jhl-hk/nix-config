@@ -101,12 +101,12 @@ in {
     # Pinned rather than left to the option default, which is "the first entry
     # of the sorted list" -- a fact about the alphabet, not a choice. It moved
     # on its own once already when the gateway retired a model.
-    pinnedDefault = "gpt-5.6-sol";
+    pinnedDefault = "gpt-6.1-sol";
   in {
     inherit (active) apiUrl apiKeyFile;
 
     # Unioned in rather than taken from the refresh alone. Both gateways
-    # stopped listing gpt-5.6-sol in /v1/models while still serving it, and
+    # stopped listing gpt-6.1-sol in /v1/models while still serving it, and
     # "not listed" is not the same as "not callable".
     #
     # This matters far out of proportion to one id: zed.nix, opencode.nix and
@@ -116,7 +116,7 @@ in {
     # inside the same `lib.optionalAttrs hasDefault` as default_model.
     #
     # It also re-enables the hand-picked ids checked against this list:
-    # zed's commitModelId and opencode's agentModels.plan, both gpt-5.6-sol.
+    # zed's commitModelId and opencode's agentModels.plan, both .
     #
     # If calls to this model ever start failing, delete the union rather than
     # working around it downstream -- the guard exists to keep an unusable id

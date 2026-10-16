@@ -108,7 +108,7 @@ let
     # that used to sit in claude/skills/.
     // scanSkills "${inputs.emil-skills}/skills"
     # BIRD.skills keeps its skills at the repo root; template/ is a scaffold.
-    // removeAttrs (scanSkills "${inputs.bird-skills}") [ "template" ]
+    // removeAttrs (scanSkills "${inputs.bird-skills}") ["template"]
     // {
       # Anthropic's repo stays explicit. It holds 19 skills and only these four
       # are wanted -- scanning it would quietly enable academy-guide,
@@ -207,10 +207,18 @@ let
     # 500k is deliberate rather than default -- it was set by hand on this
     # machine and is recorded here so the other two get it too.
     #
-    # Note this is the one key nix is *authoritative* about (see the merge
-    # below): changing it through Claude Code's own UI gets reverted on the
-    # next switch. Change it here.
+    # Note every key here is *authoritative* (see the merge below): changing
+    # it through Claude Code's own UI gets reverted on the next switch.
+    # Change it here.
     autoCompactWindow = 500000;
+
+    # Empty strings drop the Co-Authored-By trailer on commits and the
+    # "Generated with Claude Code" line on PR descriptions. Replaces the
+    # deprecated includeCoAuthoredBy.
+    attribution = {
+      commit = "";
+      pr = "";
+    };
   };
 
   settingsPath = "${config.home.homeDirectory}/.claude/settings.json";

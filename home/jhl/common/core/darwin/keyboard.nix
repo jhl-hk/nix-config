@@ -62,18 +62,19 @@
           "Input Mode" = "com.apple.inputmethod.TCIM.Pinyin";
           InputSourceKind = "Input Mode";
         }
-        # U.S. keyboard
-        {
-          InputSourceKind = "Keyboard Layout";
-          "KeyboardLayout ID" = 0;
-          "KeyboardLayout Name" = "U.S.";
-        }
-        # Simplified Chinese Pinyin
-        {
-          "Bundle ID" = "com.apple.inputmethod.SCIM";
-          "Input Mode" = "com.apple.inputmethod.SCIM.ITABC";
-          InputSourceKind = "Input Mode";
-        }
+        # Temporarily disabled: U.S. and Simplified Chinese Pinyin.
+        # # U.S. keyboard
+        # {
+        # InputSourceKind = "Keyboard Layout";
+        # "KeyboardLayout ID" = 0;
+        # "KeyboardLayout Name" = "U.S.";
+        # }
+        # # Simplified Chinese Pinyin
+        # {
+        # "Bundle ID" = "com.apple.inputmethod.SCIM";
+        # "Input Mode" = "com.apple.inputmethod.SCIM.ITABC";
+        # InputSourceKind = "Input Mode";
+        # }
         {
           "Bundle ID" = "com.apple.inputmethod.TCIM";
           InputSourceKind = "Keyboard Input Method";
@@ -88,10 +89,10 @@
           "Bundle ID" = "com.apple.inputmethod.Kotoeri.RomajiTyping";
           InputSourceKind = "Keyboard Input Method";
         }
-        {
-          "Bundle ID" = "com.apple.inputmethod.SCIM";
-          InputSourceKind = "Keyboard Input Method";
-        }
+        # {
+        # "Bundle ID" = "com.apple.inputmethod.SCIM";
+        # InputSourceKind = "Keyboard Input Method";
+        # }
         # Colemak layout
         {
           InputSourceKind = "Keyboard Layout";

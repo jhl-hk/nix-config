@@ -95,7 +95,7 @@ let
   # And like there, the id is checked against the refreshed list instead of
   # trusted: `just llm-models` can retire it from under this file, and falling
   # back to the default beats writing a model Zed cannot resolve.
-  commitModelId = "gpt-5.6-sol";
+  commitModelId = "gpt-6.1-sol";
   commitModelRef =
     if lib.elem commitModelId (dfltProvider.models or [])
     then {
