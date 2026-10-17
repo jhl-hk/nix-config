@@ -250,7 +250,7 @@ Then, **on that Mac**, `just rebuild`. Remember `git add --intent-to-add` (or ju
 
 ## Recipe 7b: add a non-NixOS Linux host
 
-For nix installed on top of a distro that owns the system — Arch, Debian, Fedora. The machine gets a `homeConfigurations."<user>@<Name>"` and no system configuration at all. Pattern source: `hosts/home/jhlsArchLinux/` and `home/jhl/jhlsArchLinux.nix` — both deleted when that machine was retired, so read them out of git history.
+For nix installed on top of a distro that owns the system — Arch, Debian, Fedora. The machine gets a `homeConfigurations."<user>@<Name>"` and no system configuration at all. Pattern source: `hosts/home/jhlsRogZephyrus/` and `home/jhl/jhlsRogZephyrus.nix`.
 
 Still two files and still no `flake.nix` edit:
 

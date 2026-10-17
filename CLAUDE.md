@@ -1,9 +1,9 @@
 # CLAUDE.md
 
-nix-darwin + home-manager flake, one user (`jhl`), three machines — all Macs — on one live lane:
+nix-darwin + home-manager flake, one user (`jhl`), four machines — three Macs on nix-darwin, one Arch box on standalone home-manager:
 
 - **nix-darwin** — `jhlsMacBookPro`, `jhlsMacBookAir`, `SeandeMac-Studio`. Host dir `hosts/darwin/<Host>/`, output `darwinConfigurations.<Host>`.
-- **standalone home-manager** — no machines right now. Host dir `hosts/home/<Host>/`, output `homeConfigurations.jhl@<Host>`. **No system configuration exists on this lane**: no `hosts/common/core`, no `environment.systemPackages`, no sops. Anything needing root belongs to the distro's package manager.
+- **standalone home-manager** — `jhlsRogZephyrus` (Arch, CLI and dev environment only). Host dir `hosts/home/<Host>/`, output `homeConfigurations.jhl@<Host>`. **No system configuration exists on this lane**: no `hosts/common/core`, no `environment.systemPackages`, no sops. Anything needing root belongs to the distro's package manager.
 
   `jhlsArchLinux` was the one machine here and has been removed; `hosts/home/` is now a `.gitkeep` skeleton like `hosts/nixos/`. The lane's machinery — `mkHomeHost`, `lib.custom.evalHostSpec`, the Linux branch of `scripts/rebuild.sh`, `home/jhl/common/core/linux.nix` — is all still in place, so a Linux box returns by adding two files and nothing else. The division of labour that lane settled on (nix owns CLI tools, dotfiles and fonts; GUI apps and anything dlopen'd into another process stay with the distro) is worth recovering from git history before widening it.
 

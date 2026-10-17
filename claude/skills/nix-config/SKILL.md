@@ -5,12 +5,12 @@ description: Operates jhl's nix-darwin + home-manager monorepo at ~/Documents/ni
 
 # nix-config
 
-Operating manual for `/Users/jhl/Documents/nix-src/nix-config` (public logic) and `/Users/jhl/Documents/nix-src/nix-secrets` (private data, separate flake input). One user, `jhl`; three machines, all Macs, on one of the three host lanes:
+Operating manual for `/Users/jhl/Documents/nix-src/nix-config` (public logic) and `/Users/jhl/Documents/nix-src/nix-secrets` (private data, separate flake input). One user, `jhl`; four machines on the three host lanes:
 
 | Lane | Directory | Output | Machines |
 |---|---|---|---|
 | nix-darwin | `hosts/darwin/` | `darwinConfigurations.<Host>` | `jhlsMacBookPro`, `jhlsMacBookAir`, `SeandeMac-Studio` |
-| standalone home-manager | `hosts/home/` | `homeConfigurations.<user>@<Host>` | none — skeleton only |
+| standalone home-manager | `hosts/home/` | `homeConfigurations.<user>@<Host>` | `jhlsRogZephyrus` |
 | NixOS | `hosts/nixos/` | `nixosConfigurations.<Host>` | none yet (empty skeleton) |
 
 The standalone lane is for **nix on top of another distro** — Arch, here. There is no system configuration at all on that lane: no `hosts/common/core`, no `environment.systemPackages`, no system sops. Anything that needs root is pacman's job, not this repo's. The NixOS skeleton (`hosts/nixos/`, `modules/hosts/nixos/`, `hosts/common/core/nixos.nix`, `hosts/common/users/jhl/nixos.nix`) is still unused; do not confuse it with the standalone lane, which is a real, live machine.
@@ -139,7 +139,7 @@ Same two files, different lane: `hosts/home/<Name>/default.nix` and `home/jhl/<N
 - The home file carries everything, including what a Mac would get from its system config. Import `home/jhl/common/optional/nix/standalone.nix` to enable flakes through `~/.config/nix/nix.conf`, since the distro owns `/etc/nix`.
 - The flake attribute is `homeConfigurations."<user>@<Name>"`, and `just rebuild` drives `home-manager switch`, not `darwin-rebuild`. `scripts/rebuild.sh` picks the lane from `uname`.
 
-No machines on it right now — `jhlsArchLinux` was the only one and was retired. The machinery is intact; recover its header from git history before putting a box back on the lane, it records what the lane gives up, notably sops.
+`jhlsRogZephyrus` is the live machine: CLI and dev environment only. The retired `jhlsArchLinux` header in git history records what the lane gives up, notably sops.
 
 ### Recipe 8 — wire something that needs a secret
 
