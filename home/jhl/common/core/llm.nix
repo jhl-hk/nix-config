@@ -1,6 +1,7 @@
 {
   config,
   lib,
+  pkgs,
   hostSpec,
   ...
 }:
@@ -37,24 +38,20 @@
 #  process in that session can read this key. If that is unacceptable, disable
 #  the agent and type the key into Zed once so it lands in the Keychain.
 #
-#  -- and why Linux only gets the terminal half --------------------------
+#  -- and on Linux -------------------------------------------------------
 #
-#  The launchd block is gated on isDarwin. Without the gate it would still be
-#  harmless -- home-manager defaults launchd.enable to isDarwin, so no plist is
-#  ever written -- but "inert because of somebody else's default" is not a
-#  thing to rely on, and it reads as though GUI injection works everywhere.
+#  The launchd block is gated on isDarwin. The Linux counterpart is a systemd
+#  user service running `systemctl --user set-environment`. It is ordered
+#  before graphical-session-pre.target so plasmashell, which launches Zed from
+#  the menu, inherits the variable. Same cost as setenv: every process the user
+#  manager starts afterwards can read the key.
 #
-#  There is a Linux equivalent if it is ever wanted: home-manager already
-#  writes ~/.config/environment.d/10-home-manager.conf, which systemd's user
-#  manager imports into the graphical session. It is not used here because it
-#  takes literal values -- it cannot shell out to read a file the way the
-#  launchd agent does -- so putting the key there would mean writing it into
-#  the nix store, which is exactly what modules/home/llm.nix refuses to do.
+#  environment.d is not used: it takes literal values, so the key would land in
+#  the nix store, which modules/home/llm.nix refuses to do.
 #
-#  Moot on the standalone home-manager lane regardless: it has no system scope
-#  and therefore no sops, so apiKeyFile never exists and even the zsh export
-#  below skips itself. That lane is empty today -- jhlsArchLinux was its only
-#  machine and has been retired.
+#  On the standalone home-manager lane there is no system sops;
+#  home/jhl/common/optional/sops/standalone.nix decrypts the key as the user
+#  and repoints apiKeyFile at it. The service waits on its sops-nix.service.
 #
 #############################################################
 let
@@ -164,6 +161,29 @@ in {
           ''
         ];
       };
+    })
+  active);
+
+  # GUI on Linux: the systemd user manager's environment, read by the
+  # graphical session. See the header.
+  systemd.user.services = lib.optionalAttrs (!hostSpec.isDarwin) (lib.mapAttrs' (name: p:
+    lib.nameValuePair "llm-env-${name}" {
+      Unit = {
+        Description = "Export ${p.envVar} to the user session";
+        Wants = ["sops-nix.service"];
+        After = ["sops-nix.service"];
+        Before = ["graphical-session-pre.target"];
+      };
+      Service = {
+        Type = "oneshot";
+        RemainAfterExit = true;
+        ExecStart = toString (pkgs.writeShellScript "llm-env-${name}" ''
+          [ -r ${keyFileOf p} ] || exit 0
+          exec ${pkgs.systemd}/bin/systemctl --user set-environment \
+            ${p.envVar}="$(cat ${keyFileOf p})"
+        '');
+      };
+      Install.WantedBy = ["graphical-session-pre.target"];
     })
   active);
 }
