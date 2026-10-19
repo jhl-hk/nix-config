@@ -7,7 +7,8 @@
 #
 #  Codex CLI -- the system config layer
 #
-#  Written into /etc/codex/config.toml: the WakaTime plugin. The JianyueLab
+#  Written into /etc/codex/config.toml: the approval policy and reviewer, and
+#  the WakaTime plugin. The JianyueLab
 #  gateway is a profile instead (`codex --profile jyl`), declared in
 #  home/jhl/common/optional/ai/codex.nix; the default provider is the ChatGPT
 #  subscription.
@@ -88,7 +89,16 @@ in {
   #    the version moved, and if it did not:
   #
   #      rm -rf ~/.codex/plugins/cache/wakatime
+  #
+  # approvals_reviewer: escalation requests go to Codex's automated reviewer
+  # instead of a prompt. Top-level keys must precede the first table. Changing
+  # the permission mode in the Codex UI writes approvals_reviewer into
+  # ~/.codex/config.toml, which outranks this layer -- delete it there to
+  # return to this value.
   environment.etc."codex/config.toml".text = ''
+    approval_policy = "on-request"
+    approvals_reviewer = "auto_review"
+
     [marketplaces.wakatime]
     source_type = "local"
     source = "${codexWakatime}"
