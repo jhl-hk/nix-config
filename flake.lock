@@ -250,6 +250,22 @@
         "type": "github"
       }
     },
+    "open-agents": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1780562893,
+        "narHash": "sha256-sinyOqDViNNsUk0iLruWoyGnVG9BAjUKvHvq75Dze9I=",
+        "owner": "vercel-labs",
+        "repo": "open-agents",
+        "rev": "cf865e94de7729751c747171785b6ce57e7b178c",
+        "type": "github"
+      },
+      "original": {
+        "owner": "vercel-labs",
+        "repo": "open-agents",
+        "type": "github"
+      }
+    },
     "privacy-skills": {
       "flake": false,
       "locked": {
@@ -282,10 +298,12 @@
         "nix-secrets": "nix-secrets",
         "nixpkgs": "nixpkgs",
         "nixpkgs-darwin": "nixpkgs-darwin",
+        "open-agents": "open-agents",
         "privacy-skills": "privacy-skills",
         "sops-nix": "sops-nix",
         "wakatime-antigravity": "wakatime-antigravity",
-        "wakatime-codex": "wakatime-codex"
+        "wakatime-codex": "wakatime-codex",
+        "web-animation-skills": "web-animation-skills"
       }
     },
     "sops-nix": {
@@ -337,6 +355,22 @@
       "original": {
         "owner": "wakatime",
         "repo": "codex-cli-wakatime",
+        "type": "github"
+      }
+    },
+    "web-animation-skills": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1782134663,
+        "narHash": "sha256-o7dy+znjGwdI6a3zSrKeH6Zkx/d2LoIodfHfDWAy0EE=",
+        "owner": "iart-ai",
+        "repo": "web-animation-skills",
+        "rev": "b6dba3eb759726845a44163ff0bad70dd9e7fbb6",
+        "type": "github"
+      },
+      "original": {
+        "owner": "iart-ai",
+        "repo": "web-animation-skills",
         "type": "github"
       }
     }

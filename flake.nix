@@ -155,6 +155,20 @@
       flake = false;
     };
 
+    # iart-ai/web-animation-skills -- GSAP, SVG, 60fps and micro-interaction
+    # skills (MIT, public).
+    web-animation-skills = {
+      url = "github:iart-ai/web-animation-skills";
+      flake = false;
+    };
+
+    # vercel-labs/open-agents (MIT, public). Only one skill is taken:
+    # .agents/skills/web-animation-design. Named by hand in claude.nix.
+    open-agents = {
+      url = "github:vercel-labs/open-agents";
+      flake = false;
+    };
+
     # -- Privacy / compliance skills ----------------------------------------
     #
     # Three public marketplaces, all hookless, so they follow the same rule as

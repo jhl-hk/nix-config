@@ -109,6 +109,11 @@ let
     // scanSkills "${inputs.emil-skills}/skills"
     # BIRD.skills keeps its skills at the repo root; template/ is a scaffold.
     // removeAttrs (scanSkills "${inputs.bird-skills}") ["template"]
+    # Scanned whole: gsap-web, 60fps-animation, svg-animation, micro-interaction.
+    // scanSkills "${inputs.web-animation-skills}/skills"
+    // {
+      web-animation-design = "${inputs.open-agents}/.agents/skills/web-animation-design";
+    }
     // {
       # Anthropic's repo stays explicit. It holds 19 skills and only these four
       # are wanted -- scanning it would quietly enable academy-guide,
