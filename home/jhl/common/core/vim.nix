@@ -1,0 +1,33 @@
+#############################################################
+#
+#  Vim -- ~/.vimrc only
+#
+#  The binary comes from the system side (hosts/common/core) or the distro.
+#
+#  Colemak navigation: h/n/e/i are left/down/up/right. Displaced keys:
+#    n -> j   down             j -> e   end of word
+#    e -> k   up               k -> n   next match
+#    i -> l   right            l -> i   insert
+#  Uppercase follows: N join, E keyword lookup, I bottom of screen,
+#  J end of WORD, K previous match, L insert at BOL.
+#  Text objects move with insert: `dlw` is the old `diw`.
+#
+#  A ~/.vimrc stops Vim from loading defaults.vim, so it is sourced first.
+#
+#############################################################
+{
+  home.file.".vimrc".text = ''
+    unlet! skip_defaults_vim
+    source $VIMRUNTIME/defaults.vim
+
+    for s:m in ['n', 'x', 'o']
+      for [s:from, s:to] in [
+            \ ['n', 'j'], ['e', 'k'], ['i', 'l'],
+            \ ['j', 'e'], ['k', 'n'], ['l', 'i'],
+            \ ['N', 'J'], ['E', 'K'], ['I', 'L'],
+            \ ['J', 'E'], ['K', 'N'], ['L', 'I']]
+        execute s:m . 'noremap ' . s:from . ' ' . s:to
+      endfor
+    endfor
+  '';
+}

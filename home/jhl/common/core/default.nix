@@ -42,6 +42,7 @@ in {
     ./zsh.nix
     ./starship.nix
     ./zoxide.nix
+    ./vim.nix
     ./yazi.nix
     ./tmux.nix
     ./agent-instructions.nix
