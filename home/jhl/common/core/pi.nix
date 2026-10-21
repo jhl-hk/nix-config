@@ -270,15 +270,16 @@ in {
       # A "!" pattern in settings.skills is not enough: it disables a skill
       # after loading, and the name-collision check runs on everything loaded.
       # The .ignore cannot go inside synced/, which claude.ai owns.
+      # claude.ai may suffix a plugin directory, e.g. figma~g2, hence figma*.
       #   skills-figquery/  figma's second copy of the names in its skills/
       #   workflow-skills/  figma skills Claude Code does not load either
       #   twilio-agent-connect  ships with no description, which pi rejects
       ".pi/agent/claude-plugins/synced".source =
         config.lib.file.mkOutOfStoreSymlink "${config.home.homeDirectory}/.claude/plugins/synced";
       ".pi/agent/claude-plugins/.ignore".text = ''
-        synced/*/figma/skills-figquery/
-        synced/*/figma/workflow-skills/
-        synced/*/twilio-developer-kit/skills/twilio/twilio-agent-connect/
+        synced/*/figma*/skills-figquery/
+        synced/*/figma*/workflow-skills/
+        synced/*/twilio-developer-kit*/skills/twilio/twilio-agent-connect/
       '';
     }
     // lib.optionalAttrs (active != {}) {
