@@ -78,14 +78,24 @@ let
   # whatever you picked in the UI, which beats pointing at a nonexistent model.
   dflt = config.llm.defaultProvider;
   dfltProvider = activeLlm.${dflt} or null;
+
+  # Zed's default model is hand-picked here rather than the shared
+  # llm defaultModel. Falls back to the shared one if the gateway stops
+  # listing it.
+  zedModelId = "expen";
+  defaultModelId =
+    if lib.elem zedModelId (dfltProvider.models or [])
+    then zedModelId
+    else dfltProvider.defaultModel or null;
+
   # elem rather than a non-empty check, because core/llm.nix pins defaultModel
   # by hand: if the gateway retires that id, write no default at all rather
   # than one Zed cannot resolve -- mutableUserSettings keeps the UI's choice.
-  hasDefault = dfltProvider != null && lib.elem dfltProvider.defaultModel dfltProvider.models;
+  hasDefault = dfltProvider != null && lib.elem defaultModelId dfltProvider.models;
 
   defaultModelRef = {
     provider = dflt;
-    model = dfltProvider.defaultModel;
+    model = defaultModelId;
   };
 
   # Commit messages get their own model. commit_message_model is a Zed concept,
@@ -95,7 +105,7 @@ let
   # And like there, the id is checked against the refreshed list instead of
   # trusted: `just llm-models` can retire it from under this file, and falling
   # back to the default beats writing a model Zed cannot resolve.
-  commitModelId = "gpt-6.1-sol";
+  commitModelId = "cheap";
   commitModelRef =
     if lib.elem commitModelId (dfltProvider.models or [])
     then {
@@ -221,7 +231,7 @@ in {
         }
         // lib.optionalAttrs hasDefault {
           open_ai_compatible_api = {
-            model = dfltProvider.defaultModel;
+            model = defaultModelId;
             api_url = dfltProvider.apiUrl;
           };
         };
