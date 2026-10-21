@@ -54,6 +54,7 @@ in {
     ./opencode.nix
     ./pi.nix
     ./wakatime.nix
+    ./typst.nix
   ];
 
   home = {

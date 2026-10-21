@@ -130,6 +130,7 @@ in {
       "prisma"
       "svelte"
       "toml"
+      "typst"
       "vue"
       "bird2" # BIRD routing daemon config
 
