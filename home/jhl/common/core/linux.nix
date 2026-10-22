@@ -64,6 +64,9 @@
   # it would shadow a forwarded agent on every inbound ssh. Both bash
   # (profileExtra) and zsh (envExtra) get it.
   services.ssh-agent.enable = true;
+  systemd.user.services.ssh-agent.Service.Environment = [
+    "SSH_ASKPASS=/usr/bin/ksshaskpass"
+  ];
 
   fonts.fontconfig.enable = true;
 
