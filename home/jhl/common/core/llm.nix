@@ -18,8 +18,9 @@
 #  llm/models.json is produced by `just llm-models` hitting /v1/models.
 #  It is not fetched from within nix because flake evaluation has no network
 #  (and that endpoint needs a key anyway -- a bare GET returns 401, verified).
-#  Generating a file and readFile-ing it keeps the list declarative: in git,
-#  diffable, revertable, and refreshed with one command.
+#  Generating a file and readFile-ing it keeps the list declarative and
+#  refreshed with one command. The files stay tracked, since flake eval only
+#  sees tracked files, but their refreshes are skip-worktree and never committed.
 #
 #  Refreshing it is automatic: rebuild-pre runs llm-models on every switch, in
 #  its non-fatal wrapper, so an offline machine still rebuilds against the

@@ -402,8 +402,8 @@ verify-sops EXPECT="sops-pipeline-ok":
 #
 # Why this step exists: flake evaluation has no network, and that endpoint needs
 # a key anyway (a bare GET returns 401), so the model list cannot be fetched at
-# build time. Generating a file and readFile-ing it keeps the list declarative
-# -- in git, diffable, revertable.
+# build time. Generating a file and readFile-ing it keeps the list declarative.
+# Refreshes are kept out of git by skip-worktree (see llm-models).
 #
 # The key is decrypted straight from the ciphertext rather than read from
 # /run/secrets, so no rebuild is needed first.
@@ -475,6 +475,9 @@ llm-models-one SECRET HOST OUT:
 llm-models:
     #!/usr/bin/env bash
     set -uo pipefail
+    # The lists stay tracked (flake eval only sees tracked files) but their
+    # refreshes are not committed: skip-worktree hides them from git status.
+    git update-index --skip-worktree home/jhl/common/core/llm/*.json
     ok=0
     failed=()
     while read -r secret host out; do
