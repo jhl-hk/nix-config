@@ -65,7 +65,7 @@
   # (profileExtra) and zsh (envExtra) get it.
   services.ssh-agent.enable = true;
   systemd.user.services.ssh-agent.Service.Environment = [
-    "SSH_ASKPASS=/usr/bin/ksshaskpass"
+    "SSH_ASKPASS=/usr/bin/lxqt-openssh-askpass"
   ];
 
   fonts.fontconfig.enable = true;

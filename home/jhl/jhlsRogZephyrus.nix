@@ -24,4 +24,7 @@
     # No system sops on this lane; decrypts as the user instead.
     ./common/optional/sops/standalone.nix
   ];
+
+  # No id_yk5c on this machine.
+  sshKeys.extra = [];
 }
