@@ -48,6 +48,7 @@
 
       # Editors
       "antigravity" # Google's agentic IDE
+      "cursor"
       # Office apps one by one: the microsoft-office suite cask always
       # installs OneNote too, with no way to leave it out.
       "microsoft-word"
