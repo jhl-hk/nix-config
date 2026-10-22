@@ -17,9 +17,8 @@
 #  omp writes ~/.omp/agent/config.yml itself (setup wizard, /settings,
 #  `omp config set`), so it is not linked from the store. nix owns an overlay
 #  instead, ~/.omp/agent/nix.yml, loaded through PI_CONFIG_FILES. Overlays rank
-#  above config.yml, so a key set here cannot be changed from /settings; keep
-#  this file to the keys that must hold on every machine and leave the model,
-#  theme and composer choices to config.yml.
+#  above config.yml, so a key set here cannot be changed from /settings.
+#  Change it here and rebuild.
 #
 #  An overlay that is missing or invalid is a hard error at startup, and
 #  PI_CONFIG_FILES only reaches shells started after a switch.
@@ -66,6 +65,12 @@ let
     # Claude Code marketplace plugins (superpowers among them). Off by
     # default in omp.
     enabledProviders = ["claude"];
+
+    # Choices made in the setup wizard, pinned so every machine matches.
+    modelRoles.default = "anthropic/claude-opus-5-5";
+    symbolPreset = "unicode";
+    composer.shape = "claude";
+    theme.dark = "dark-copper";
   };
 
   yaml = pkgs.formats.yaml {};
