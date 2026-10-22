@@ -41,6 +41,11 @@
         name = "JianyueLab/internal";
         trusted = true;
       }
+      # oh-my-pi (omp), below.
+      {
+        name = "can1357/tap";
+        trusted = true;
+      }
     ];
 
     brews = [
@@ -79,6 +84,11 @@
       # every switch, since a build-only dep is not a dependency of anything
       # the Brewfile lists.
       "JianyueLab/internal/harness"
+
+      # oh-my-pi, a pi fork. Config: home/jhl/common/optional/ai/omp.nix,
+      # imported by the same two hosts. `omp update` detects the brew install
+      # and runs brew upgrade, so it does not fight this entry.
+      "can1357/tap/omp"
     ];
 
     # agy, the Antigravity CLI agent, replacing gemini-cli here. A cask and

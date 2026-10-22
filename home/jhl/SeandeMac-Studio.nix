@@ -12,6 +12,7 @@
     ./common/optional/ai/antigravity.nix
     ./common/optional/ai/codex.nix
     ./common/optional/ai/harness.nix
+    ./common/optional/ai/omp.nix
     ./common/optional/ai/openusage.nix
   ];
 }
