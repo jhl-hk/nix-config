@@ -14,6 +14,7 @@
   imports = [
     ./common/core
     ./common/optional/ai/codex.nix
+    ./common/optional/desktop/niri.nix
     ./common/optional/editors/zed.nix
 
     # Arch's nix package owns /etc/nix/nix.conf; flakes are enabled through
