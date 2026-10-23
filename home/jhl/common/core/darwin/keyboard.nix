@@ -56,29 +56,22 @@
       # Note: this array is ordered, and the order is the input-source cycling
       # order -- do not reshuffle it by language.
       AppleEnabledInputSources = [
-        # Traditional Chinese Pinyin
+        # Simplified Chinese Pinyin
         {
-          "Bundle ID" = "com.apple.inputmethod.TCIM";
-          "Input Mode" = "com.apple.inputmethod.TCIM.Pinyin";
+          "Bundle ID" = "com.apple.inputmethod.SCIM";
+          "Input Mode" = "com.apple.inputmethod.SCIM.ITABC";
           InputSourceKind = "Input Mode";
         }
-        # Temporarily disabled: U.S. and Simplified Chinese Pinyin.
-        # # U.S. keyboard
+        {
+          "Bundle ID" = "com.apple.inputmethod.SCIM";
+          InputSourceKind = "Keyboard Input Method";
+        }
+        # Temporarily disabled: U.S.
         # {
         # InputSourceKind = "Keyboard Layout";
         # "KeyboardLayout ID" = 0;
         # "KeyboardLayout Name" = "U.S.";
         # }
-        # # Simplified Chinese Pinyin
-        # {
-        # "Bundle ID" = "com.apple.inputmethod.SCIM";
-        # "Input Mode" = "com.apple.inputmethod.SCIM.ITABC";
-        # InputSourceKind = "Input Mode";
-        # }
-        {
-          "Bundle ID" = "com.apple.inputmethod.TCIM";
-          InputSourceKind = "Keyboard Input Method";
-        }
         # Japanese Romaji
         {
           "Bundle ID" = "com.apple.inputmethod.Kotoeri.RomajiTyping";
@@ -89,10 +82,6 @@
           "Bundle ID" = "com.apple.inputmethod.Kotoeri.RomajiTyping";
           InputSourceKind = "Keyboard Input Method";
         }
-        # {
-        # "Bundle ID" = "com.apple.inputmethod.SCIM";
-        # InputSourceKind = "Keyboard Input Method";
-        # }
         # Colemak layout
         {
           InputSourceKind = "Keyboard Layout";
