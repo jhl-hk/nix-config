@@ -89,7 +89,6 @@
       "grok-build" # config inherited from ~/.claude, see home/jhl/common/core/grok.nix
       "grok-bot"
       "grammarly-desktop"
-      "openusage" # AI usage tracker
 
       "notion" # Documentation
       "notion-calendar"

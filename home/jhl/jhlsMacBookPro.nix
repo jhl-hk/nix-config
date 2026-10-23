@@ -16,7 +16,6 @@
     ./common/optional/ai/codex.nix
     ./common/optional/ai/harness.nix
     ./common/optional/ai/omp.nix
-    ./common/optional/ai/openusage.nix
 
     # Bash + flyline. zsh stays the login shell; this only affects `bash`.
     # Needs hosts/common/optional/darwin/flyline.nix on the system side.

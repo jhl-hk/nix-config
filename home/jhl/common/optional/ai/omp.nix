@@ -68,7 +68,7 @@ let
 
     # Choices made in the setup wizard, pinned so every machine matches.
     modelRoles.default = "anthropic/claude-opus-5-5";
-    symbolPreset = "unicode";
+    symbolPreset = "ascii";
     composer.shape = "claude";
     theme.dark = "dark-copper";
   };
