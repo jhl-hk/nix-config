@@ -1,10 +1,12 @@
 #############################################################
 #
-#  Vim -- ~/.vimrc only
+#  Vim -- ~/.vimrc only; Neovim -- binary and init.lua
 #
-#  The binary comes from the system side (hosts/common/core) or the distro.
+#  The Vim binary comes from the system side (hosts/common/core) or the
+#  distro. Neovim comes from home-manager. EDITOR stays vim.
 #
-#  Colemak navigation: h/n/e/i are left/down/up/right. Displaced keys:
+#  Colemak navigation, shared by both: h/n/e/i are left/down/up/right.
+#  Displaced keys:
 #    n -> j   down             j -> e   end of word
 #    e -> k   up               k -> n   next match
 #    i -> l   right            l -> i   insert
@@ -13,13 +15,11 @@
 #  Text objects move with insert: `dlw` is the old `diw`.
 #
 #  A ~/.vimrc stops Vim from loading defaults.vim, so it is sourced first.
+#  Neovim has its own defaults and needs no equivalent.
 #
 #############################################################
-{
-  home.file.".vimrc".text = ''
-    unlet! skip_defaults_vim
-    source $VIMRUNTIME/defaults.vim
-
+let
+  colemak = ''
     for s:m in ['n', 'x', 'o']
       for [s:from, s:to] in [
             \ ['n', 'j'], ['e', 'k'], ['i', 'l'],
@@ -30,4 +30,15 @@
       endfor
     endfor
   '';
+in {
+  home.file.".vimrc".text = ''
+    unlet! skip_defaults_vim
+    source $VIMRUNTIME/defaults.vim
+
+    ${colemak}'';
+
+  programs.neovim = {
+    enable = true;
+    extraConfig = colemak;
+  };
 }
