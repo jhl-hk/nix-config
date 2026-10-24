@@ -9,8 +9,8 @@
 #  omp -- oh-my-pi (https://github.com/can1357/oh-my-pi), a pi fork
 #
 #  The binary is the can1357/tap/omp brew in
-#  hosts/common/optional/darwin/dev-extras.nix; this file is imported by the
-#  same two hosts.
+#  hosts/common/optional/darwin/dev-extras.nix on the Macs, and the distro
+#  package on jhlsTokyoDesktop.
 #
 #  -- config.yml stays omp's ----------------------------------------------
 #

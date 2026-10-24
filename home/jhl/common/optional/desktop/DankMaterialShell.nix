@@ -23,4 +23,9 @@ let
 in {
   xdg.configFile."DankMaterialShell".source =
     config.lib.file.mkOutOfStoreSymlink "${repoDir}/home/jhl/common/optional/desktop/DankMaterialShell";
+
+  xdg.configFile."systemd/user/dms.service.d/icon-theme.conf".text = ''
+    [Service]
+    Environment=QS_ICON_THEME=Adwaita
+  '';
 }
