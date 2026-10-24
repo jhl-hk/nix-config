@@ -32,7 +32,19 @@
 
     extraPackages = lib.optionals pkgs.stdenv.isLinux [pkgs.wl-clipboard];
 
-    settings.mgr.show_hidden = true;
+    settings = {
+      mgr.show_hidden = true;
+
+      # Edit with nvim instead of $EDITOR, which stays vim.
+      opener.edit = [
+        {
+          run = "nvim %s";
+          desc = "nvim";
+          for = "unix";
+          block = true;
+        }
+      ];
+    };
 
     # Colemak navigation, same scheme as ./vim.nix: h/n/e/i are
     # left/down/up/right. Prepended, so the QWERTY defaults still work as a
