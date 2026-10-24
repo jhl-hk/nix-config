@@ -39,6 +39,11 @@ in {
 
   programs.neovim = {
     enable = true;
-    extraConfig = colemak;
+    # y / p use the system clipboard (pbcopy on macOS, OSC 52 over ssh).
+    # Soft wrap breaks at word boundaries, wrapped lines keep their indent.
+    extraConfig = ''
+      set clipboard=unnamedplus
+      set linebreak breakindent
+      ${colemak}'';
   };
 }
