@@ -1,24 +1,31 @@
 {...}:
 #############################################################
 #
-#  fcitx5 -- Simplified Chinese (Pinyin) and Japanese (Mozc) input
+#  fcitx5 -- Simplified Chinese (Pinyin) input
 #
-#  Three input methods in one group, and the point of the whole file is the
+#  Two input methods in one group, and the point of the whole file is the
 #  per-method keyboard layout:
 #
 #    keyboard-us-colemak   English, this machine's actual layout
 #    pinyin                Simplified Chinese, forced to us  (QWERTY)
-#    mozc                  Japanese romaji,    forced to us  (QWERTY)
 #
-#  Pinyin and romaji are both spelled out in Latin letters, and the muscle
-#  memory for both is QWERTY -- typing "zhong" or "nihon" on Colemak lands on
-#  entirely different keys. fcitx5 applies the per-item Layout while that input
-#  method is active and restores the group layout when you switch back, so
-#  English stays Colemak without a second thought.
+#  Pinyin is spelled out in Latin letters, and the muscle memory for it is
+#  QWERTY -- typing "zhong" on Colemak lands on entirely different keys. fcitx5
+#  applies the per-item Layout while that input method is active and restores
+#  the group layout when you switch back, so English stays Colemak without a
+#  second thought.
+#
+#  Order matters: fcitx5 uses the *first* item as the inactive state, the one
+#  the trigger key toggles back to. Colemak goes first so that "IM off" means
+#  English, not Pinyin.
+#
+#  No Japanese here, unlike the Macs' Kotoeri romaji in ../../core/darwin/
+#  keyboard.nix. To add it: pacman's fcitx5-mozc, then an item with
+#  Name=mozc and Layout=us.
 #
 #  -- The binaries are pacman's, deliberately -------------------------------
 #
-#    sudo pacman -S --needed fcitx5-im fcitx5-chinese-addons fcitx5-mozc
+#    sudo pacman -S --needed fcitx5-im fcitx5-chinese-addons
 #
 #  fcitx5 is not installable from nix here. fcitx5-gtk and fcitx5-qt are IM
 #  modules that get dlopen'd *into other applications*; built against nixpkgs'
@@ -27,10 +34,10 @@
 #  the NVIDIA GL stack. So this file manages configuration only -- exactly the
 #  split ../editors/zed.nix already runs with package = null.
 #
-#  The input method identifiers below are the .conf basenames those packages
-#  install under share/fcitx5/inputmethod/: `pinyin` from fcitx5-chinese-addons
-#  (LangCode zh_CN) and `mozc` from fcitx5-mozc (LangCode ja). They are not
-#  free-form names -- a typo means fcitx5 quietly drops the entry.
+#  The input method identifier below is the .conf basename the package
+#  installs under share/fcitx5/inputmethod/: `pinyin` from
+#  fcitx5-chinese-addons (LangCode zh_CN). It is not a free-form name -- a
+#  typo means fcitx5 quietly drops the entry.
 #
 #  -- What managing profile costs -------------------------------------------
 #
@@ -40,6 +47,19 @@
 #  to work and then not persist. Add input methods by editing this file and
 #  rebuilding.
 #
+#  The symlink itself survives. fcitx5 saves profile on exit, on idle
+#  autosave and from the GUI, by writing a temp file and renaming it into
+#  place -- but since 5.1.x it resolves the symlink first, so the temp file
+#  lands in the read-only store, mkstemp fails, and the save is dropped
+#  without a log line. Verified on 5.1.23: "Save before exiting..." ran and
+#  ~/.config/fcitx5/profile was still the home-manager link afterwards.
+#
+#  A running fcitx5 keeps its in-memory profile until it restarts.
+#  `fcitx5-remote -r` reloads the global config but not this file, so after a
+#  rebuild that changes it:
+#
+#    systemctl --user restart 'app-org.fcitx.Fcitx5@autostart.service'
+#
 #  That is the trade README's "read-only store symlink" trap describes, taken
 #  knowingly: the set of input methods and their layouts is the thing worth
 #  pinning across machines, and it is not something that changes weekly.
@@ -48,9 +68,13 @@
 #  **unmanaged** on purpose. Those are preferences you tune by trying them, the
 #  GUI is the right tool, and nothing about them needs to be reproducible.
 #
-#  -- Plasma still needs one thing this file cannot do ----------------------
+#  -- Starting it is the session's job, not this file's ---------------------
 #
-#  On Wayland, KWin has to be told to launch fcitx5 as the input method:
+#  Under niri, fcitx5 starts from pacman's /etc/xdg/autostart/
+#  org.fcitx.Fcitx5.desktop, which systemd turns into
+#  app-org.fcitx.Fcitx5@autostart.service. Nothing to configure.
+#
+#  A Plasma Wayland session instead needs KWin told to launch it:
 #
 #    kwriteconfig6 --file kwinrc --group Wayland \
 #      --key InputMethod --type path /usr/share/applications/fcitx5-wayland-launcher.desktop
@@ -65,7 +89,7 @@
     [Groups/0]
     Name=Default
     Default Layout=us-colemak
-    DefaultIM=keyboard-us-colemak
+    DefaultIM=pinyin
 
     [Groups/0/Items/0]
     Name=keyboard-us-colemak
@@ -73,10 +97,6 @@
 
     [Groups/0/Items/1]
     Name=pinyin
-    Layout=us
-
-    [Groups/0/Items/2]
-    Name=mozc
     Layout=us
 
     [GroupOrder]
