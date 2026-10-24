@@ -1,0 +1,12 @@
+{
+    "id": "zuluClock",
+    "name": "Zulu Clock",
+    "description": "Bar clock as UTC and local military time: 1517z 0017j • Sat 24 Oct 26",
+    "version": "1.0.0",
+    "author": "jhl",
+    "type": "widget",
+    "capabilities": ["dankbar-widget"],
+    "component": "./ZuluClockWidget.qml",
+    "icon": "schedule",
+    "permissions": []
+}

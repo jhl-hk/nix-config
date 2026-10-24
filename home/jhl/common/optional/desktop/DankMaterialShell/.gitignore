@@ -1,0 +1,6 @@
+# DMS runtime state, not configuration.
+.changelog-*
+.firstlaunch
+plugins/.repos/
+# Regenerated from the wallpaper palette.
+firefox.css

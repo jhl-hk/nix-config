@@ -1,0 +1,15 @@
+{
+  "worldClock": {
+    "enabled": true,
+    "iconOnly": false,
+    "timezones": [
+      {
+        "timezone": "UTC",
+        "label": ""
+      }
+    ]
+  },
+  "zuluClock": {
+    "enabled": true
+  }
+}
