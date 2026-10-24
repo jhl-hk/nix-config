@@ -263,7 +263,7 @@ sops-edit FILE:
 # Skipped outright when no secrets are declared; it does not fake success.
 #
 # Also skipped on the standalone home-manager lane, which has no system scope
-# and therefore no sops.secrets to check (jhlsRogZephyrus).
+# and therefore no sops.secrets to check (jhlsRogZephyrus, jhlsTokyoDesktop).
 
 # Confirm every secret declared on this machine really landed in /run/secrets
 check-sops:

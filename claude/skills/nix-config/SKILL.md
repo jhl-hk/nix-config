@@ -10,7 +10,7 @@ Operating manual for `/Users/jhl/Documents/nix-src/nix-config` (public logic) an
 | Lane | Directory | Output | Machines |
 |---|---|---|---|
 | nix-darwin | `hosts/darwin/` | `darwinConfigurations.<Host>` | `jhlsMacBookPro`, `jhlsMacBookAir`, `SeandeMac-Studio` |
-| standalone home-manager | `hosts/home/` | `homeConfigurations.<user>@<Host>` | `jhlsRogZephyrus` |
+| standalone home-manager | `hosts/home/` | `homeConfigurations.<user>@<Host>` | `jhlsRogZephyrus`, `jhlsTokyoDesktop` |
 | NixOS | `hosts/nixos/` | `nixosConfigurations.<Host>` | none yet (empty skeleton) |
 
 The standalone lane is for **nix on top of another distro** — Arch, here. There is no system configuration at all on that lane: no `hosts/common/core`, no `environment.systemPackages`, no system sops. Anything that needs root is pacman's job, not this repo's. The NixOS skeleton (`hosts/nixos/`, `modules/hosts/nixos/`, `hosts/common/core/nixos.nix`, `hosts/common/users/jhl/nixos.nix`) is still unused; do not confuse it with the standalone lane, which is a real, live machine.
@@ -139,7 +139,7 @@ Same two files, different lane: `hosts/home/<Name>/default.nix` and `home/jhl/<N
 - The home file carries everything, including what a Mac would get from its system config. Import `home/jhl/common/optional/nix/standalone.nix` to enable flakes through `~/.config/nix/nix.conf`, since the distro owns `/etc/nix`.
 - The flake attribute is `homeConfigurations."<user>@<Name>"`, and `just rebuild` drives `home-manager switch`, not `darwin-rebuild`. `scripts/rebuild.sh` picks the lane from `uname`.
 
-`jhlsRogZephyrus` is the live machine: CLI and dev environment only. The retired `jhlsArchLinux` header in git history records what the lane gives up, notably sops.
+`jhlsRogZephyrus` (laptop) and `jhlsTokyoDesktop` (desktop) are the live machines: CLI and dev environment only. The retired `jhlsArchLinux` header in git history records what the lane gives up, notably sops.
 
 ### Recipe 8 — wire something that needs a secret
 

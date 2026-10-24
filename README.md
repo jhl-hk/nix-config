@@ -5,10 +5,10 @@ jhl's nix-darwin + home-manager flake. Four machines, one user (`jhl`):
 | Lane | Host directory | Flake output | Machines |
 |---|---|---|---|
 | nix-darwin | `hosts/darwin/` | `darwinConfigurations.<Host>` | `jhlsMacBookPro`, `jhlsMacBookAir`, `SeandeMac-Studio` |
-| standalone home-manager | `hosts/home/` | `homeConfigurations.jhl@<Host>` | `jhlsRogZephyrus` |
+| standalone home-manager | `hosts/home/` | `homeConfigurations.jhl@<Host>` | `jhlsRogZephyrus`, `jhlsTokyoDesktop` |
 | NixOS | `hosts/nixos/` | `nixosConfigurations.<Host>` | none — skeleton only |
 
-The standalone lane is nix running on top of a distro that owns the system. It has a home configuration and **no system configuration**: no `hosts/common/core`, no `environment.systemPackages`, no sops. Root-level concerns stay with the distro's package manager. `jhlsRogZephyrus` lives here and manages CLI tools and the development environment only.
+The standalone lane is nix running on top of a distro that owns the system. It has a home configuration and **no system configuration**: no `hosts/common/core`, no `environment.systemPackages`, no sops. Root-level concerns stay with the distro's package manager. `jhlsRogZephyrus` and `jhlsTokyoDesktop` live here and manage CLI tools and the development environment only.
 
 Private data lives in the sibling [`../nix-secrets`](https://github.com/jhl-hk/nix-secrets) (private) and is pulled in as a flake input.
 
