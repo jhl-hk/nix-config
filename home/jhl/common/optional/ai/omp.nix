@@ -68,9 +68,14 @@ let
 
     # Choices made in the setup wizard, pinned so every machine matches.
     modelRoles.default = "anthropic/claude-opus-5-5";
-    symbolPreset = "ascii";
+    symbolPreset = "unicode";
     composer.shape = "claude";
-    theme.dark = "dark-copper";
+    # Both slots pinned: omp picks theme.light on a light terminal background,
+    # and its default ("light") would otherwise apply there.
+    theme = {
+      dark = "dark-copper";
+      light = "dark-copper";
+    };
   };
 
   yaml = pkgs.formats.yaml {};
