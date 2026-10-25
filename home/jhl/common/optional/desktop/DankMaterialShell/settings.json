@@ -37,7 +37,10 @@
       "enabled": true,
       "position": 0,
       "screenPreferences": [
-        "all"
+        {
+          "name": "DP-1",
+          "model": "DELL SE3223Q"
+        }
       ],
       "showOnLastDisplay": true,
       "leftWidgets": [

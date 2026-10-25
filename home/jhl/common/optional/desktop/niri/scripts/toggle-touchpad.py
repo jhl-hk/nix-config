@@ -1,33 +1,33 @@
 #!/usr/bin/python3
 import fcntl
 from pathlib import Path
-import re
 import subprocess
 
-
-def toggle(text):
-    pattern = r"(?m)^(    touchpad \{\n)(        (?:// )?off)(?=\n)"
-    def replace(match):
-        line = "        off" if "//" in match[2] else "        // off"
-        return match[1] + line
-    result, count = re.subn(pattern, replace, text, count=1)
-    if count != 1:
-        raise RuntimeError("Cannot locate the touchpad off setting")
-    return result
+# Included by config.kdl; present means the touchpad is off.
+# git-ignored, so the state stays on this machine.
+STATE = """\
+input {
+    touchpad {
+        off
+    }
+}
+"""
 
 
 def main():
     with open(__file__) as lock:
         fcntl.flock(lock, fcntl.LOCK_EX)
-        config = Path.home() / ".config/niri/config.kdl"
-        original = config.read_text()
-        updated = toggle(original)
-        # Niri reloads the configuration when this file changes.
-        config.write_text(updated)
-        result = subprocess.run(["niri", "validate"], capture_output=True)
-        if result.returncode:
-            config.write_text(original)
-            raise RuntimeError(result.stderr.decode())
+        state = Path.home() / ".config/niri/local/touchpad.kdl"
+        # Niri reloads the configuration when an included file changes.
+        if state.exists():
+            state.unlink()
+        else:
+            state.parent.mkdir(exist_ok=True)
+            state.write_text(STATE)
+            result = subprocess.run(["niri", "validate"], capture_output=True)
+            if result.returncode:
+                state.unlink()
+                raise RuntimeError(result.stderr.decode())
 
 
 if __name__ == "__main__":

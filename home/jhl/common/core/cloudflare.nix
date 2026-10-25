@@ -1,4 +1,8 @@
-{lib, ...}:
+{
+  config,
+  lib,
+  ...
+}:
 #############################################################
 #
 #  CLOUDFLARE_API_TOKEN injection
@@ -25,9 +29,15 @@
 #
 #############################################################
 let
-  tokenFile = "/run/secrets/cloudflare/api_token";
+  tokenFile = config.cloudflare.apiTokenFile;
 in {
-  programs.zsh.initContent = lib.mkAfter ''
+  options.cloudflare.apiTokenFile = lib.mkOption {
+    type = lib.types.str;
+    default = "/run/secrets/cloudflare/api_token";
+    description = "Decrypted Cloudflare API token.";
+  };
+
+  config.programs.zsh.initContent = lib.mkAfter ''
     [ -r ${tokenFile} ] && export CLOUDFLARE_API_TOKEN="$(cat ${tokenFile})"
   '';
 }

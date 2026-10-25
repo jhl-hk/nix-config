@@ -14,6 +14,8 @@
 #  copy. Edits take effect on save, the same as before, and land in git.
 #  DankMaterialShell writes ./niri/dms/*.kdl at runtime; those writes land
 #  in the repo too, so commit them along with your own edits.
+#  Per-machine state is git-ignored: dms/outputs.kdl, dms/colors.kdl and
+#  local/ (the touchpad switch). See ./niri/.gitignore.
 #
 #  The whole directory is linked, not single files. A tool that saves by
 #  writing a temp file and renaming it replaces a linked *file* with a plain
