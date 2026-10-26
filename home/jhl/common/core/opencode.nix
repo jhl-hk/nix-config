@@ -124,6 +124,15 @@ let
       # wakatime-cli, which reads ~/.wakatime.cfg from wakatime.nix and pulls
       # the key out of sops via hosts/common/optional/darwin/wakatime.nix.
       plugin = ["opencode-wakatime@1.3.9"];
+
+      # Shared list, modules/home/mcp-servers.nix. OAuth is detected per
+      # server; sign in with `opencode mcp auth <name>`.
+      mcp =
+        lib.mapAttrs (_: s: {
+          type = "remote";
+          inherit (s) url;
+        })
+        config.mcpServers;
     }
     // lib.optionalAttrs (active != {}) {
       provider = lib.mapAttrs toProvider active;

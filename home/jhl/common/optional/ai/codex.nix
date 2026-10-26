@@ -168,4 +168,37 @@ in {
         ${python}/bin/python3 ${merge} "$HOME/.codex/jyl.config.toml" ${managed}
       fi
     '';
+
+  # MCP servers from the shared list (modules/home/mcp-servers.nix), merged
+  # into the user config by name. Codex writes config.toml itself, and the
+  # [mcp_servers.*] tables already there (node_repl from the ChatGPT app)
+  # stay. Sign in with `codex mcp login <name>`.
+  home.activation.codexMcpServers = let
+    servers = (pkgs.formats.json {}).generate "codex-mcp-servers.json" (
+      lib.mapAttrs (_: s: {inherit (s) url;}) config.mcpServers
+    );
+    python = pkgs.python3.withPackages (ps: [ps.tomlkit]);
+    merge = pkgs.writeText "codex-mcp-servers.py" ''
+      import json, os, sys, tomlkit
+
+      path, servers = sys.argv[1], json.load(open(sys.argv[2]))
+      doc = tomlkit.parse(open(path).read()) if os.path.exists(path) else tomlkit.document()
+      if "mcp_servers" not in doc:
+          doc["mcp_servers"] = tomlkit.table(is_super_table=True)
+      for name, server in servers.items():
+          doc["mcp_servers"][name] = server
+      os.makedirs(os.path.dirname(path), exist_ok=True)
+      with open(path + ".tmp", "w") as f:
+          f.write(tomlkit.dumps(doc))
+      os.chmod(path + ".tmp", 0o600)
+      os.replace(path + ".tmp", path)
+    '';
+  in
+    lib.hm.dag.entryAfter ["writeBoundary"] ''
+      if [[ -v DRY_RUN ]]; then
+        echo "codex.nix: would merge MCP servers into $HOME/.codex/config.toml"
+      elif ! ${python}/bin/python3 -I ${merge} "$HOME/.codex/config.toml" ${servers}; then
+        echo "codex.nix: MCP merge failed, left $HOME/.codex/config.toml untouched" >&2
+      fi
+    '';
 }

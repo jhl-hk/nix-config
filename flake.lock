@@ -181,10 +181,10 @@
     "jianyuelab-skills": {
       "flake": false,
       "locked": {
-        "lastModified": 1792153330,
-        "narHash": "sha256-/Lcn6wjwjbxKVyT7pgXK7CeWana5nsIR9zSPrcZdiuA=",
+        "lastModified": 1793024644,
+        "narHash": "sha256-cKqfqEcqPcAqHTtD79g8r85J42Qi2/cVzsVfpqY1ECY=",
         "ref": "main",
-        "rev": "a6e4018110108f4aca70aa0f3dd84e13a5202928",
+        "rev": "d2ebdfd0b3fc9ba6d6aac20e207abdaa36837056",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/JianyueLab/skills.git"

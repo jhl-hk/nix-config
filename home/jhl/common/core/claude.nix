@@ -227,6 +227,39 @@ let
   };
 
   settingsPath = "${config.home.homeDirectory}/.claude/settings.json";
+
+  # -- MCP servers ---------------------------------------------------------
+  #
+  # User scope: available in every directory. The list is the shared
+  # mcpServers option (modules/home/mcp-servers.nix).
+  mcpServers =
+    lib.mapAttrs (_: s: {
+      type = "http";
+      inherit (s) url;
+    })
+    config.mcpServers;
+
+  claudeJsonPath = "${config.home.homeDirectory}/.claude.json";
+
+  # Python, not jq: ~/.claude.json can hold a lone UTF-16 surrogate (a
+  # truncated emoji in prompt history), which jq rejects outright. Python's
+  # json module round-trips it as an escape.
+  mergeMcpServers = pkgs.writeText "merge-mcp-servers.py" ''
+    import json, os, sys, tempfile
+
+    path, servers = sys.argv[1], json.loads(sys.argv[2])
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        data = {}
+    data["mcpServers"] = {**data.get("mcpServers", {}), **servers}
+
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".claude.json.")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    os.replace(tmp, path)
+  '';
 in {
   options.claudeComplianceSkills.enable = lib.mkEnableOption ''
     the privacy/compliance skill set (GDPR, ISO, SOC 2, NIST, HIPAA, ...).
@@ -301,6 +334,22 @@ in {
         rm -f "$settings.nix-tmp"
         echo "claude.nix: jq merge failed, left $settings untouched" >&2
       fi
+    fi
+  '';
+
+  # MCP servers live in ~/.claude.json, not settings.json, and Claude Code
+  # rewrites that file constantly -- so the same merge-at-activation approach.
+  # Additive by server name, like enabledPlugins: a server added with
+  # `claude mcp add` survives a switch, and removing one here does not remove
+  # it from disk (`claude mcp remove -s user <name>` does). mkstemp creates
+  # the temp file 0600, which keeps the file's existing mode.
+  config.home.activation.claudeMcpServers = lib.hm.dag.entryAfter ["writeBoundary"] ''
+    if [[ -v DRY_RUN ]]; then
+      echo "claude.nix: would merge MCP servers into ${claudeJsonPath}"
+    elif ! ${pkgs.python3}/bin/python3 -I ${mergeMcpServers} \
+      ${lib.escapeShellArg claudeJsonPath} \
+      ${lib.escapeShellArg (builtins.toJSON mcpServers)}; then
+      echo "claude.nix: MCP merge failed, left ${claudeJsonPath} untouched" >&2
     fi
   '';
 }

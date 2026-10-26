@@ -56,6 +56,17 @@ let
   # Change the model with `openclaw models set <provider/model>` and the merge
   # asserts it back on the next switch -- so change it here instead.
   settings = {
+    # Shared list, modules/home/mcp-servers.nix. transport must be explicit:
+    # without it openclaw falls back to SSE. Sign in with
+    # `openclaw mcp login <name>`.
+    mcp.servers =
+      lib.mapAttrs (_: s: {
+        inherit (s) url;
+        transport = "streamable-http";
+        auth = "oauth";
+      })
+      config.mcpServers;
+
     agents.defaults = {
       # AGENTS.md is a read-only symlink from nix (see home.file below), so
       # the seeding pass must not try to create or rewrite it.

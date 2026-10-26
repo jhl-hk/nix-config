@@ -275,4 +275,39 @@ in {
       echo "antigravity.nix: 'agy plugin install' failed, wakatime not installed" >&2
     fi
   '';
+
+  # MCP servers from the shared list (modules/home/mcp-servers.nix), merged
+  # into mcp_config.json by name. agy writes that file itself (`agy mcp
+  # add/enable/disable`) and ships it empty, so it is merged, not linked.
+  # agy's key for a remote server is serverUrl, not url.
+  home.activation.agyMcpServers = let
+    servers = lib.mapAttrs (_: s: {serverUrl = s.url;}) config.mcpServers;
+    merge = pkgs.writeText "agy-mcp-servers.py" ''
+      import json, os, sys, tempfile
+
+      path, servers = sys.argv[1], json.loads(sys.argv[2])
+      try:
+          with open(path, encoding="utf-8") as f:
+              text = f.read()
+      except FileNotFoundError:
+          text = ""
+      data = json.loads(text) if text.strip() else {}
+      data["mcpServers"] = {**data.get("mcpServers", {}), **servers}
+
+      os.makedirs(os.path.dirname(path), exist_ok=True)
+      fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".mcp_config.json.")
+      with os.fdopen(fd, "w", encoding="utf-8") as f:
+          json.dump(data, f, indent=2)
+      os.replace(tmp, path)
+    '';
+  in
+    lib.hm.dag.entryAfter ["writeBoundary"] ''
+      if [[ -v DRY_RUN ]]; then
+        echo "antigravity.nix: would merge MCP servers into $HOME/.gemini/config/mcp_config.json"
+      elif ! ${pkgs.python3}/bin/python3 -I ${merge} \
+        "$HOME/.gemini/config/mcp_config.json" \
+        ${lib.escapeShellArg (builtins.toJSON servers)}; then
+        echo "antigravity.nix: MCP merge failed, left mcp_config.json untouched" >&2
+      fi
+    '';
 }
