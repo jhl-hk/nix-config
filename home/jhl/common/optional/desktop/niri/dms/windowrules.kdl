@@ -6,3 +6,9 @@ window-rule {
     match app-id="^com.danklinux.dms$"
     open-floating true
 }
+
+// @id=wr_1792908555192986473 @name=euroscope.exe
+window-rule {
+    match app-id="^euroscope.exe$"
+    open-fullscreen true
+}

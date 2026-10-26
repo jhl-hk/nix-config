@@ -1,4 +1,9 @@
-{pkgs, ...}:
+{
+  config,
+  lib,
+  pkgs,
+  ...
+}:
 #############################################################
 #
 #  wakatime-cli configuration
@@ -57,7 +62,13 @@
 #
 #############################################################
 {
-  home.file.".wakatime.cfg".source = (pkgs.formats.ini {}).generate "wakatime.cfg" {
+  options.wakatime.apiKeyFile = lib.mkOption {
+    type = lib.types.str;
+    default = "/run/secrets/wakatime/api_key";
+    description = "Decrypted WakaTime API key.";
+  };
+
+  config.home.file.".wakatime.cfg".source = (pkgs.formats.ini {}).generate "wakatime.cfg" {
     settings = {
       # sh -c is what runs this, and stdout is TrimSpace'd (loadAPIKey in
       # wakatime-cli's pkg/params/params.go), so an absolute path plus the
@@ -65,7 +76,7 @@
       #
       # Deliberately no api_key next to it: loadAPIKey returns that first and
       # only falls through to the vault command when it is empty.
-      api_key_vault_cmd = "/bin/cat /run/secrets/wakatime/api_key";
+      api_key_vault_cmd = "/bin/cat ${config.wakatime.apiKeyFile}";
     };
   };
 }

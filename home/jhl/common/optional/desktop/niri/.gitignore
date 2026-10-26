@@ -1,0 +1,6 @@
+# Per-machine monitor layout, written by DankMaterialShell.
+dms/outputs.kdl
+# Wallpaper-derived palette, written by DankMaterialShell.
+dms/colors.kdl
+# Touchpad on/off state, written by scripts/toggle-touchpad.py.
+local/

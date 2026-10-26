@@ -7,7 +7,7 @@
 #  GUI apps, IME, drivers and the system belong to pacman.
 #
 #  sops runs through home-manager here (./common/optional/sops/standalone.nix).
-#  Only the llm key is wired; wakatime and cloudflare still read /run/secrets.
+#  It wires llm, cloudflare, wakatime and tea.
 #
 #############################################################
 {
