@@ -155,6 +155,13 @@
       flake = false;
     };
 
+    # Leonxlnx/taste-skill -- frontend art-direction skill (MIT, public).
+    # One skill: skills/taste-skill, named design-taste-frontend.
+    taste-skill = {
+      url = "github:Leonxlnx/taste-skill";
+      flake = false;
+    };
+
     # iart-ai/web-animation-skills -- GSAP, SVG, 60fps and micro-interaction
     # skills (MIT, public).
     web-animation-skills = {

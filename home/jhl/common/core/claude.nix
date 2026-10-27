@@ -46,6 +46,10 @@ let
     # claude/skills/gdpr-compliant/UPSTREAM.md for the commit, the MIT notice
     # and the two local fixes to re-check when bumping it.
     "gdpr-compliant"
+    # Vendored from pbakaus/impeccable (86 MiB tree). Its hooks are opt-in
+    # per project via `/impeccable hooks on`, so the plugin is not needed.
+    # See claude/skills/impeccable/UPSTREAM.md.
+    "impeccable"
   ];
 
   # Skills that cannot be vendored, because this repo is public and they are
@@ -111,6 +115,7 @@ let
     // removeAttrs (scanSkills "${inputs.bird-skills}") ["template"]
     # Scanned whole: gsap-web, 60fps-animation, svg-animation, micro-interaction.
     // scanSkills "${inputs.web-animation-skills}/skills"
+    // scanSkills "${inputs.taste-skill}/skills"
     // {
       web-animation-design = "${inputs.open-agents}/.agents/skills/web-animation-design";
     }
