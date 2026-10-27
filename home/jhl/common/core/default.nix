@@ -50,6 +50,7 @@ in {
     ./grok.nix
     ./cloudflare.nix
     ./jyl-usage.nix
+    ./jyl-memory.nix
     ./llm.nix
     ./opencode.nix
     ./pi.nix

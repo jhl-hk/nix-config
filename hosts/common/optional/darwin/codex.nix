@@ -7,8 +7,9 @@
 #
 #  Codex CLI -- the system config layer
 #
-#  Written into /etc/codex/config.toml: the approval policy and reviewer, and
-#  the WakaTime plugin. The JianyueLab
+#  Written into /etc/codex/config.toml: the approval policy and reviewer, the
+#  WakaTime plugin, and jyl-memory (see home/jhl/common/core/jyl-memory.nix).
+#  The JianyueLab
 #  gateway is a profile instead (`codex --profile jyl`), declared in
 #  home/jhl/common/optional/ai/codex.nix; the default provider is the ChatGPT
 #  subscription.
@@ -69,6 +70,26 @@ let
       substituteInPlace "$out/plugins/codex-cli-wakatime/scripts/run" \
         --replace-fail 'exec node ' 'exec ${pkgs.nodejs}/bin/node '
     '';
+
+  # jyl-memory from the pinned jianyuelab-plugins input. The repo root carries
+  # .agents/plugins/marketplace.json (marketplace "jianyuelab-claude"), which
+  # names plugins/jyl-memory. Patched the same way as codexWakatime: the
+  # launcher's last resort becomes the nixpkgs node instead of a silent exit,
+  # so the Codex app -- started from the Dock, without the zsh export of
+  # JYL_MEMORY_RUNTIME -- still runs its hooks.
+  #
+  # The same plugin.json-version caveat applies: after
+  # `nix flake update jianyuelab-plugins`, if plugins/jyl-memory's version did
+  # not change, run `rm -rf ~/.codex/plugins/cache/jianyuelab-claude`.
+  codexJylMemory =
+    pkgs.runCommand "codex-jyl-memory" {
+      src = inputs.jianyuelab-plugins;
+    } ''
+      cp -r "$src" "$out"
+      chmod -R u+w "$out"
+      substituteInPlace "$out/plugins/jyl-memory/scripts/run" \
+        --replace-fail 'exit 0' 'exec ${pkgs.nodejs}/bin/node "$ENTRY" "$@"'
+    '';
 in {
   # source_type = "local" rather than "git": a git marketplace is cloned into
   # ~/.codex/.tmp/marketplaces at runtime and tracks whatever HEAD is, which
@@ -104,6 +125,13 @@ in {
     source = "${codexWakatime}"
 
     [plugins."codex-cli-wakatime@wakatime"]
+    enabled = true
+
+    [marketplaces.jianyuelab-claude]
+    source_type = "local"
+    source = "${codexJylMemory}"
+
+    [plugins."jyl-memory@jianyuelab-claude"]
     enabled = true
   '';
 }

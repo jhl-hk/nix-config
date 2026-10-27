@@ -168,11 +168,13 @@ let
   #
   # Only plugins that carry hooks stay plugins; anything else becomes an entry
   # in inputSkills above. Hooks are the dividing line because there is no way
-  # to express one through home.file, and for these three the hook *is* the
+  # to express one through home.file, and for these four the hook *is* the
   # feature:
   #
   #   claude-code-wakatime  heartbeats
   #   jyl-usage             the five hooks that read the transcript
+  #   jyl-memory            SessionStart recall, SessionEnd distillation into
+  #                         the memory service -- see ./jyl-memory.nix
   #   superpowers           a SessionStart hook that injects the whole
   #                         using-superpowers SKILL.md into context. Dropping
   #                         it would leave the 14 skills present but unadvertised
@@ -199,6 +201,7 @@ let
   enabledPlugins = {
     "claude-code-wakatime@wakatime" = true;
     "jyl-usage@jianyuelab-claude" = true;
+    "jyl-memory@jianyuelab-claude" = true;
     "superpowers@superpowers-dev" = true;
   };
 

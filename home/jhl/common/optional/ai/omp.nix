@@ -1,5 +1,6 @@
 {
   config,
+  inputs,
   lib,
   pkgs,
   ...
@@ -90,6 +91,13 @@ in {
       ".omp/agent/APPEND_SYSTEM.md".text = ''
         Skills live in several directories. To load a skill, read the exact path listed for it. Never build a skill path from its name.
       '';
+
+      # jyl-memory's omp half (see ../../core/jyl-memory.nix). omp loads
+      # hooks/post/*.ts and ignores the plugin's hooks/hooks.json, so the hook
+      # is linked here rather than arriving with the Claude Code plugin. omp
+      # resolves the symlink, so the hook finds scripts/run next to itself in
+      # the store.
+      ".omp/agent/hooks/post/jyl-memory.ts".source = "${inputs.jianyuelab-plugins}/plugins/jyl-memory/hooks/post/jyl-memory.ts";
     }
     // lib.optionalAttrs (active != {}) {
       ".omp/agent/models.yml".source = yaml.generate "omp-models.yml" {

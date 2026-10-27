@@ -163,10 +163,10 @@
     "jianyuelab-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1792737392,
-        "narHash": "sha256-IghweUWXiq4PcoN5TjuRGNkNyOuivm+fKc74LLMAkWQ=",
+        "lastModified": 1793125474,
+        "narHash": "sha256-5fMwVivx82sGiF5SRLZr771hMrk6R1P99KRJU0nhbWI=",
         "ref": "main",
-        "rev": "e360c7d3dd30ce6fe7d6458edbac5cb7eda1efb3",
+        "rev": "5b53999e8eb3242712b96f37e02e0010a87e162b",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/JianyueLab/claude-plugin.git"
