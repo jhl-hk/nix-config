@@ -29,5 +29,5 @@
   ];
 
   # No id_yk5c on this machine.
-  sshKeys.extra = [];
+  sshKeys.extra = ["id_shared"];
 }

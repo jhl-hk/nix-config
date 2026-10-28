@@ -20,6 +20,13 @@
 let
   keys = [config.sshKeys.primary] ++ config.sshKeys.extra;
 in {
+  # Public half of the shared key. The private half is decrypted by sops:
+  # hosts/common/core/darwin/ssh-shared-key.nix on the Macs,
+  # home/jhl/common/optional/sops/standalone.nix on the standalone lane.
+  home.file.".ssh/id_shared.pub".text = ''
+    ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIPXyHGJrGjtSQCgGjQqT28PSXgxtHT8u+Z/j3ioZF0X/ jhl-shared
+  '';
+
   programs.ssh = {
     enable = true;
     enableDefaultConfig = false;

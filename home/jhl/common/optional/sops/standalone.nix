@@ -44,6 +44,11 @@ in {
       "cloudflare/api_token" = {};
       "wakatime/api_key" = {};
       "tea/token" = {};
+      # Counterpart of hosts/common/core/darwin/ssh-shared-key.nix.
+      "ssh/id_shared" = {
+        mode = "0400";
+        path = "${config.home.homeDirectory}/.ssh/id_shared";
+      };
     };
   };
 

@@ -16,6 +16,7 @@
     ./darwin/system-defaults.nix
     ./darwin/apps.nix
     ./darwin/local-dns.nix
+    ./darwin/ssh-shared-key.nix
   ];
 
   # nix-darwin wants an **integer**. NixOS wants a string for

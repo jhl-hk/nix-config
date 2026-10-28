@@ -26,7 +26,7 @@
 
     extra = lib.mkOption {
       type = lib.types.listOf lib.types.str;
-      default = ["id_yk5c"];
+      default = ["id_yk5c" "id_shared"];
       description = "Extra key filenames to add to ssh-agent / IdentityFile.";
     };
   };
