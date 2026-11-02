@@ -69,6 +69,10 @@ let
 
     # Choices made in the setup wizard, pinned so every machine matches.
     modelRoles.default = "anthropic/claude-opus-5-5";
+
+    # Fast mode on by default for OpenAI-family models, gateway gpt-* included:
+    # sent as service_tier = "priority". `/fast` still toggles it per session.
+    tier.openai = "priority";
     symbolPreset = "unicode";
     composer.shape = "claude";
     # Both slots pinned: omp picks theme.light on a light terminal background,
