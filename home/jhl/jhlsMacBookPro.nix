@@ -17,6 +17,9 @@
     ./common/optional/ai/harness.nix
     ./common/optional/ai/omp.nix
 
+    # Needs hosts/common/optional/darwin/omniwm.nix on the system side.
+    ./common/optional/desktop/omniwm.nix
+
     # Bash + flyline. zsh stays the login shell; this only affects `bash`.
     # Needs hosts/common/optional/darwin/flyline.nix on the system side.
     ./common/optional/shell/flyline.nix

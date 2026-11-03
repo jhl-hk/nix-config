@@ -13,6 +13,7 @@
     "hosts/common/optional/darwin/dev-extras.nix"
     "hosts/common/optional/darwin/steam.nix"
     "hosts/common/optional/darwin/obs.nix"
+    "hosts/common/optional/darwin/omniwm.nix"
     "hosts/common/optional/common/llm.nix"
     "hosts/common/optional/darwin/cloudflare.nix"
     "hosts/common/optional/darwin/wakatime.nix"
