@@ -14,6 +14,7 @@
   imports = [
     ./common/core
     ./common/optional/ai/codex.nix
+    ./common/optional/ai/omp.nix
     ./common/optional/desktop/DankMaterialShell.nix
     ./common/optional/desktop/fcitx5.nix
     ./common/optional/desktop/niri.nix
@@ -25,6 +26,9 @@
 
     # No system sops on this lane; decrypts as the user instead.
     ./common/optional/sops/standalone.nix
+
+    # Omni + kube client configs from sops. Needs the sops import above.
+    ./common/optional/k8s/omni.nix
   ];
 
   # No id_yk5c on this machine.
