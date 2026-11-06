@@ -16,6 +16,8 @@
     "hosts/common/optional/darwin/omniwm.nix"
     "hosts/common/optional/darwin/blender.nix"
     "hosts/common/optional/common/llm.nix"
+    # omp's redcoke provider (home/jhl/common/optional/ai/omp.nix).
+    "hosts/common/optional/common/redcoke.nix"
     "hosts/common/optional/darwin/cloudflare.nix"
     "hosts/common/optional/darwin/wakatime.nix"
 

@@ -155,6 +155,11 @@ fi
 
 cd "$repo_root"
 
+# The eval cache keys a dirty tree on its git diff, and the llm/*.json model
+# lists are skip-worktree, so a refreshed list is not part of that diff. With
+# the cache on, a rebuild after `just llm-models` reuses the old evaluation.
+noEvalCache=(--option eval-cache false)
+
 green "====== $(printf '%s' "$ACTION" | tr '[:lower:]' '[:upper:]') $HOST ======"
 
 if [ "$LANE" = "darwin" ]; then
@@ -165,9 +170,9 @@ if [ "$LANE" = "darwin" ]; then
 		fi
 		# No sudo: nh elevates itself for the activation step and refuses to run
 		# as root.
-		nh "${args[@]}"
+		nh "${args[@]}" -- "${noEvalCache[@]}"
 	else
-		args=("$ACTION" --flake ".#$HOST")
+		args=("$ACTION" --flake ".#$HOST" "${noEvalCache[@]}")
 		if [ "$TRACE" -eq 1 ]; then
 			args+=(--show-trace)
 		fi
@@ -199,9 +204,9 @@ elif [ "$LANE" = "nixos" ]; then
 		if [ "$TRACE" -eq 1 ]; then
 			args+=(--show-trace)
 		fi
-		nh "${args[@]}"
+		nh "${args[@]}" -- "${noEvalCache[@]}"
 	else
-		args=("$ACTION" --flake ".#$HOST")
+		args=("$ACTION" --flake ".#$HOST" "${noEvalCache[@]}")
 		if [ "$TRACE" -eq 1 ]; then
 			args+=(--show-trace)
 		fi
@@ -233,9 +238,9 @@ else
 		if [ "$TRACE" -eq 1 ]; then
 			args+=(--show-trace)
 		fi
-		nh "${args[@]}"
+		nh "${args[@]}" -- "${noEvalCache[@]}"
 	elif command -v home-manager >/dev/null 2>&1; then
-		args=("$ACTION" --flake ".#$CONFIG" -b "$BACKUP")
+		args=("$ACTION" --flake ".#$CONFIG" -b "$BACKUP" "${noEvalCache[@]}")
 		if [ "$TRACE" -eq 1 ]; then
 			args+=(--show-trace)
 		fi

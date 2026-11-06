@@ -31,6 +31,14 @@
 #  omp looks it up and, if unset, sends the literal string. The variable is
 #  exported by home/jhl/common/core/llm.nix.
 #
+#  redcoke (https://llm.redcoke.dev/v1) is omp-only and not in llm.providers.
+#  It is a new-api gateway, so discovery type proxy reads /v1/models at
+#  runtime and picks each model's wire from supported_endpoint_types. No model
+#  list is generated. Its key is the rd_llm/api_key sops secret
+#  (hosts/common/optional/common/redcoke.nix on the Macs,
+#  home/jhl/common/optional/sops/standalone.nix on the standalone lane),
+#  exported as REDCOKE_API_KEY by the zsh block below.
+#
 #############################################################
 let
   active = lib.filterAttrs (_: p: p.models != []) config.llm.providers;
@@ -56,6 +64,14 @@ let
     # The gateway rejects role "developer"; see pi.nix.
     compat.supportsDeveloperRole = false;
     models = map (toModel p) p.models;
+  };
+
+  redcoke = {
+    baseUrl = "https://llm.redcoke.dev/v1";
+    apiKey = "REDCOKE_API_KEY";
+    authHeader = true;
+    disableStrictTools = true;
+    discovery.type = "proxy";
   };
 
   overlay = {
@@ -86,8 +102,14 @@ let
   yaml = pkgs.formats.yaml {};
   overlayFile = ".omp/agent/nix.yml";
 in {
-  home.file =
-    {
+  options.omp.redcokeKeyFile = lib.mkOption {
+    type = lib.types.str;
+    default = "/run/secrets/rd_llm/api_key";
+    description = "Decrypted llm.redcoke.dev API key.";
+  };
+
+  config = {
+    home.file = {
       ${overlayFile}.source = yaml.generate "omp-nix.yml" overlay;
 
       # Same reason as pi.nix's APPEND_SYSTEM.md: skills come from several
@@ -102,12 +124,17 @@ in {
       # resolves the symlink, so the hook finds scripts/run next to itself in
       # the store.
       ".omp/agent/hooks/post/jyl-memory.ts".source = "${inputs.jianyuelab-plugins}/plugins/jyl-memory/hooks/post/jyl-memory.ts";
-    }
-    // lib.optionalAttrs (active != {}) {
+
       ".omp/agent/models.yml".source = yaml.generate "omp-models.yml" {
-        providers = lib.mapAttrs (_: toProvider) active;
+        providers = lib.mapAttrs (_: toProvider) active // {inherit redcoke;};
       };
     };
 
-  home.sessionVariables.PI_CONFIG_FILES = "${config.home.homeDirectory}/${overlayFile}";
+    # Unreadable file (not decrypted yet) leaves the variable unset.
+    programs.zsh.initContent = ''
+      [ -r ${config.omp.redcokeKeyFile} ] && export REDCOKE_API_KEY="$(cat ${config.omp.redcokeKeyFile})"
+    '';
+
+    home.sessionVariables.PI_CONFIG_FILES = "${config.home.homeDirectory}/${overlayFile}";
+  };
 }

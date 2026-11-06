@@ -638,3 +638,6 @@ binds {
     // moving the mouse or pressing any other key.
     Mod+Shift+P { power-off-monitors; }
 }
+
+// DMS Include Configs
+include "dms/outputs.kdl"

@@ -10,6 +10,8 @@
     "hosts/common/optional/darwin/vscode.nix"
     "hosts/common/optional/darwin/dev-extras.nix"
     "hosts/common/optional/common/llm.nix"
+    # omp's redcoke provider (home/jhl/common/optional/ai/omp.nix).
+    "hosts/common/optional/common/redcoke.nix"
     "hosts/common/optional/darwin/cloudflare.nix"
     "hosts/common/optional/darwin/wakatime.nix"
 

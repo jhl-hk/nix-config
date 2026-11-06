@@ -38,9 +38,13 @@
         {
           "name": "DP-1",
           "model": "DELL SE3223Q"
+        },
+        {
+          "name": "eDP-2",
+          "model": "ATNA60DL04-0 "
         }
       ],
-      "showOnLastDisplay": true,
+      "showOnLastDisplay": false,
       "leftWidgets": [
         "launcherButton",
         "workspaceSwitcher",
