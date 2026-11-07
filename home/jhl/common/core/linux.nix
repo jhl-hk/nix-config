@@ -1,4 +1,8 @@
-{pkgs, ...}:
+{
+  lib,
+  pkgs,
+  ...
+}:
 #############################################################
 #
 #  Home Core -- the Linux half
@@ -63,10 +67,22 @@
   # overrides SSH_AUTH_SOCK when SSH_CONNECTION is unset. Set unconditionally
   # it would shadow a forwarded agent on every inbound ssh. Both bash
   # (profileExtra) and zsh (envExtra) get it.
+  #
+  # The agent prompts for a FIDO PIN through SSH_ASKPASS only when DISPLAY or
+  # WAYLAND_DISPLAY is in its own environment; otherwise it sends an empty PIN.
+  # systemd fixes a unit's environment at spawn, so the unit starts with the
+  # graphical session, after niri has imported both variables.
   services.ssh-agent.enable = true;
-  systemd.user.services.ssh-agent.Service.Environment = [
-    "SSH_ASKPASS=/usr/bin/lxqt-openssh-askpass"
-  ];
+  systemd.user.services.ssh-agent = {
+    Unit = {
+      After = ["graphical-session.target"];
+      PartOf = ["graphical-session.target"];
+    };
+    Service.Environment = [
+      "SSH_ASKPASS=/usr/bin/lxqt-openssh-askpass"
+    ];
+    Install.WantedBy = lib.mkForce ["graphical-session.target"];
+  };
 
   fonts.fontconfig.enable = true;
 
