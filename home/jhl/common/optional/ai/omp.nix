@@ -75,8 +75,9 @@ let
   };
 
   overlay = {
-    # brew owns updates (`just update`, or `omp update`).
+    # brew / pacman own updates (`just update`, or `omp update`).
     startup.checkUpdate = false;
+    update.auto = false;
 
     # Reads the ~/.claude user root: CLAUDE.md, ~/.claude/skills, and the
     # Claude Code marketplace plugins (superpowers among them). Off by
@@ -85,6 +86,14 @@ let
 
     # Choices made in the setup wizard, pinned so every machine matches.
     modelRoles.default = "anthropic/claude-opus-5-5";
+    defaultThinkingLevel = "auto";
+    statusLine = {
+      preset = "nerd";
+      separator = "powerline";
+      contextLine = "annotated";
+      sessionAccent = true;
+      showHookStatus = true;
+    };
 
     # Fast mode on by default for OpenAI-family models, gateway gpt-* included:
     # sent as service_tier = "priority". `/fast` still toggles it per session.
