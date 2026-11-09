@@ -180,7 +180,8 @@ let
   #                         it would leave the 14 skills present but unadvertised
   #
   # What nix owns is the *declaration* -- which marketplaces exist and which
-  # plugins are on. Claude Code still clones the content into
+  # plugins are on -- plus an install of any declared plugin that is missing
+  # (claudePlugins below). Claude Code still clones the content into
   # ~/.claude/plugins/cache at runtime, so these are not version-pinned the
   # way inputSkills is. That is the cost of keeping the hooks.
   marketplaces = {
@@ -342,6 +343,38 @@ in {
         rm -f "$settings.nix-tmp"
         echo "claude.nix: jq merge failed, left $settings untouched" >&2
       fi
+    fi
+  '';
+
+  # Installs every enabledPlugins entry missing from installed_plugins.json.
+  # Enabling a plugin in settings.json does not install it. Claude Code is
+  # pacman on Arch and the claude-code cask on a Mac, so the binary is found
+  # by path. Before installing, the plugin's marketplace clone is refreshed,
+  # because a stale clone may not list a newer plugin. Failures are not fatal;
+  # the next switch retries. Needs network and the GitHub SSH key.
+  config.home.activation.claudePlugins = lib.hm.dag.entryAfter ["claudeSettings"] ''
+    installed="${config.home.homeDirectory}/.claude/plugins/installed_plugins.json"
+    claude=""
+    for c in /opt/homebrew/bin/claude /usr/bin/claude "${config.home.homeDirectory}/.local/bin/claude"; do
+      if [ -x "$c" ]; then claude="$c"; break; fi
+    done
+
+    if [[ -v DRY_RUN ]]; then
+      echo "claude.nix: would install missing plugins"
+    elif [ -z "$claude" ]; then
+      echo "claude.nix: claude is not installed, skipping plugin install" >&2
+    else
+      for p in ${lib.escapeShellArgs (lib.attrNames enabledPlugins)}; do
+        if [ -f "$installed" ] && ${pkgs.jq}/bin/jq -e --arg p "$p" '.plugins[$p]' "$installed" >/dev/null 2>&1; then
+          continue
+        fi
+        "$claude" plugin marketplace update "''${p#*@}" >/dev/null 2>&1 || true
+        if "$claude" plugin install "$p" >/dev/null 2>&1; then
+          echo "claude.nix: installed $p"
+        else
+          echo "claude.nix: 'claude plugin install $p' failed" >&2
+        fi
+      done
     fi
   '';
 
