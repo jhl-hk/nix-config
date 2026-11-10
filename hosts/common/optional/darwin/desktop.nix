@@ -26,6 +26,15 @@
 #############################################################
 {
   darwinHomebrew = {
+    # NotchNotch, below. Its omp and agent plugins are linked by
+    # home/jhl/common/optional/ai/omp.nix.
+    taps = [
+      {
+        name = "JianyueLab/tap";
+        trusted = true;
+      }
+    ];
+
     casks = [
       # Fonts
       "font-maple-mono" # Maple Mono Font
@@ -93,6 +102,8 @@
       "notion" # Documentation
       "notion-calendar"
       "clash-verge-rev"
+
+      "jianyuelab/tap/notchnotch" # Notch panel; `brew upgrade` (sysup) keeps it current
     ];
 
     # Requires signing in to an Apple ID first: mas signin your@email.com
