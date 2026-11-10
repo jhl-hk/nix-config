@@ -147,13 +147,13 @@ in {
           providers = lib.mapAttrs (_: toProvider) active // {inherit redcoke;};
         };
       }
-      # NotchNotch plugins (pinned inputs). Only the Macs run the app. The omp
-      # extension posts turn ends; the manifest directories register both
-      # plugins with the app's plugin host.
+      # NotchNotch's omp plugin (pinned input). Only the Macs run the app. The
+      # extension posts turn ends; the manifest directory registers the plugin
+      # with the app. The app, the agent plugin and the preferences are in
+      # ../../core/darwin/notchnotch.nix.
       // lib.optionalAttrs hostSpec.isDarwin {
         ".omp/agent/extensions/notchnotch.ts".source = "${inputs.notchnotch}/plugins/omp/notchnotch.ts";
         "Library/Application Support/NotchNotch/Plugins/co.jianyuelab.notchnotch.omp".source = "${inputs.notchnotch}/plugins/omp";
-        "Library/Application Support/NotchNotch/Plugins/co.jianyuelab.notchnotch.agents".source = "${inputs.notchnotch-agents}";
       };
 
     # Unreadable file (not decrypted yet) leaves the variable unset.

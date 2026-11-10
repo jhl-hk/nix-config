@@ -12,6 +12,7 @@
     ./darwin/ssh-agent.nix
     ./darwin/ghostty.nix
     ./darwin/git-homebrew.nix
+    ./darwin/notchnotch.nix
   ];
 
   home.sessionPath = ["/opt/homebrew/bin"];
