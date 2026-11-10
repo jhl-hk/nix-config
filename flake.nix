@@ -121,6 +121,24 @@
       flake = false;
     };
 
+    # The same, for omp: a single self-contained extension file that omp
+    # auto-loads from ~/.omp/agent/extensions/. Linked by
+    # home/jhl/common/optional/ai/omp.nix rather than `omp plugin install`,
+    # which would clone HEAD at runtime instead of honouring flake.lock.
+    wakatime-omp = {
+      url = "github:ephraimduncan/wakatime-omp";
+      flake = false;
+    };
+
+    # NotchNotch's omp extension (scripts/omp/notchnotch.ts): posts omp turn
+    # ends and the session name to the NotchNotch app. Linked on the Macs only
+    # by home/jhl/common/optional/ai/omp.nix, for the same flake.lock reason as
+    # wakatime-omp. Pinned to the release tag; bump it with the app.
+    notchnotch = {
+      url = "github:JianyueLab-Org/notch/v27.1.11";
+      flake = false;
+    };
+
     # Anthropic's skills repo, for the four document-processing skills
     # (docx/pdf/pptx/xlsx). Public, so no SSH and no touch on `nix flake update`.
     #

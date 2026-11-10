@@ -153,6 +153,10 @@ in {
   # its own copy into ~/.wakatime when that misses ("Using global wakatime-cli,
   # skipping installation check", dist/bundle.js in opencode-wakatime 1.3.9).
   # Providing it from nixpkgs keeps that binary on the flake lock instead of
-  # self-updating out of GitHub releases behind our back.
-  home.packages = [pkgs.wakatime-cli];
+  # self-updating out of GitHub releases behind our back. omp's wakatime
+  # extension (optional/ai/omp.nix) takes the same binary off PATH.
+  #
+  # unstable, not stable: stable's 2.14.5 has no OMP transcript parser, so
+  # omp's `--sync-ai-activity` heartbeats would record nothing.
+  home.packages = [pkgs.unstable.wakatime-cli];
 }

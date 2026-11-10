@@ -12,6 +12,7 @@
 #  reads, because they all shell out to some wakatime-cli:
 #
 #    opencode      opencode-wakatime plugin, declared in opencode.nix
+#    omp           wakatime-omp extension, linked in optional/ai/omp.nix
 #    Claude Code   claude-code-wakatime, declared as a marketplace + enabled
 #                  plugin in claude.nix
 #    Antigravity   antigravity-cli-wakatime, installed by the activation block
@@ -23,14 +24,13 @@
 #
 #  -- Which wakatime-cli each one gets -----------------------------------
 #
-#  Not one binary, two. opencode-wakatime resolves `which wakatime-cli` and so
-#  uses the nixpkgs build that opencode.nix puts on PATH. The Antigravity and
-#  Codex plugins do not look at PATH at all: both hardcode
-#  ~/.wakatime/wakatime-cli-<os>-<arch>, download it on first use, and
-#  overwrite it whenever its version differs from the latest GitHub tag.
+#  Not one binary, two. opencode-wakatime and omp's wakatime-omp resolve
+#  `which wakatime-cli` and so use the nixpkgs build that opencode.nix puts on
+#  PATH. The Antigravity and Codex plugins do not look at PATH at all: both
+#  hardcode ~/.wakatime/wakatime-cli-<os>-<arch>, download it on first use,
+#  and overwrite it whenever its version differs from the latest GitHub tag.
 #
-#  That split is deliberate and not worth closing -- the Codex plugin calls
-#  `--sync-ai-heartbeats`, a flag nixpkgs' 2.14.5 does not have, and a symlink
+#  That split is deliberate and not worth closing -- a symlink from that path
 #  into the store would be replaced by the next update check anyway. Both
 #  binaries read the same settings below, so the key reaches all of them.
 #

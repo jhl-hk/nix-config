@@ -1,5 +1,6 @@
 {
   config,
+  hostSpec,
   inputs,
   lib,
   pkgs,
@@ -118,26 +119,40 @@ in {
   };
 
   config = {
-    home.file = {
-      ${overlayFile}.source = yaml.generate "omp-nix.yml" overlay;
+    home.file =
+      {
+        ${overlayFile}.source = yaml.generate "omp-nix.yml" overlay;
 
-      # Same reason as pi.nix's APPEND_SYSTEM.md: skills come from several
-      # roots, and models build paths from names.
-      ".omp/agent/APPEND_SYSTEM.md".text = ''
-        Skills live in several directories. To load a skill, read the exact path listed for it. Never build a skill path from its name.
-      '';
+        # Same reason as pi.nix's APPEND_SYSTEM.md: skills come from several
+        # roots, and models build paths from names.
+        ".omp/agent/APPEND_SYSTEM.md".text = ''
+          Skills live in several directories. To load a skill, read the exact path listed for it. Never build a skill path from its name.
+        '';
 
-      # jyl-memory's omp half (see ../../core/jyl-memory.nix). omp loads
-      # hooks/post/*.ts and ignores the plugin's hooks/hooks.json, so the hook
-      # is linked here rather than arriving with the Claude Code plugin. omp
-      # resolves the symlink, so the hook finds scripts/run next to itself in
-      # the store.
-      ".omp/agent/hooks/post/jyl-memory.ts".source = "${inputs.jianyuelab-plugins}/plugins/jyl-memory/hooks/post/jyl-memory.ts";
+        # jyl-memory's omp half (see ../../core/jyl-memory.nix). omp loads
+        # hooks/post/*.ts and ignores the plugin's hooks/hooks.json, so the hook
+        # is linked here rather than arriving with the Claude Code plugin. omp
+        # resolves the symlink, so the hook finds scripts/run next to itself in
+        # the store.
+        ".omp/agent/hooks/post/jyl-memory.ts".source = "${inputs.jianyuelab-plugins}/plugins/jyl-memory/hooks/post/jyl-memory.ts";
 
-      ".omp/agent/models.yml".source = yaml.generate "omp-models.yml" {
-        providers = lib.mapAttrs (_: toProvider) active // {inherit redcoke;};
+        # WakaTime heartbeats (wakatime-omp, pinned input). omp auto-loads
+        # extensions/*.ts. The extension takes the first wakatime-cli on PATH,
+        # which is the one opencode.nix installs; that build must be new enough
+        # to carry wakatime-cli's OMP transcript parser (pkg/ai/omp.go, absent
+        # from 2.14.5). The key comes from ../../core/wakatime.nix.
+        ".omp/agent/extensions/wakatime.ts".source = "${inputs.wakatime-omp}/src/extension.ts";
+
+        ".omp/agent/models.yml".source = yaml.generate "omp-models.yml" {
+          providers = lib.mapAttrs (_: toProvider) active // {inherit redcoke;};
+        };
+      }
+      # NotchNotch (pinned input) shows omp turn ends and the conversation
+      # title in the notch. Only the Macs run the app; elsewhere the extension
+      # would post to a port nothing listens on.
+      // lib.optionalAttrs hostSpec.isDarwin {
+        ".omp/agent/extensions/notchnotch.ts".source = "${inputs.notchnotch}/scripts/omp/notchnotch.ts";
       };
-    };
 
     # Unreadable file (not decrypted yet) leaves the variable unset.
     programs.zsh.initContent = ''
