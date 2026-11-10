@@ -16,8 +16,8 @@
 #    home/jhl/common/optional/ai/openclaw.nix      ~/.openclaw/openclaw.json
 #
 #  grok and omp need no entry: both load ~/.claude.json's mcpServers through
-#  their Claude-compat layer. harness takes stdio servers only, and pi and llm
-#  have no MCP client, so they are not wired.
+#  their Claude-compat layer. pi and llm have no MCP client, so they are not
+#  wired.
 #
 #############################################################
 {

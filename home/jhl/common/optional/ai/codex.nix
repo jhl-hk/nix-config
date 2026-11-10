@@ -16,8 +16,7 @@
 #
 #  -- Mirrored from the directory, not from the nix list -----------------
 #
-#  The same choice home/jhl/common/optional/ai/harness.nix makes, for the same
-#  two reasons. "The skills Claude Code has" is **two** directories: the
+#  Two reasons. "The skills Claude Code has" is **two** directories: the
 #  hand-managed ~/.claude/skills that core/claude.nix links and pi,
 #  antigravity and openclaw also read, plus the superpowers plugin's own set
 #  under ~/.claude/plugins/cache, which is reachable only by glob because the
@@ -28,13 +27,11 @@
 #  Reading the directory at activation is therefore strictly closer to "what
 #  Claude Code has" than re-deriving the nix list would be.
 #
-#  -- Symlinks, where harness gets copies --------------------------------
+#  -- Symlinks -----------------------------------------------------------
 #
-#  harness resolves each skill path and rejects anything landing outside its
-#  skills directory, which forces a copy. Codex has no such check -- a link
-#  through ~/.claude/skills/<name> into the nix store resolves and loads --
-#  so this stays symlinks: no duplicated bytes, and a `just rebuild` that
-#  repoints a skill repoints Codex's copy at the same moment.
+#  A link through ~/.claude/skills/<name> into the nix store resolves and
+#  loads, so this stays symlinks: no duplicated bytes, and a `just rebuild`
+#  that repoints a skill repoints Codex's copy at the same moment.
 #
 #  The links point at the ~/.claude path rather than at the store path they
 #  resolve to. That is load-bearing for the cleanup below: "a link into

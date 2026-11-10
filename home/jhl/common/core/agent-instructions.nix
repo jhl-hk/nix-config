@@ -38,12 +38,6 @@
 #                and by the codex CLI itself -- it belongs to neither module,
 #                which is half the reason this file exists.
 #
-#  harness is absent on purpose: v0.9.0 has no instruction-file mechanism at
-#  all. Its whole TOML surface is providers/model/mcp keys, and its only
-#  per-repo channel is skills. Delivering these rules there would mean
-#  repackaging them as a SKILL.md, which is a different thing -- a skill is
-#  loaded when relevant, instructions bind every turn.
-#
 #  These land on every Mac, including ones without the agent installed, where
 #  the file is simply never read. Gating each on its harness would couple core
 #  to what is optional, for the sake of an unread 3 kB file.
