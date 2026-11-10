@@ -147,11 +147,13 @@ in {
           providers = lib.mapAttrs (_: toProvider) active // {inherit redcoke;};
         };
       }
-      # NotchNotch (pinned input) shows omp turn ends and the conversation
-      # title in the notch. Only the Macs run the app; elsewhere the extension
-      # would post to a port nothing listens on.
+      # NotchNotch plugins (pinned inputs). Only the Macs run the app. The omp
+      # extension posts turn ends; the manifest directories register both
+      # plugins with the app's plugin host.
       // lib.optionalAttrs hostSpec.isDarwin {
-        ".omp/agent/extensions/notchnotch.ts".source = "${inputs.notchnotch}/scripts/omp/notchnotch.ts";
+        ".omp/agent/extensions/notchnotch.ts".source = "${inputs.notchnotch}/plugins/omp/notchnotch.ts";
+        "Library/Application Support/NotchNotch/Plugins/co.jianyuelab.notchnotch.omp".source = "${inputs.notchnotch}/plugins/omp";
+        "Library/Application Support/NotchNotch/Plugins/co.jianyuelab.notchnotch.agents".source = "${inputs.notchnotch-agents}";
       };
 
     # Unreadable file (not decrypted yet) leaves the variable unset.

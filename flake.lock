@@ -253,18 +253,31 @@
     "notchnotch": {
       "flake": false,
       "locked": {
-        "lastModified": 1794287646,
-        "narHash": "sha256-KMSQj1qcB1qI+V5RBJn9PA9suBlzaq6ypP1vRv2OWyo=",
+        "lastModified": 1794294325,
+        "narHash": "sha256-7bZcmViEkvBjgoZ3k/P/yDUjyV2uRDZocCvegAR/mJk=",
         "owner": "JianyueLab-Org",
         "repo": "notch",
-        "rev": "6b42849e874e1fc57c44a359c051a5dcd55cd882",
+        "rev": "9e2ca7d0e3ae82e8fc860d4d37a50374712d9e44",
         "type": "github"
       },
       "original": {
         "owner": "JianyueLab-Org",
-        "ref": "v27.1.11",
+        "ref": "v27.2.0",
         "repo": "notch",
         "type": "github"
+      }
+    },
+    "notchnotch-agents": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1794294318,
+        "narHash": "sha256-J9OlV2md1GgJAr/LaTcA607nV0UEiBfkTpVaJoSly0U=",
+        "type": "tarball",
+        "url": "https://github.com/JianyueLab-Org/notch/releases/download/v27.2.0/NotchNotchAgents-27.2.0.zip"
+      },
+      "original": {
+        "type": "tarball",
+        "url": "https://github.com/JianyueLab-Org/notch/releases/download/v27.2.0/NotchNotchAgents-27.2.0.zip"
       }
     },
     "open-agents": {
@@ -316,6 +329,7 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-darwin": "nixpkgs-darwin",
         "notchnotch": "notchnotch",
+        "notchnotch-agents": "notchnotch-agents",
         "open-agents": "open-agents",
         "privacy-skills": "privacy-skills",
         "sops-nix": "sops-nix",

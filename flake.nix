@@ -130,12 +130,16 @@
       flake = false;
     };
 
-    # NotchNotch's omp extension (scripts/omp/notchnotch.ts): posts omp turn
-    # ends and the session name to the NotchNotch app. Linked on the Macs only
-    # by home/jhl/common/optional/ai/omp.nix, for the same flake.lock reason as
-    # wakatime-omp. Pinned to the release tag; bump it with the app.
+    # NotchNotch plugins. `notchnotch` is the repo (omp plugin in plugins/omp);
+    # `notchnotch-agents` is the signed Agent Detection plugin from the release.
+    # Linked on the Macs only by home/jhl/common/optional/ai/omp.nix, for the
+    # same flake.lock reason as wakatime-omp. Bump both with the app.
     notchnotch = {
-      url = "github:JianyueLab-Org/notch/v27.1.11";
+      url = "github:JianyueLab-Org/notch/v27.2.0";
+      flake = false;
+    };
+    notchnotch-agents = {
+      url = "https://github.com/JianyueLab-Org/notch/releases/download/v27.2.0/NotchNotchAgents-27.2.0.zip";
       flake = false;
     };
 
