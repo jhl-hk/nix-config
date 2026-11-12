@@ -14,6 +14,9 @@
 #  Out-of-store directory symlink: OmniWM rewrites settings.toml when its
 #  settings UI changes, and those writes land in this checkout.
 #
+#  Tiling transitions are off (animationsEnabled = false). Overview and
+#  Quake terminal animations retain their own settings.
+#
 #  Hotkeys bind physical QWERTY keycodes; letters are chosen so the
 #  Colemak positions match the niri binds.
 #
