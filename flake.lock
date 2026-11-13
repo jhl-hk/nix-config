@@ -3,11 +3,11 @@
     "alireza-skills": {
       "flake": false,
       "locked": {
-        "lastModified": 1794294674,
-        "narHash": "sha256-KdIObL0WLaOOjoPeLdYjrrWRxzsseRCZQYQtuuank3U=",
+        "lastModified": 1794479706,
+        "narHash": "sha256-pPbVUXzLLnW2XopjEoOf+iZHBvPy9QTmBe+eU7N1O0c=",
         "owner": "alirezarezvani",
         "repo": "claude-skills",
-        "rev": "91a1ddaab1ae8fe95b8ecd3e98419458db86a992",
+        "rev": "08cd8a9fc86cc370e2c0d448e8171fbcfdbc5a30",
         "type": "github"
       },
       "original": {
@@ -72,11 +72,11 @@
     "emil-skills": {
       "flake": false,
       "locked": {
-        "lastModified": 1794226046,
-        "narHash": "sha256-C+d01N8ACWXcd5EGqQndkiQR8VFmOZ/lg6fTKMhWzYc=",
+        "lastModified": 1794493327,
+        "narHash": "sha256-p8ZITQR99clmNiHjpudCUkBdm++Ri0BkeV9hGuH6nL0=",
         "owner": "emilkowalski",
         "repo": "skills",
-        "rev": "715c1807e08c497cfd1dc4feb450a2a3300ef2a9",
+        "rev": "f7ce8c02d6e3c8f0d980a44c57bcc41a40254349",
         "type": "github"
       },
       "original": {
@@ -220,11 +220,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1793977579,
-        "narHash": "sha256-WrSODdZFVIs/Hh2NzC0bY+ROByi0bATg8WfePX8dPj8=",
+        "lastModified": 1794495034,
+        "narHash": "sha256-E0hYoioqUtM2XmPPvYYpJgdADF5AW9oOoPSEiM9dTHQ=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "4fe25e12eb9f4c744966dd3de5a05246cf098601",
+        "rev": "2074cc672349f14240fb7ea90d509e0b643e9dd4",
         "type": "github"
       },
       "original": {
@@ -236,11 +236,11 @@
     },
     "nixpkgs-darwin": {
       "locked": {
-        "lastModified": 1793976852,
-        "narHash": "sha256-bWDN3JZcE9ovYoaD0/6WYbMtXYpUu0vd5onpK0pc/SE=",
+        "lastModified": 1794217284,
+        "narHash": "sha256-Ya0ojDh1BF5zgyZRlehygC0ZvvEg2WaGZWn1xiNozmM=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "57f1c8965649ce5bcac5118a0d2e41f1fbdc56e5",
+        "rev": "f4244ef33645badc8157562b5e80748929b396c2",
         "type": "github"
       },
       "original": {
@@ -427,11 +427,11 @@
     "web-animation-skills": {
       "flake": false,
       "locked": {
-        "lastModified": 1782134663,
-        "narHash": "sha256-o7dy+znjGwdI6a3zSrKeH6Zkx/d2LoIodfHfDWAy0EE=",
+        "lastModified": 1794413696,
+        "narHash": "sha256-skYmNDOcVDIn+LPL496F3ynkB5cqSVbjIl22+UlpkYM=",
         "owner": "iart-ai",
         "repo": "web-animation-skills",
-        "rev": "b6dba3eb759726845a44163ff0bad70dd9e7fbb6",
+        "rev": "ed3a045192679b24d32090ee7a983871311ababd",
         "type": "github"
       },
       "original": {
