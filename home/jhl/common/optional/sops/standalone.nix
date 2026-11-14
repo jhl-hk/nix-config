@@ -41,7 +41,6 @@ in {
     defaultSopsFile = sopsFile;
     secrets = {
       "llm/api_key" = {};
-      "rd_llm/api_key" = {};
       "cloudflare/api_token" = {};
       "wakatime/api_key" = {};
       "tea/token" = {};
@@ -55,7 +54,6 @@ in {
 
   llm.apiKeyFile = lib.mkForce (secret "llm/api_key");
   llm.providers.JianyueLab.apiKeyFile = lib.mkForce (secret "llm/api_key");
-  omp.redcokeKeyFile = lib.mkForce (secret "rd_llm/api_key");
   cloudflare.apiTokenFile = lib.mkForce (secret "cloudflare/api_token");
   wakatime.apiKeyFile = lib.mkForce (secret "wakatime/api_key");
 
