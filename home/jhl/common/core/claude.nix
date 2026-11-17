@@ -187,7 +187,7 @@ let
   marketplaces = {
     wakatime.source = {
       source = "git";
-      url = "https://github.com/wakatime/claude-code-wakatime.git";
+      url = "git@github.com:wakatime/claude-code-wakatime.git";
     };
     jianyuelab-claude.source = {
       source = "github";
@@ -195,7 +195,7 @@ let
     };
     superpowers-dev.source = {
       source = "git";
-      url = "https://github.com/obra/superpowers.git";
+      url = "git@github.com:obra/superpowers.git";
     };
   };
 
