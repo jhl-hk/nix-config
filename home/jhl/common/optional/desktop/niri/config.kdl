@@ -60,9 +60,6 @@ input {
     // focus-follows-mouse max-scroll-amount="0%"
 }
 
-// Per-machine touchpad off switch, written by scripts/toggle-touchpad.py.
-include optional=true "local/touchpad.kdl"
-
 // You can configure outputs by their name, which you can find
 // by running `niri msg outputs` while inside a niri instance.
 // The built-in laptop monitor is usually called "eDP-1".
@@ -649,3 +646,9 @@ binds {
 
 // DMS Include Configs
 include "dms/outputs.kdl"
+include "dms/input.kdl"
+
+// Per-machine touchpad off switch, written by scripts/toggle-touchpad.py.
+// Must stay after dms/input.kdl: niri replaces a pointing-device section
+// from a later include instead of merging it.
+include optional=true "local/touchpad.kdl"

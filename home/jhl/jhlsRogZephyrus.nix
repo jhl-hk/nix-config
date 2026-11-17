@@ -33,4 +33,8 @@
 
   # No id_yk5c on this machine.
   sshKeys.extra = ["id_shared"];
+
+  programs.zsh.envExtra = ''
+    export PATH="$HOME/.local/bin:$PATH"
+  '';
 }

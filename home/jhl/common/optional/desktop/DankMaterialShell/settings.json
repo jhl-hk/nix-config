@@ -452,5 +452,6 @@
       "col": 0,
       "row": 6
     }
-  ]
+  ],
+  "mouseAccelSpeed": -0.5
 }
