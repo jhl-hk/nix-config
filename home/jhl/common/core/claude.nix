@@ -54,7 +54,7 @@ let
 
   # Skills that cannot be vendored, because this repo is public and they are
   # not. The value is a path inside a private flake input -- see the block
-  # above jianyuelab-skills in flake.nix for why, and for the re-locking step
+  # above jianyuelab-docs in flake.nix for why, and for the re-locking step
   # that a local edit needs before it is visible here.
   #
   # home.file links a directory source as **one symlink** to the store rather
@@ -96,16 +96,16 @@ let
         (name: type: type == "directory" && builtins.pathExists "${base}/plugins/${name}/skills")
         (builtins.readDir "${base}/plugins")));
 
+  # JianyueLab/skills, linked live from the local checkout rather than pinned
+  # as an input -- see the claudeLiveSkills activation block.
+  liveSkillsDir = "${config.home.homeDirectory}/Documents/Dev/JianyueLab/skills";
+
   inputSkills =
     # Scanned, not listed. These are this org's own multi-skill repos, so
     # anything added upstream is wanted here by definition -- and listing each
     # path by hand meant a skill could sit unlinked indefinitely with nothing
-    # to signal it. That is exactly what happened: the repo reached seven
-    # entries while this file still named one.
-    #
-    # `nix flake update jianyuelab-skills` is now the whole workflow.
-    scanSkills "${inputs.jianyuelab-skills}"
-    // scanSkills "${inputs.jianyuelab-docs}/skills"
+    # to signal it.
+    scanSkills "${inputs.jianyuelab-docs}/skills"
     # emilkowalski/skills, scanned for the same reason: it is a single-purpose
     # library (animation and interface-design taste) where every skill is
     # wanted, and apple-design here replaces the hand-copied vendored version
@@ -343,6 +343,47 @@ in {
         rm -f "$settings.nix-tmp"
         echo "claude.nix: jq merge failed, left $settings untouched" >&2
       fi
+    fi
+  '';
+
+  # JianyueLab/skills, one symlink per skill into the working copy: an edit
+  # to a SKILL.md there is visible immediately, with no push or re-lock.
+  # Adding or removing a skill directory still needs a switch to relink.
+  #
+  # Plain symlinks, not home.file + mkOutOfStoreSymlink: the skill names come
+  # from the checkout, which pure evaluation cannot read.
+  #
+  # A name already managed by home.file is left alone. Links into the
+  # checkout whose target is gone are removed. No checkout, no links.
+  config.home.activation.claudeLiveSkills = lib.hm.dag.entryAfter ["linkGeneration"] ''
+    src=${lib.escapeShellArg liveSkillsDir}
+    dst="${config.home.homeDirectory}/.claude/skills"
+
+    if [[ -v DRY_RUN ]]; then
+      echo "claude.nix: would link skills from $src"
+    elif [ ! -d "$src" ]; then
+      echo "claude.nix: $src not found, skipping live skills" >&2
+    else
+      mkdir -p "$dst"
+      for link in "$dst"/*; do
+        if [ -L "$link" ] && [ ! -e "$link" ]; then
+          case "$(readlink "$link")" in "$src"/*) rm "$link" ;; esac
+        fi
+      done
+      for dir in "$src"/*/; do
+        dir="''${dir%/}"
+        name="$(basename "$dir")"
+        [ -f "$dir/SKILL.md" ] || continue
+        target="$dst/$name"
+        if [ -e "$target" ] || [ -L "$target" ]; then
+          case "$(readlink "$target")" in
+            "$dir") continue ;;
+            "$src"/*) ;;
+            *) echo "claude.nix: $target exists, not linking $name" >&2; continue ;;
+          esac
+        fi
+        ln -sfn "$dir" "$target"
+      done
     fi
   '';
 

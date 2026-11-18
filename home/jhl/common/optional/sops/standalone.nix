@@ -19,11 +19,11 @@
 #  which never exist here. The key file options are repointed below with
 #  mkForce; anything added later that reads /run/secrets needs the same.
 #
-#  tea: the user-level counterpart of hosts/common/optional/nixos/tea.nix.
-#  The tea-login user service seeds ~/.config/tea/config.yml if the login is
-#  missing. To rotate the token:
-#    tea logins delete "Jyl Git"
-#    systemctl --user restart tea-login
+#  fj: the user-level counterpart of hosts/common/optional/nixos/forgejo.nix.
+#  The forgejo-login user service seeds the fj login if it is missing.
+#  The token still lives under tea.token. To rotate it:
+#    fj -H git.jyl.as auth logout
+#    systemctl --user restart forgejo-login
 #
 #  Do not import on a Mac: the system lane already provides these secrets.
 #
@@ -31,8 +31,7 @@
 let
   sopsFile = "${inputs.nix-secrets}/secrets/shared.yaml";
   secret = name: config.sops.secrets.${name}.path;
-  teaLogin = "Jyl Git";
-  teaUrl = "https://git.jyl.as";
+  forgejoHost = "git.jyl.as";
 in {
   imports = [inputs.sops-nix.homeManagerModules.sops];
 
@@ -57,23 +56,23 @@ in {
   cloudflare.apiTokenFile = lib.mkForce (secret "cloudflare/api_token");
   wakatime.apiKeyFile = lib.mkForce (secret "wakatime/api_key");
 
-  systemd.user.services.tea-login = {
+  home.packages = [pkgs.forgejo-cli];
+
+  systemd.user.services.forgejo-login = {
     Unit = {
-      Description = "Seed the tea login for ${teaUrl}";
+      Description = "Seed the fj login for ${forgejoHost}";
       After = ["sops-nix.service"];
       Requires = ["sops-nix.service"];
     };
     Service = {
       Type = "oneshot";
       RemainAfterExit = true;
-      ExecStart = toString (pkgs.writeShellScript "tea-login" ''
-        export PATH=${lib.makeBinPath [pkgs.tea pkgs.gnugrep]}:$PATH
-        if tea logins list --output simple | grep -qF "${teaLogin}"; then
+      ExecStart = toString (pkgs.writeShellScript "forgejo-login" ''
+        export PATH=${lib.makeBinPath [pkgs.forgejo-cli pkgs.gnugrep]}:$PATH
+        if fj auth list | grep -qF "${forgejoHost}"; then
           exit 0
         fi
-        GITEA_SERVER_TOKEN="$(cat ${secret "tea/token"})" \
-          tea logins add --name "${teaLogin}" --url "${teaUrl}"
-        tea logins default "${teaLogin}"
+        fj -H "${forgejoHost}" auth add-token < ${secret "tea/token"}
       '');
     };
     Install.WantedBy = ["default.target"];

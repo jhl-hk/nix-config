@@ -7,19 +7,19 @@
 }:
 #############################################################
 #
-#  tea -- Gitea CLI login for git.jyl.as
+#  fj -- Forgejo CLI login for git.jyl.as
 #
 #  The token is decrypted from shared.yaml. A oneshot service then runs
-#  `tea logins add` as the user if the login is missing.
+#  `fj auth add-token` as the user if the login is missing.
 #
-#  tea owns ~/.config/tea/config.yml and writes to it, so the file is not
-#  managed as a symlink. The service only seeds it.
+#  fj owns its keys file and writes to it, so the file is not managed as a
+#  symlink. The service only seeds it.
 #
 #  The service skips an existing login. To rotate the token:
-#    tea logins delete "Jyl Git"
-#    sudo systemctl restart tea-login
+#    fj -H git.jyl.as auth logout
+#    sudo systemctl restart forgejo-login
 #
-#  Filling in the ciphertext:
+#  The token still lives under the tea.token key. Filling in the ciphertext:
 #    just sops-edit shared
 #
 #      tea:
@@ -31,8 +31,7 @@
 let
   sopsFile = "${inputs.nix-secrets}/secrets/shared.yaml";
   user = config.hostSpec.username;
-  loginName = "Jyl Git";
-  url = "https://git.jyl.as";
+  host = "git.jyl.as";
 in {
   assertions = [
     {
@@ -40,7 +39,7 @@ in {
         builtins.pathExists sopsFile
         && lib.hasInfix "tea:\n    token:" (builtins.readFile sopsFile);
       message = ''
-        hosts/common/optional/nixos/tea.nix is imported, but
+        hosts/common/optional/nixos/forgejo.nix is imported, but
         secrets/shared.yaml has no tea.token yet.
 
           just sops-edit shared
@@ -60,12 +59,12 @@ in {
     mode = "0400";
   };
 
-  systemd.services.tea-login = {
-    description = "Seed the tea login for ${url}";
+  systemd.services.forgejo-login = {
+    description = "Seed the fj login for ${host}";
     wantedBy = ["multi-user.target"];
     wants = ["network-online.target"];
     after = ["network-online.target"];
-    path = [pkgs.tea pkgs.gnugrep];
+    path = [pkgs.forgejo-cli pkgs.gnugrep];
     environment.HOME = config.hostSpec.home;
     serviceConfig = {
       Type = "oneshot";
@@ -73,12 +72,10 @@ in {
       User = user;
     };
     script = ''
-      if tea logins list --output simple | grep -qF "${loginName}"; then
+      if fj auth list | grep -qF "${host}"; then
         exit 0
       fi
-      GITEA_SERVER_TOKEN="$(cat ${config.sops.secrets."tea/token".path})" \
-        tea logins add --name "${loginName}" --url "${url}"
-      tea logins default "${loginName}"
+      fj -H "${host}" auth add-token < ${config.sops.secrets."tea/token".path}
     '';
   };
 }

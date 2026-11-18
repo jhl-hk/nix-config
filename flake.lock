@@ -178,24 +178,6 @@
         "url": "ssh://git@github.com/JianyueLab/claude-plugin.git"
       }
     },
-    "jianyuelab-skills": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1794215618,
-        "narHash": "sha256-rOKwlowtu2z4HrxXX5rUiYOXBEjUFD6IdNCpGldWWUs=",
-        "ref": "main",
-        "rev": "d5eb7ac67adfbdd4e936e5423a10e6d18a1dccf3",
-        "shallow": true,
-        "type": "git",
-        "url": "ssh://git@github.com/JianyueLab/skills.git"
-      },
-      "original": {
-        "ref": "main",
-        "shallow": true,
-        "type": "git",
-        "url": "ssh://git@github.com/JianyueLab/skills.git"
-      }
-    },
     "nix-secrets": {
       "inputs": {
         "nixpkgs": [
@@ -203,10 +185,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1794808004,
-        "narHash": "sha256-xmQ1hNXwGvdg4In2mFyB6g0XrXM3b5C15LlHeGgookw=",
+        "lastModified": 1794875259,
+        "narHash": "sha256-EFuXA6ty0NyuWD81UVhGFKQ4taDN5+Stu6xwUoty85Q=",
         "ref": "main",
-        "rev": "a83d1c63bf9cd85505f7288ab11e4726b6ca09ca",
+        "rev": "703a926b37100183ff1976d683fbcac0a65e4f96",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/jhl-hk/nix-secrets.git"
@@ -324,7 +306,6 @@
         "home-manager-unstable": "home-manager-unstable",
         "jianyuelab-docs": "jianyuelab-docs",
         "jianyuelab-plugins": "jianyuelab-plugins",
-        "jianyuelab-skills": "jianyuelab-skills",
         "nix-secrets": "nix-secrets",
         "nixpkgs": "nixpkgs",
         "nixpkgs-darwin": "nixpkgs-darwin",

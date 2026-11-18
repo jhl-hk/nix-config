@@ -21,7 +21,7 @@
     tree
     inetutils # telnet
     gh
-    tea
+    forgejo-cli
     tmux
     pandoc
     qpdf

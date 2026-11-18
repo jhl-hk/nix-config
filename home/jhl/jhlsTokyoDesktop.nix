@@ -7,7 +7,7 @@
 #  GUI apps, IME, drivers and the system belong to the distro.
 #
 #  sops runs through home-manager here (./common/optional/sops/standalone.nix).
-#  It wires llm, cloudflare, wakatime and tea.
+#  It wires llm, cloudflare, wakatime and the fj (Forgejo CLI) login.
 #
 #############################################################
 {
