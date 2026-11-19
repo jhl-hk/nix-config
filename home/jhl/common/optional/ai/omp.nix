@@ -8,11 +8,12 @@
 }:
 #############################################################
 #
-#  omp -- oh-my-pi (https://github.com/can1357/oh-my-pi), a pi fork
+#  omp -- oh-my-pi (https://github.com/can1357/oh-my-pi), the coding agent
 #
 #  The binary is the can1357/tap/omp brew in
 #  hosts/common/optional/darwin/dev-extras.nix on the Macs, and the distro
-#  package on jhlsTokyoDesktop.
+#  package on jhlsTokyoDesktop. Global instructions are linked by
+#  ../../core/agent-instructions.nix, skills by ../../core/skills.nix.
 #
 #  -- config.yml stays omp's ----------------------------------------------
 #
@@ -27,17 +28,24 @@
 #
 #  -- Providers -----------------------------------------------------------
 #
-#  ~/.omp/agent/models.yml is the fourth consumer of llm.providers, next to
-#  pi.nix, opencode.nix and Zed. apiKey is an environment variable *name*:
-#  omp looks it up and, if unset, sends the literal string. The variable is
-#  exported by home/jhl/common/core/llm.nix.
+#  ~/.omp/agent/models.yml is a consumer of llm.providers, next to Zed.
+#  apiKey is an environment variable *name*: omp looks it up and, if unset,
+#  sends the literal string. The variable is exported by
+#  home/jhl/common/core/llm.nix.
+#
+#  -- MCP servers ---------------------------------------------------------
+#
+#  omp.mcpServers (the shared remote list from modules/home/mcp-servers.nix
+#  plus anything another module adds, e.g. blender-mcp.nix) is merged into
+#  ~/.omp/agent/mcp.json by name. omp writes that file too (`/mcp add`), so
+#  it is not linked from the store; entries added there by hand survive.
 #
 #############################################################
 let
   active = lib.filterAttrs (_: p: p.models != []) config.llm.providers;
 
-  # Same claims as pi.nix: every gateway model reasons, and the gateway
-  # accepts exactly these efforts.
+  # Every gateway model reasons, and the gateway accepts exactly these
+  # efforts.
   toModel = p: id: {
     inherit id;
     reasoning = true;
@@ -54,7 +62,7 @@ let
     api = "openai-completions";
     apiKey = p.envVar;
     authHeader = true;
-    # The gateway rejects role "developer"; see pi.nix.
+    # The gateway rejects role "developer".
     compat.supportsDeveloperRole = false;
     models = map (toModel p) p.models;
   };
@@ -64,13 +72,12 @@ let
     startup.checkUpdate = false;
     update.auto = false;
 
-    # Reads the ~/.claude user root: CLAUDE.md, ~/.claude/skills, and the
-    # Claude Code marketplace plugins (superpowers among them). Off by
-    # default in omp.
-    enabledProviders = ["claude"];
-
     # Choices made in the setup wizard, pinned so every machine matches.
     modelRoles.default = "anthropic/claude-opus-5-5";
+    # Subagent dispatches may name their model per call (task and eval).
+    # Grants come from configured modelRoles, the agent's own frontmatter
+    # model and the parent's live model; no extra roles are set yet.
+    task.perCallModel = "on";
     defaultThinkingLevel = "auto";
     statusLine = {
       preset = "nerd";
@@ -92,28 +99,63 @@ let
 
   yaml = pkgs.formats.yaml {};
   overlayFile = ".omp/agent/nix.yml";
+  mcpJsonPath = "${config.home.homeDirectory}/.omp/agent/mcp.json";
+
+  mergeMcp = pkgs.writeText "merge-omp-mcp.py" ''
+    import json, os, sys, tempfile
+
+    path, servers = sys.argv[1], json.loads(sys.argv[2])
+    try:
+        with open(path, encoding="utf-8") as f:
+            data = json.load(f)
+    except FileNotFoundError:
+        data = {}
+    data["mcpServers"] = {**data.get("mcpServers", {}), **servers}
+
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".mcp.json.")
+    with os.fdopen(fd, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    os.replace(tmp, path)
+  '';
 in {
+  options.omp.mcpServers = lib.mkOption {
+    type = lib.types.attrsOf (lib.types.attrsOf lib.types.anything);
+    default = {};
+    description = "MCP servers merged into ~/.omp/agent/mcp.json, keyed by name.";
+  };
+
   config = {
+    omp.mcpServers =
+      lib.mapAttrs (_: s: {
+        type = "http";
+        inherit (s) url;
+      })
+      config.mcpServers;
+
+    home.activation.ompMcpServers = lib.hm.dag.entryAfter ["writeBoundary"] ''
+      if [[ -v DRY_RUN ]]; then
+        echo "omp.nix: would merge MCP servers into ${mcpJsonPath}"
+      elif ! ${pkgs.python3}/bin/python3 -I ${mergeMcp} \
+        ${lib.escapeShellArg mcpJsonPath} \
+        ${lib.escapeShellArg (builtins.toJSON config.omp.mcpServers)}; then
+        echo "omp.nix: MCP merge failed, left ${mcpJsonPath} untouched" >&2
+      fi
+    '';
+
     home.file =
       {
         ${overlayFile}.source = yaml.generate "omp-nix.yml" overlay;
 
-        # Same reason as pi.nix's APPEND_SYSTEM.md: skills come from several
-        # roots, and models build paths from names.
-        ".omp/agent/APPEND_SYSTEM.md".text = ''
-          Skills live in several directories. To load a skill, read the exact path listed for it. Never build a skill path from its name.
-        '';
-
         # jyl-memory's omp half (see ../../core/jyl-memory.nix). omp loads
-        # hooks/post/*.ts and ignores the plugin's hooks/hooks.json, so the hook
-        # is linked here rather than arriving with the Claude Code plugin. omp
+        # hooks/post/*.ts and ignores the plugin's hooks/hooks.json. omp
         # resolves the symlink, so the hook finds scripts/run next to itself in
         # the store.
         ".omp/agent/hooks/post/jyl-memory.ts".source = "${inputs.jianyuelab-plugins}/plugins/jyl-memory/hooks/post/jyl-memory.ts";
 
         # WakaTime heartbeats (wakatime-omp, pinned input). omp auto-loads
         # extensions/*.ts. The extension takes the first wakatime-cli on PATH,
-        # which is the one opencode.nix installs; that build must be new enough
+        # which ../../core/wakatime.nix installs; that build must be new enough
         # to carry wakatime-cli's OMP transcript parser (pkg/ai/omp.go, absent
         # from 2.14.5). The key comes from ../../core/wakatime.nix.
         ".omp/agent/extensions/wakatime.ts".source = "${inputs.wakatime-omp}/src/extension.ts";

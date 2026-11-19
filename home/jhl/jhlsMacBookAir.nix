@@ -11,6 +11,5 @@
   # applications that are not there.
   imports = [
     ./common/core
-    ./common/optional/ai/openclaw.nix
   ];
 }

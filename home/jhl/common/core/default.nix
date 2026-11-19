@@ -46,14 +46,10 @@ in {
     ./yazi.nix
     ./tmux.nix
     ./agent-instructions.nix
-    ./claude.nix
-    ./grok.nix
+    ./skills.nix
     ./cloudflare.nix
-    ./jyl-usage.nix
     ./jyl-memory.nix
     ./llm.nix
-    ./opencode.nix
-    ./pi.nix
     ./wakatime.nix
     ./typst.nix
   ];

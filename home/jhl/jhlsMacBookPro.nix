@@ -12,8 +12,6 @@
     ./common/core
     ./common/optional/editors/zed.nix
     ./common/optional/editors/typora.nix
-    ./common/optional/ai/antigravity.nix
-    ./common/optional/ai/codex.nix
     ./common/optional/ai/omp.nix
     # Needs hosts/common/optional/darwin/blender.nix on the system side.
     ./common/optional/ai/blender-mcp.nix

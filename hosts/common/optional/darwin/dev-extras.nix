@@ -48,21 +48,10 @@
       "rclone"
       "cloudflare-wrangler" # Cloudflare Workers/R2 CLI
 
-      # oh-my-pi, a pi fork. Config: home/jhl/common/optional/ai/omp.nix,
+      # oh-my-pi, the coding agent. Config: home/jhl/common/optional/ai/omp.nix,
       # imported by the same two hosts. `omp update` detects the brew install
       # and runs brew upgrade, so it does not fight this entry.
       "can1357/tap/omp"
     ];
-
-    # agy, the Antigravity CLI agent, replacing gemini-cli here. A cask and
-    # not a formula -- Homebrew ships it as an app bundle with a symlinked
-    # binary, so `brew info --formula antigravity-cli` finds nothing. Distinct
-    # from the "antigravity" cask in desktop.nix, which is the GUI IDE; these
-    # are two packages and installing one does not bring the other.
-    #
-    # home/jhl/common/optional/ai/antigravity.nix wires its skills and is
-    # imported by the same two hosts, so the binary and its config travel
-    # together.
-    casks = ["antigravity-cli"];
   };
 }

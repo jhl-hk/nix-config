@@ -4,7 +4,7 @@
 #  LLM providers (OpenAI-compatible endpoints)
 #
 #  The same provider facts feed two consumers:
-#    home/jhl/common/core/opencode.nix
+#    home/jhl/common/optional/ai/omp.nix
 #    home/jhl/common/optional/editors/zed.nix
 #  Declaring them as options avoids copying the URL and model names into both.
 #
@@ -21,9 +21,8 @@
 #    GUI         same file, via a launchd agent running launchctl setenv
 #
 #  Zed's docs say verbatim "Do not put API keys in settings.json"; it looks for
-#  a <PROVIDER_ID>_API_KEY environment variable. opencode understands {env:VAR}
-#  substitution inside config values. Conveniently, both can share one variable
-#  name.
+#  a <PROVIDER_ID>_API_KEY environment variable. omp's models.yml names the
+#  variable in apiKey. Conveniently, both can share one variable name.
 #
 #  -- How envVar is derived (this one bites) -----------------------------
 #
@@ -63,9 +62,8 @@
       type = lib.types.str;
       default = "";
       description = ''
-        Name of the default provider. opencode's model and Zed's
-        agent.default_model / commit_message_model / edit_predictions all point
-        at it.
+        Name of the default provider. Zed's agent.default_model /
+        commit_message_model / edit_predictions all point at it.
 
         When left empty, or when that provider has no models refreshed yet,
         neither side writes a default at all -- Zed uses mutableUserSettings
@@ -125,7 +123,7 @@
               whatever you put here.
 
               An empty list means the provider is skipped entirely (neither Zed
-              nor opencode generates config for it), so a first rebuild before
+              nor omp generates config for it), so a first rebuild before
               the list has ever been refreshed cannot produce a broken config
               with an empty available_models.
             '';

@@ -1,53 +1,5 @@
 {
   "nodes": {
-    "alireza-skills": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1794479706,
-        "narHash": "sha256-pPbVUXzLLnW2XopjEoOf+iZHBvPy9QTmBe+eU7N1O0c=",
-        "owner": "alirezarezvani",
-        "repo": "claude-skills",
-        "rev": "08cd8a9fc86cc370e2c0d448e8171fbcfdbc5a30",
-        "type": "github"
-      },
-      "original": {
-        "owner": "alirezarezvani",
-        "repo": "claude-skills",
-        "type": "github"
-      }
-    },
-    "anthropic-skills": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1794004348,
-        "narHash": "sha256-dRCZrNarCCJFuvATgfW6qmwwVS5HGFXNVGOhbVZd7LA=",
-        "owner": "anthropics",
-        "repo": "skills",
-        "rev": "2c5958ecac7cee2b583967a2c4981d0f4a75c579",
-        "type": "github"
-      },
-      "original": {
-        "owner": "anthropics",
-        "repo": "skills",
-        "type": "github"
-      }
-    },
-    "bird-skills": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1786077565,
-        "narHash": "sha256-v2GHW/RndDfVBM49XSZM1WwRQD1QJFKqzwqy8pJBYjU=",
-        "owner": "bird-chinese-community",
-        "repo": "BIRD.skills",
-        "rev": "2ea2541d533e3fb03449924a04df962bf5957b82",
-        "type": "github"
-      },
-      "original": {
-        "owner": "bird-chinese-community",
-        "repo": "BIRD.skills",
-        "type": "github"
-      }
-    },
     "darwin": {
       "inputs": {
         "nixpkgs": [
@@ -69,38 +21,6 @@
         "type": "github"
       }
     },
-    "emil-skills": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1794493327,
-        "narHash": "sha256-p8ZITQR99clmNiHjpudCUkBdm++Ri0BkeV9hGuH6nL0=",
-        "owner": "emilkowalski",
-        "repo": "skills",
-        "rev": "f7ce8c02d6e3c8f0d980a44c57bcc41a40254349",
-        "type": "github"
-      },
-      "original": {
-        "owner": "emilkowalski",
-        "repo": "skills",
-        "type": "github"
-      }
-    },
-    "grc-skills": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1794022749,
-        "narHash": "sha256-fqJYx4dMxknhUMizfqChc8ccK268XfdZMotA5zEfwM4=",
-        "owner": "Sushegaad",
-        "repo": "Claude-Skills-Governance-Risk-and-Compliance",
-        "rev": "5a9afcfce98efa4d64f75bead5e544ee06c38154",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Sushegaad",
-        "repo": "Claude-Skills-Governance-Risk-and-Compliance",
-        "type": "github"
-      }
-    },
     "home-manager": {
       "inputs": {
         "nixpkgs": [
@@ -108,11 +28,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794251182,
-        "narHash": "sha256-R2sZBXiOJo3HAnvTiVkbbHDJy//JMlAwUKEiPbfqPXk=",
+        "lastModified": 1794943722,
+        "narHash": "sha256-Qkh6uNyMsic61gfyOO8VXnC+HEBdti6Xe2kKiMf66O0=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "6eb2d33d1d0c95a37ef6443c88e6c1686012ee8b",
+        "rev": "5643e73425b85ac359ba2aaf83deae8ce1cd7968",
         "type": "github"
       },
       "original": {
@@ -129,11 +49,11 @@
         ]
       },
       "locked": {
-        "lastModified": 1794278858,
-        "narHash": "sha256-rkrJwLgLSHBnXfgoSKIDa+2LLGdTqynsV3GAxOTGhUU=",
+        "lastModified": 1794963576,
+        "narHash": "sha256-+CPrP74GDJ63f7bgEFC9Av4hbxc7K9WUNv1ZVRifRe8=",
         "owner": "nix-community",
         "repo": "home-manager",
-        "rev": "82ce401aa350502897c3f2e85f384d61cd3b0b6d",
+        "rev": "2b13c9cb3aa20653e6f8ee0b7f8331a53ea9b0a9",
         "type": "github"
       },
       "original": {
@@ -145,10 +65,10 @@
     "jianyuelab-docs": {
       "flake": false,
       "locked": {
-        "lastModified": 1794226659,
-        "narHash": "sha256-Opg1H9/p/C8Al4GCQz5+SH9EelW13uCu4mujksULYKU=",
+        "lastModified": 1794805830,
+        "narHash": "sha256-KAOanZQSuk4v0zyPKiK+5aypxGf9/JvJD8aTVgpSkGM=",
         "ref": "main",
-        "rev": "82cd9fd7e7e609d3ac6d3559178faeef85104b87",
+        "rev": "b36878ac10c53dee96b64a6d0162889927d2c878",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/JianyueLab/Docs.git"
@@ -163,10 +83,10 @@
     "jianyuelab-plugins": {
       "flake": false,
       "locked": {
-        "lastModified": 1794153273,
-        "narHash": "sha256-IBvhBoHUQAsIUsSKbAk9TsKQYdjYPDRU9/uzn11/7co=",
+        "lastModified": 1794584229,
+        "narHash": "sha256-UGcXzJY2sLiDdIS13mVAgguyIqzcCEKXQdxQYbWzuPY=",
         "ref": "main",
-        "rev": "212851c0d2c80fae8f2a1cb49614032708e77f96",
+        "rev": "43a71286fcfdca61d0ca0ea01212d4c528bd75a3",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/JianyueLab/claude-plugin.git"
@@ -185,10 +105,10 @@
         ]
       },
       "locked": {
-        "lastModified": 1794875259,
-        "narHash": "sha256-EFuXA6ty0NyuWD81UVhGFKQ4taDN5+Stu6xwUoty85Q=",
+        "lastModified": 1795095037,
+        "narHash": "sha256-cuFCGw1C7JHhueuaVYVX8bYH7voOPh9c5elN1BAxtXM=",
         "ref": "main",
-        "rev": "703a926b37100183ff1976d683fbcac0a65e4f96",
+        "rev": "cd90aacc387d35efd3a6ad585686ceb366eec914",
         "shallow": true,
         "type": "git",
         "url": "ssh://git@github.com/jhl-hk/nix-secrets.git"
@@ -202,11 +122,11 @@
     },
     "nixpkgs": {
       "locked": {
-        "lastModified": 1794495034,
-        "narHash": "sha256-E0hYoioqUtM2XmPPvYYpJgdADF5AW9oOoPSEiM9dTHQ=",
+        "lastModified": 1794840529,
+        "narHash": "sha256-ySrWnmZB5UsZTYGHHnBjllT05O5iFjElCRS+mabtfP0=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "2074cc672349f14240fb7ea90d509e0b643e9dd4",
+        "rev": "e21fec321d73511849707a7585e4ea155ee4bf40",
         "type": "github"
       },
       "original": {
@@ -218,11 +138,11 @@
     },
     "nixpkgs-darwin": {
       "locked": {
-        "lastModified": 1794217284,
-        "narHash": "sha256-Ya0ojDh1BF5zgyZRlehygC0ZvvEg2WaGZWn1xiNozmM=",
+        "lastModified": 1794918815,
+        "narHash": "sha256-lsIUChCLfoCyf0VO6CzedtMZBV62+1W86nT3XGCIgiw=",
         "owner": "nixos",
         "repo": "nixpkgs",
-        "rev": "f4244ef33645badc8157562b5e80748929b396c2",
+        "rev": "94d362415787ffff528f73820996aeedd97ff0dd",
         "type": "github"
       },
       "original": {
@@ -262,46 +182,9 @@
         "url": "https://github.com/JianyueLab-Org/notch/releases/download/v27.2.0/NotchNotchAgents-27.2.0.zip"
       }
     },
-    "open-agents": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1780562893,
-        "narHash": "sha256-sinyOqDViNNsUk0iLruWoyGnVG9BAjUKvHvq75Dze9I=",
-        "owner": "vercel-labs",
-        "repo": "open-agents",
-        "rev": "cf865e94de7729751c747171785b6ce57e7b178c",
-        "type": "github"
-      },
-      "original": {
-        "owner": "vercel-labs",
-        "repo": "open-agents",
-        "type": "github"
-      }
-    },
-    "privacy-skills": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1773691611,
-        "narHash": "sha256-G5Vh/KW0rdAtfanLMBA+UISLT4Ir1giKVEzyJ1T5joI=",
-        "owner": "mukul975",
-        "repo": "Privacy-Data-Protection-Skills",
-        "rev": "9b2ef9eae161c00a17241d42a388571321b33e9f",
-        "type": "github"
-      },
-      "original": {
-        "owner": "mukul975",
-        "repo": "Privacy-Data-Protection-Skills",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
-        "alireza-skills": "alireza-skills",
-        "anthropic-skills": "anthropic-skills",
-        "bird-skills": "bird-skills",
         "darwin": "darwin",
-        "emil-skills": "emil-skills",
-        "grc-skills": "grc-skills",
         "home-manager": "home-manager",
         "home-manager-unstable": "home-manager-unstable",
         "jianyuelab-docs": "jianyuelab-docs",
@@ -311,14 +194,8 @@
         "nixpkgs-darwin": "nixpkgs-darwin",
         "notchnotch": "notchnotch",
         "notchnotch-agents": "notchnotch-agents",
-        "open-agents": "open-agents",
-        "privacy-skills": "privacy-skills",
         "sops-nix": "sops-nix",
-        "taste-skill": "taste-skill",
-        "wakatime-antigravity": "wakatime-antigravity",
-        "wakatime-codex": "wakatime-codex",
-        "wakatime-omp": "wakatime-omp",
-        "web-animation-skills": "web-animation-skills"
+        "wakatime-omp": "wakatime-omp"
       }
     },
     "sops-nix": {
@@ -328,64 +205,16 @@
         ]
       },
       "locked": {
-        "lastModified": 1794261845,
-        "narHash": "sha256-Ivif/kuD68yEOKcZZG3zSwNMFUuIgzUgeJuzcHrQy+8=",
+        "lastModified": 1794866654,
+        "narHash": "sha256-Y28AMB8lyKjASdJ0BVsR2AqR1cUsVuo8RVVpzHoECho=",
         "owner": "Mic92",
         "repo": "sops-nix",
-        "rev": "fe7b4228405aeac2ce7192c2049a6e2bc8637082",
+        "rev": "7c637afdccdf9bcf35c4a2d67b58a77c1fd843a4",
         "type": "github"
       },
       "original": {
         "owner": "Mic92",
         "repo": "sops-nix",
-        "type": "github"
-      }
-    },
-    "taste-skill": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1794054801,
-        "narHash": "sha256-7w2pcrS5g3ACXiAoJL3oe+hiVy+aDmUnx3PxeRZ9rVg=",
-        "owner": "Leonxlnx",
-        "repo": "taste-skill",
-        "rev": "f6b76575f949707b4e3c37cd86cb44b0b98643e8",
-        "type": "github"
-      },
-      "original": {
-        "owner": "Leonxlnx",
-        "repo": "taste-skill",
-        "type": "github"
-      }
-    },
-    "wakatime-antigravity": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1788188365,
-        "narHash": "sha256-DpcjikQNsrn6NmJwAnIwM2naHeoM5qYn8KQHa5phzRQ=",
-        "owner": "wakatime",
-        "repo": "antigravity-wakatime",
-        "rev": "463526c52ba95a652929244b80277885f0a76a3a",
-        "type": "github"
-      },
-      "original": {
-        "owner": "wakatime",
-        "repo": "antigravity-wakatime",
-        "type": "github"
-      }
-    },
-    "wakatime-codex": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1781616533,
-        "narHash": "sha256-xzUudO+3DCPiJMzMzKODY5X6T/32XvKIJ1OXGN/uLvs=",
-        "owner": "wakatime",
-        "repo": "codex-cli-wakatime",
-        "rev": "a0218436d549915c521287b9436782891e75e856",
-        "type": "github"
-      },
-      "original": {
-        "owner": "wakatime",
-        "repo": "codex-cli-wakatime",
         "type": "github"
       }
     },
@@ -402,22 +231,6 @@
       "original": {
         "owner": "ephraimduncan",
         "repo": "wakatime-omp",
-        "type": "github"
-      }
-    },
-    "web-animation-skills": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1794413696,
-        "narHash": "sha256-skYmNDOcVDIn+LPL496F3ynkB5cqSVbjIl22+UlpkYM=",
-        "owner": "iart-ai",
-        "repo": "web-animation-skills",
-        "rev": "ed3a045192679b24d32090ee7a983871311ababd",
-        "type": "github"
-      },
-      "original": {
-        "owner": "iart-ai",
-        "repo": "web-animation-skills",
         "type": "github"
       }
     }

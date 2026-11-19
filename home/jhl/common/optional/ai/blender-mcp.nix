@@ -1,9 +1,4 @@
-{
-  config,
-  lib,
-  pkgs,
-  ...
-}:
+{pkgs, ...}:
 #############################################################
 #
 #  Blender MCP -- the official Blender Lab server, for omp
@@ -18,14 +13,14 @@
 #  Blender comes from hosts/common/optional/darwin/blender.nix -- keep the pair.
 #  The add-on needs Preferences > System > Allow Online Access.
 #
-#  Merged into ~/.omp/agent/mcp.json by name: omp also writes that file
-#  (`/mcp add`), so it is not linked from the store.
+#  Added to omp.mcpServers, which ./omp.nix merges into ~/.omp/agent/mcp.json;
+#  import the two together.
 #
 #############################################################
 let
   version = "1.0.3";
-
-  servers.blender = {
+in {
+  omp.mcpServers.blender = {
     type = "stdio";
     command = "${pkgs.uv}/bin/uvx";
     args = [
@@ -34,34 +29,4 @@ let
       "blender-mcp"
     ];
   };
-
-  mcpJsonPath = "${config.home.homeDirectory}/.omp/agent/mcp.json";
-
-  merge = pkgs.writeText "merge-omp-mcp.py" ''
-    import json, os, sys, tempfile
-
-    path, servers = sys.argv[1], json.loads(sys.argv[2])
-    try:
-        with open(path, encoding="utf-8") as f:
-            data = json.load(f)
-    except FileNotFoundError:
-        data = {}
-    data["mcpServers"] = {**data.get("mcpServers", {}), **servers}
-
-    os.makedirs(os.path.dirname(path), exist_ok=True)
-    fd, tmp = tempfile.mkstemp(dir=os.path.dirname(path), prefix=".mcp.json.")
-    with os.fdopen(fd, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-    os.replace(tmp, path)
-  '';
-in {
-  home.activation.ompBlenderMcp = lib.hm.dag.entryAfter ["writeBoundary"] ''
-    if [[ -v DRY_RUN ]]; then
-      echo "blender-mcp.nix: would merge MCP servers into ${mcpJsonPath}"
-    elif ! ${pkgs.python3}/bin/python3 -I ${merge} \
-      ${lib.escapeShellArg mcpJsonPath} \
-      ${lib.escapeShellArg (builtins.toJSON servers)}; then
-      echo "blender-mcp.nix: MCP merge failed, left ${mcpJsonPath} untouched" >&2
-    fi
-  '';
 }

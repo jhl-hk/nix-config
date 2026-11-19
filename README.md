@@ -1,14 +1,16 @@
 # nix-config
 
-jhl's nix-darwin + home-manager flake. Four machines, one user (`jhl`):
+jhl's nix-darwin + NixOS + home-manager flake. Six machines, one user (`jhl`):
 
 | Lane | Host directory | Flake output | Machines |
 |---|---|---|---|
 | nix-darwin | `hosts/darwin/` | `darwinConfigurations.<Host>` | `jhlsMacBookPro`, `jhlsMacBookAir`, `SeandeMac-Studio` |
 | standalone home-manager | `hosts/home/` | `homeConfigurations.jhl@<Host>` | `jhlsRogZephyrus`, `jhlsTokyoDesktop` |
-| NixOS | `hosts/nixos/` | `nixosConfigurations.<Host>` | none — skeleton only |
+| NixOS | `hosts/nixos/` | `nixosConfigurations.<Host>` | `DevEnv` |
 
-The standalone lane is nix running on top of a distro that owns the system. It has a home configuration and **no system configuration**: no `hosts/common/core`, no `environment.systemPackages`, no sops. Root-level concerns stay with the distro's package manager. `jhlsRogZephyrus` and `jhlsTokyoDesktop` live here and manage CLI tools and the development environment only.
+The standalone lane is nix running on top of a distro that owns the system. It has a home configuration and **no system configuration**: no `hosts/common/core`, no `hosts/common/optional`, no `environment.systemPackages`. Root-level concerns stay with the distro's package manager. Secrets come from home-manager sops (`home/jhl/common/optional/sops/standalone.nix`). `jhlsRogZephyrus` and `jhlsTokyoDesktop` live here.
+
+`DevEnv` is a NixOS machine with the full system lane (`hosts/common/core/nixos.nix`, `hosts/common/optional/nixos/`), deployed with `just deploy DevEnv`.
 
 Private data lives in the sibling [`../nix-secrets`](https://github.com/jhl-hk/nix-secrets) (private) and is pulled in as a flake input.
 
@@ -19,7 +21,7 @@ Private data lives in the sibling [`../nix-secrets`](https://github.com/jhl-hk/n
 ├── flake.nix              # host auto-discovery, overlays, packages, checks, devShells
 ├── lib/                   # lib.custom: relativeToRoot / scanPaths
 ├── modules/               # reusable option-providing modules, all auto-imported by scanPaths
-│   ├── common/            #   shared across NixOS/Darwin/HM -- host-spec.nix lives here
+│   ├── common/            #   system scope + evalHostSpec only -- host-spec.nix lives here
 │   ├── home/              #   home-manager scope
 │   └── hosts/{common,nixos,darwin}/
 ├── overlays/              # additions / customLib / modifications / unstable
@@ -32,7 +34,7 @@ Private data lives in the sibling [`../nix-secrets`](https://github.com/jhl-hk/n
 │   ├── darwin/<HostName>/ # one Mac per directory, auto-discovered
 │   ├── home/<HostName>/   # one standalone home-manager machine per directory;
 │   │                      #   hostSpec only, not a NixOS module
-│   └── nixos/             # empty skeleton
+│   └── nixos/<HostName>/  # one NixOS machine per directory, auto-discovered
 └── home/jhl/
     ├── common/core/       # the baseline wanted everywhere
     ├── common/optional/   # picked per machine
@@ -41,7 +43,7 @@ Private data lives in the sibling [`../nix-secrets`](https://github.com/jhl-hk/n
 
 ## Three composition lanes + one data bus
 
-**Hosts** — drop a directory in `hosts/darwin/<Name>/` (or `hosts/home/<Name>/`) and that is a new machine; `flake.nix` discovers it with `readDir`. Host files are thin: set `hostSpec.hostName`, then pick what you need from `hosts/common/optional/`. On the `hosts/home/` lane the file is *only* `hostSpec` — it is evaluated on its own, outside any system module tree, so NixOS options do not exist there.
+**Hosts** — drop a directory in `hosts/darwin/<Name>/`, `hosts/nixos/<Name>/` or `hosts/home/<Name>/` and that is a new machine; `flake.nix` discovers it with `readDir`. Host files are thin: set `hostSpec.hostName`, then pick what you need from `hosts/common/optional/`. On the `hosts/home/` lane the file is *only* `hostSpec` — it is evaluated on its own, outside any system module tree, so NixOS options do not exist there.
 
 **Home** — each `(user, machine)` pair maps to `home/jhl/<HostName>.nix`, which imports `common/core` plus a selection of `common/optional`.
 
@@ -61,6 +63,7 @@ Population lives in its own file because both lanes need it and only one has a s
 just                # list every recipe
 just rebuild        # rebuild and switch this machine (runs update-nix-secrets before and check-sops after)
 just build          # build without switching
+just deploy HOST    # switch a remote NixOS host (evaluate here, build and activate there)
 just rebuild-trace  # switch with --show-trace, for debugging evaluation errors
 just check          # nix flake check --all-systems; really builds every machine
 just diff           # git diff, excluding flake.lock
@@ -69,7 +72,7 @@ just fmt            # format with alejandra
 just check-beta     # what the activation-time seed check decides about masApps (macOS only)
 just clean          # clean up old generations
 
-nix develop         # dev shell: sops / age / ssh-to-age / just / gum / alejandra / deadnix
+nix develop         # dev shell: sops / age / ssh-to-age / just / gum / alejandra / deadnix / jq / yq-go
 ```
 
 Secrets:
@@ -82,7 +85,7 @@ just check-sops          # assert every secret this machine declares landed in /
 just verify-sops         # end-to-end canary self-check, see below
 ```
 
-Everything under "Secrets" is macOS-only in practice: sops is wired into the system scope, which the standalone lane does not have. `check-sops`, `verify-sops` and `check-beta` all detect that and skip rather than failing confusingly.
+`check-sops`, `verify-sops` and `check-beta` are macOS-only and skip on Linux. On the standalone lane, check secrets with `systemctl --user status sops-nix`.
 
 The justfile exports `NIX_CONFIG = "extra-experimental-features = nix-command flakes"` to every recipe, so `just` works on a machine that has not switched yet — the config that enables flakes is itself something a rebuild produces. It appends rather than replaces, and is a no-op once a machine has switched.
 
@@ -90,10 +93,10 @@ The justfile exports `NIX_CONFIG = "extra-experimental-features = nix-command fl
 
 ### `scripts/rebuild.sh`
 
-`rebuild` / `build` / `rebuild-trace` all go through `scripts/rebuild.sh [switch|build] [--trace] [HOSTNAME]`, adapted from [ChanningHe/nix-config](https://github.com/ChanningHe/nix-config). Three reasons it isn't just a `darwin-rebuild` line:
+`rebuild` / `build` / `rebuild-trace` all go through `scripts/rebuild.sh [switch|build] [--trace] [HOSTNAME]`, adapted from [ChanningHe/nix-config](https://github.com/ChanningHe/nix-config). It:
 
-- **It picks the lane from `uname`.** macOS resolves `hosts/darwin/<Host>` and activates with `darwin-rebuild`; Linux resolves `hosts/home/<Host>` and activates with `home-manager switch --flake .#<user>@<Host>`. One command, either machine. (Host detection uses `uname -n`, not `hostname` — Arch does not ship `hostname` by default.)
-- **A machine that has never switched has none of the pieces.** On a Mac: no `darwin-rebuild`, no Xcode command line tools, and no Homebrew — nix-darwin *manages* brew but never installs it, so activation fails outright without it. On Linux: no `home-manager`, and usually no flakes enabled either, since that is itself something this repo writes. Both gaps are closed with a plain `nix build` (with `--extra-experimental-features` where needed) followed by activating the built result. First switch on a new machine is still `just rebuild`.
+- **Picks the lane.** macOS resolves `hosts/darwin/<Host>` and activates with `darwin-rebuild`; Linux with `/etc/NIXOS` resolves `hosts/nixos/<Host>` and activates with `nixos-rebuild`; other Linux resolves `hosts/home/<Host>` and activates with `home-manager switch --flake .#<user>@<Host>`. Host detection uses `uname -n`, not `hostname` (Arch does not ship `hostname`).
+- **Bootstraps a machine that has never switched.** On a Mac: installs the Xcode command line tools and Homebrew (nix-darwin manages brew but never installs it), and builds `darwin-rebuild` from the flake. On standalone Linux: builds the activation package with `--extra-experimental-features` and runs `./result/activate`. First switch on a new machine is still `just rebuild`.
 - **It prefers [`nh`](https://github.com/nix-community/nh).** Same activation, but the build runs under nix-output-monitor and finishes with a package diff of what changed. Installed by `home/jhl/common/core/nh.nix`, which also sets `NH_FLAKE` so a bare `nh darwin switch` / `nh home switch` works from any directory.
 
 The recipes always target the current machine; the script takes a host name if you want another one: `scripts/rebuild.sh build SeandeMac-Studio`.
@@ -119,8 +122,9 @@ Then follow the three steps at the top of that file (create the ciphertext → i
 
 | What you want to add | Where it goes |
 |---|---|
-| A system package every machine needs | `environment.systemPackages` in `hosts/common/core/default.nix` |
-| A feature some machines want, with no parameters | `hosts/common/optional/darwin/<name>.nix`, then name it in the host's `imports` |
+| A system package every Mac and NixOS host needs | `environment.systemPackages` in `hosts/common/core/default.nix` |
+| A system package every Mac needs | `environment.systemPackages` in `hosts/common/core/darwin.nix` |
+| A feature some machines want, with no parameters | `hosts/common/optional/{darwin,nixos,common}/<name>.nix`, then name it in the host's `imports` |
 | A feature with parameters and an `enable` switch | `modules/hosts/darwin/<name>/default.nix` (auto-imported) |
 | A Homebrew brew/cask/masApp | `hosts/common/core/darwin/apps.nix` (fleet-wide) or an optional file (some machines) |
 | A dotfile wanted everywhere | `home/jhl/common/core/<name>.nix` + add it to the imports in the sibling `default.nix` |
@@ -129,15 +133,16 @@ Then follow the three steps at the top of that file (create the ciphertext → i
 | A dotfile switched per machine | `home/jhl/common/optional/<category>/<name>.nix`, named in `home/jhl/<Host>.nix` |
 | A brand new Mac | `hosts/darwin/<Host>/default.nix` + `home/jhl/<Host>.nix` |
 | A brand new non-NixOS Linux box | `hosts/home/<Host>/default.nix` (hostSpec only) + `home/jhl/<Host>.nix` |
+| A brand new NixOS machine | `hosts/nixos/<Host>/{default,hardware-configuration}.nix` + `home/jhl/<Host>.nix` |
 | A package not in nixpkgs | `pkgs/common/<name>/package.nix` (auto-discovered) |
 | An override of a nixpkgs package | `modifications` in `overlays/default.nix`; for a newer version prefer `pkgs.unstable.<x>` |
 
-Full templates and edge cases are in `claude/skills/nix-config/references/recipes.md`.
+Full templates and edge cases are in `skills/nix-config/references/recipes.md`.
 
 ## Traps you have to know about
 
-- **`system.stateVersion` has a different type per platform**: nix-darwin wants an integer (`6`), NixOS wants a string (`"25.05"`). Mixing them up is a type error at evaluation time. It pins migration logic, not the running version — do not touch it without reading the release notes. The standalone lane has no `system.stateVersion` at all; its equivalent is `home.stateVersion`, a string, set once in `home/jhl/common/core/default.nix`.
-- **Files under `home/jhl/common/core/` are genuinely cross-platform.** With only Macs live, a macOS path in a "cross-platform" file is harmless *today* and breaks the moment a Linux host returns — `jhlsArchLinux` already proved that once: `/opt/homebrew`, `/etc/profiles/per-user`, `launchd.agents` and `targets.darwin.*` all belong in `common/core/darwin.nix` or `common/core/darwin/`. The non-Darwin sibling is `linux.nix`, not `nixos.nix`, because it is loaded on machines with no NixOS underneath them.
+- **`system.stateVersion` has a different type per platform**: nix-darwin wants an integer (`6`), NixOS wants a string (`"26.05"`). Mixing them up is a type error at evaluation time. It pins migration logic, not the running version — do not touch it without reading the release notes. The standalone lane has no `system.stateVersion` at all; its equivalent is `home.stateVersion`, a string, set once in `home/jhl/common/core/default.nix`.
+- **Files under `home/jhl/common/core/` reach Linux.** `/opt/homebrew`, `/etc/profiles/per-user`, `launchd.agents` and `targets.darwin.*` belong in `common/core/darwin.nix` or `common/core/darwin/`. The non-Darwin sibling is `linux.nix`, not `nixos.nix`, because it is loaded on standalone machines with no NixOS underneath them.
 - **`hosts/home/<Host>/default.nix` is not a module.** It is evaluated on its own by `lib.custom.evalHostSpec` against `modules/common/host-spec.nix` — so `imports`, `environment.systemPackages` and every other NixOS option are unknown options there. Only `hostSpec` exists. The same constraint applies to `hosts/common/core/host-spec.nix`, which both lanes evaluate.
 - **`lib.custom.relativeToRoot` takes a string, not a path literal**. `relativeToRoot "hosts/common/core"` is correct; `relativeToRoot ./hosts/common/core` is not.
 - **`environment.systemPath` must use `lib.mkOrder 1100`**. nix-darwin defines the nix paths at default order 1000 and the `/usr/bin` set at 1200; a plain definition drifts with module order, which can put Homebrew's paths ahead of nix or behind `/usr/bin`.
@@ -157,7 +162,7 @@ Full templates and edge cases are in `claude/skills/nix-config/references/recipe
   `/run/secrets.d` is a 64 MiB **HFS RAM disk** (`mount | grep secrets.d` shows the device number), so `rm -rf` empties it but cannot remove the mount point itself, reporting `Resource busy` — deleting the contents is enough for safety, the rest just reclaims memory. macOS clears `/run` on reboot, but do not rely on that.
 - **`onActivation.cleanup = "zap"`**: any Homebrew package not declared in `apps.nix` is uninstalled on the next switch. Anything from a manual `brew install` is temporary.
 - **Always push changes to nix-secrets.** It is a locked remote input, so local edits are invisible to the flake. `just rebuild` runs `update-nix-secrets` for you, but pushing is on you.
-- **The standalone lane has no sops.** Every secret in this repo is declared in the system scope, which that lane does not have, so `llm` and `wakatime` would run without a key there and fail quietly rather than loudly. Worth re-reading before putting a Linux machine back on that lane.
+- **The standalone lane decrypts as the user.** `home/jhl/common/optional/sops/standalone.nix` uses home-manager sops-nix: secrets land under `$XDG_RUNTIME_DIR` and `~/.config/sops-nix/secrets/`, not `/run/secrets`. Consumers whose defaults point at `/run/secrets/...` must be repointed there with `lib.mkForce`. Never import it on a Mac or NixOS host.
 - **On the standalone lane, `~/.config/nix/nix.conf` is written by this repo** (via `home/jhl/common/optional/nix/standalone.nix`), because the distro owns `/etc/nix`. Do not import that file on a Mac: there the same file would silently outrank the `nix.conf` nix-darwin generates. Note also that the flake's `nixConfig` substituters are refused for an untrusted user — fixing that means `trusted-users = jhl` in the root-owned `/etc/nix/nix.conf`, which is outside this repo.
 
 ## References

@@ -24,7 +24,7 @@
 #      llm:
 #          api_key: sk-xxxxxxxx
 #
-#  mode 0400 with owner set to the user: Zed and opencode both run as the user
+#  mode 0400 with owner set to the user: Zed and omp both run as the user
 #  and could not read a root-only file.
 #
 #############################################################

@@ -99,10 +99,9 @@ let
   };
 
   # Commit messages get their own model. commit_message_model is a Zed concept,
-  # so the id is hand-picked here rather than in modules/home/llm.nix -- the
-  # same split as opencode.nix's per-agent agentModels.
+  # so the id is hand-picked here rather than in modules/home/llm.nix.
   #
-  # And like there, the id is checked against the refreshed list instead of
+  # The id is checked against the refreshed list instead of
   # trusted: `just llm-models` can retire it from under this file, and falling
   # back to the default beats writing a model Zed cannot resolve.
   commitModelId = "cheap";
@@ -211,19 +210,6 @@ in {
           default_model = defaultModelRef // {enable_thinking = false;};
           commit_message_model = commitModelRef;
         };
-
-      agent_servers = {
-        gemini.type = "registry";
-        codex-acp.type = "registry";
-        claude-acp = {
-          type = "registry";
-          default_config_options = {
-            mode = "auto";
-            effort = "default";
-            fast = false;
-          };
-        };
-      };
 
       edit_predictions =
         {

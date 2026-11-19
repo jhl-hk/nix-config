@@ -5,11 +5,11 @@
 #
 #  The Linux counterpart of the Homebrew baseline
 #  (hosts/common/core/darwin/apps.nix) plus dev-extras.nix.
-#  Mac-only entries (mas, xcodes, ssh-askpass, YubiKey tools, mole,
-#  antigravity-cli) are left out.
+#  Mac-only entries (mas, xcodes, ssh-askpass, YubiKey tools, mole) are left
+#  out.
 #
-#  tmux and opencode are installed here because their home-manager
-#  modules set package = null and expect Homebrew to provide them.
+#  tmux is installed here because its home-manager module sets
+#  package = null and expects Homebrew to provide it.
 #
 #############################################################
 {
@@ -32,11 +32,6 @@
     ripgrep
     fd
     jq
-
-    # Coding agents
-    claude-code
-    codex
-    opencode
 
     # Toolchains
     gcc

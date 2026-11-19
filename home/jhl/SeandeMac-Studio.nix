@@ -9,8 +9,6 @@
     ./common/core
     ./common/optional/editors/zed.nix
     ./common/optional/editors/typora.nix
-    ./common/optional/ai/antigravity.nix
-    ./common/optional/ai/codex.nix
     ./common/optional/ai/omp.nix
   ];
 }

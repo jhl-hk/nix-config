@@ -78,8 +78,8 @@ let
 in {
   llm.defaultProvider = "JianyueLab";
 
-  # One provider, not two. Zed, opencode and pi each render a single
-  # api_url/baseURL per provider and none of them has a fallback field, so a
+  # One provider, not two. Zed and omp each render a single api_url/baseUrl
+  # per provider and neither has a fallback field, so a
   # second provider would be a second thing to pick from a menu, not a
   # failover. The choice is made at refresh time instead: `just llm-models`
   # probes both gateways and writes the first one that answered into
@@ -92,7 +92,7 @@ in {
   #
   # Not request-time failover: a gateway that dies after a rebuild stays
   # selected until the next `just llm-models`. Real failover would have to
-  # live in front of both hosts, not in three editor configs.
+  # live in front of both hosts, not in the editor and agent configs.
   llm.providers.JianyueLab = let
     active = builtins.fromJSON (builtins.readFile ./llm/active.json);
 
@@ -107,19 +107,18 @@ in {
     # stopped listing gpt-6.1-sol in /v1/models while still serving it, and
     # "not listed" is not the same as "not callable".
     #
-    # This matters far out of proportion to one id: zed.nix, opencode.nix and
-    # pi.nix all gate their default on `lib.elem defaultModel models`, so an
-    # id missing here makes all three silently write no default at all. That
-    # is how Zed's AI commit generator vanished -- commit_message_model sits
-    # inside the same `lib.optionalAttrs hasDefault` as default_model.
+    # This matters far out of proportion to one id: zed.nix gates its default
+    # on `lib.elem defaultModel models`, so an id missing here makes it
+    # silently write no default at all. That is how Zed's AI commit generator
+    # vanished -- commit_message_model sits inside the same
+    # `lib.optionalAttrs hasDefault` as default_model.
     #
-    # It also re-enables the hand-picked ids checked against this list:
-    # zed's commitModelId and opencode's agentModels.plan, both .
+    # It also re-enables zed's hand-picked commitModelId, checked against this
+    # list.
     #
     # If calls to this model ever start failing, delete the union rather than
     # working around it downstream -- the guard exists to keep an unusable id
-    # out of three editor configs, and this line is the one thing overriding
-    # it.
+    # out of the configs, and this line is the one thing overriding it.
     models = lib.unique (active.models ++ [pinnedDefault]);
 
     defaultModel = pinnedDefault;
@@ -131,7 +130,7 @@ in {
     envVar = "JIANYUE_LAB_API_KEY";
   };
 
-  # Terminal: this is the path for opencode and for zed started from a shell
+  # Terminal: this is the path for omp and for zed started from a shell
   programs.zsh.initContent = lib.mkIf (active != {}) (
     lib.concatStrings (lib.mapAttrsToList (_: exportLine) active)
   );

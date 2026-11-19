@@ -13,7 +13,6 @@
 {
   imports = [
     ./common/core
-    ./common/optional/ai/codex.nix
     ./common/optional/ai/omp.nix
     ./common/optional/desktop/DankMaterialShell.nix
     ./common/optional/desktop/fcitx5.nix

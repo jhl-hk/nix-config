@@ -6,33 +6,18 @@
 }:
 #############################################################
 #
-#  wakatime-cli configuration
+#  wakatime-cli and its configuration
 #
 #  ~/.wakatime.cfg is the one file every WakaTime consumer on these machines
-#  reads, because they all shell out to some wakatime-cli:
+#  reads:
 #
-#    opencode      opencode-wakatime plugin, declared in opencode.nix
 #    omp           wakatime-omp extension, linked in optional/ai/omp.nix
-#    Claude Code   claude-code-wakatime, declared as a marketplace + enabled
-#                  plugin in claude.nix
-#    Antigravity   antigravity-cli-wakatime, installed by the activation block
-#                  in optional/ai/antigravity.nix
-#    Codex CLI     codex-cli-wakatime, declared in /etc/codex/config.toml by
-#                  hosts/common/optional/darwin/codex.nix
 #    Zed           the wakatime extension in optional/editors/zed.nix
 #    wakatime cask the menu-bar app from apps.nix
 #
-#  -- Which wakatime-cli each one gets -----------------------------------
-#
-#  Not one binary, two. opencode-wakatime and omp's wakatime-omp resolve
-#  `which wakatime-cli` and so use the nixpkgs build that opencode.nix puts on
-#  PATH. The Antigravity and Codex plugins do not look at PATH at all: both
-#  hardcode ~/.wakatime/wakatime-cli-<os>-<arch>, download it on first use,
-#  and overwrite it whenever its version differs from the latest GitHub tag.
-#
-#  That split is deliberate and not worth closing -- a symlink from that path
-#  into the store would be replaced by the next update check anyway. Both
-#  binaries read the same settings below, so the key reaches all of them.
+#  wakatime-omp resolves `which wakatime-cli`, so the nixpkgs build is put on
+#  PATH here rather than letting a plugin download and self-update its own
+#  copy out of GitHub releases.
 #
 #  -- Why this file can be nix-managed at all ----------------------------
 #
@@ -67,6 +52,8 @@
     default = "/run/secrets/wakatime/api_key";
     description = "Decrypted WakaTime API key.";
   };
+
+  config.home.packages = [pkgs.unstable.wakatime-cli];
 
   config.home.file.".wakatime.cfg".source = (pkgs.formats.ini {}).generate "wakatime.cfg" {
     settings = {

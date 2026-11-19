@@ -45,7 +45,7 @@
       inputs.nixpkgs.follows = "nixpkgs";
     };
 
-    # Claude Code skills from the private JianyueLab Docs repo.
+    # Agent skills from the private JianyueLab Docs repo.
     #
     # flake = false: a plain content tree with no flake.nix, so the input is
     # just a store path.
@@ -53,7 +53,7 @@
     # -- Why this is an input and not vendored ------------------------------
     #
     # jhl-hk/nix-config is a **public** repo, and Docs is private.
-    # claude/skills/<name> in-tree (the apple-design route) would publish
+    # skills/<name> in-tree would publish
     # JianyueLab internals to GitHub. As an input, only the URL and the locked
     # rev land here -- the same trade nix-secrets above already makes, and the
     # same one that makes `just check` need SSH auth to github.com on every
@@ -63,8 +63,8 @@
     # changes nothing until it is pushed and re-locked with
     # `nix flake update jianyuelab-docs`.
     #
-    # JianyueLab/skills is not an input. claude.nix links it live from the
-    # local checkout at ~/Documents/Dev/JianyueLab/skills.
+    # JianyueLab/skills is not an input. home/jhl/common/core/skills.nix links
+    # it live from the local checkout at ~/Documents/Dev/JianyueLab/skills.
     #
     # Docs carries the whole knowledge base because
     # skills/jianyuelab-docs/docs is a git symlink (mode 120000) to ../../docs
@@ -76,16 +76,8 @@
       flake = false;
     };
 
-    # The jyl-usage plugin, for **Antigravity only** -- see the activation
-    # block in home/jhl/common/optional/ai/antigravity.nix.
-    #
-    # Claude Code gets the same repo by a different route: claude.nix names it
-    # as a *marketplace* and Claude Code clones HEAD at runtime. That is not
-    # duplication to clean up, it is two consumers with two mechanisms -- one
-    # has a plugin installer that resolves marketplaces, the other takes a
-    # directory. The consequence is worth knowing: this input is pinned by
-    # flake.lock while the Claude Code copy is not, so the two can sit on
-    # different commits until `nix flake update jianyuelab-plugins`.
+    # JianyueLab/claude-plugin, for the jyl-memory hook omp loads from
+    # ~/.omp/agent/hooks/post/ (home/jhl/common/optional/ai/omp.nix).
     #
     # Private, hence SSH, like the two inputs above.
     jianyuelab-plugins = {
@@ -93,33 +85,7 @@
       flake = false;
     };
 
-    # WakaTime's Antigravity plugin -- heartbeats for agy, the way
-    # claude-code-wakatime and opencode-wakatime already cover their harnesses.
-    # Public, MIT-adjacent (BSD-3), so no SSH.
-    #
-    # An input rather than `agy plugin install <url>`: agy 1.2.0's installer
-    # only accepts a directory ("install target must be a directory"), and
-    # taking the URL form would re-clone HEAD at runtime instead of honouring
-    # flake.lock. Same reasoning as jianyuelab-plugins above, which this sits
-    # beside in ~/.gemini/config/plugins/.
-    #
-    # flake = false: a plain content tree, so the input is just a store path.
-    wakatime-antigravity = {
-      url = "github:wakatime/antigravity-wakatime";
-      flake = false;
-    };
-
-    # The same, for Codex CLI. Note the repo is itself a *marketplace* -- it
-    # carries .agents/plugins/marketplace.json declaring one plugin -- so
-    # hosts/common/optional/darwin/codex.nix points Codex at this store path
-    # as a local marketplace rather than letting it clone the git one into
-    # ~/.codex/.tmp/marketplaces, which flake.lock could not pin.
-    wakatime-codex = {
-      url = "github:wakatime/codex-cli-wakatime";
-      flake = false;
-    };
-
-    # The same, for omp: a single self-contained extension file that omp
+    # WakaTime for omp: a single self-contained extension file that omp
     # auto-loads from ~/.omp/agent/extensions/. Linked by
     # home/jhl/common/optional/ai/omp.nix rather than `omp plugin install`,
     # which would clone HEAD at runtime instead of honouring flake.lock.
@@ -138,101 +104,6 @@
     };
     notchnotch-agents = {
       url = "https://github.com/JianyueLab-Org/notch/releases/download/v27.2.0/NotchNotchAgents-27.2.0.zip";
-      flake = false;
-    };
-
-    # Anthropic's skills repo, for the four document-processing skills
-    # (docx/pdf/pptx/xlsx). Public, so no SSH and no touch on `nix flake update`.
-    #
-    # These are taken as an input rather than through `claude plugin install`
-    # because the plugin carries no hooks -- it is a pure skill library, so
-    # nothing is lost by linking the directories directly, and flake.lock
-    # pins them instead of Claude Code re-cloning HEAD at runtime.
-    #
-    # The upstream marketplace.json selects exactly these four out of the 19
-    # skills in the repo; home/jhl/common/core/claude.nix repeats that list.
-    # Check it against the "skills" array there when bumping this input.
-    anthropic-skills = {
-      url = "github:anthropics/skills";
-      flake = false;
-    };
-
-    # emilkowalski/skills -- design/animation taste for UI work (MIT, public).
-    #
-    # apple-design used to be vendored under claude/skills/ from this repo,
-    # copied by hand with no upstream tracking. As an input the whole set is
-    # scanned instead, so `nix flake update emil-skills` picks up both edits
-    # to the existing skills and any new ones, and the license stays with the
-    # source rather than being re-published here.
-    emil-skills = {
-      url = "github:emilkowalski/skills";
-      flake = false;
-    };
-
-    # bird-chinese-community/BIRD.skills -- BIRD / birdcc skills (MIT, public).
-    bird-skills = {
-      url = "github:bird-chinese-community/BIRD.skills";
-      flake = false;
-    };
-
-    # Leonxlnx/taste-skill -- frontend art-direction skill (MIT, public).
-    # One skill: skills/taste-skill, named design-taste-frontend.
-    taste-skill = {
-      url = "github:Leonxlnx/taste-skill";
-      flake = false;
-    };
-
-    # iart-ai/web-animation-skills -- GSAP, SVG, 60fps and micro-interaction
-    # skills (MIT, public).
-    web-animation-skills = {
-      url = "github:iart-ai/web-animation-skills";
-      flake = false;
-    };
-
-    # vercel-labs/open-agents (MIT, public). Only one skill is taken:
-    # .agents/skills/web-animation-design. Named by hand in claude.nix.
-    open-agents = {
-      url = "github:vercel-labs/open-agents";
-      flake = false;
-    };
-
-    # -- Privacy / compliance skills ----------------------------------------
-    #
-    # Three public marketplaces, all hookless, so they follow the same rule as
-    # anthropic-skills above: taken as inputs and linked directly rather than
-    # installed by `claude plugin install`, which would re-clone HEAD at
-    # runtime instead of honouring flake.lock.
-    #
-    # None of them is a flat skills/ directory -- the first two nest under
-    # plugins/<plugin>/skills/<skill>, the third under <team>/skills/<skill> --
-    # so claude.nix reaches past each repo root rather than scanning it. Read
-    # the scanning comments there before bumping any of these: how much of each
-    # repo is wanted is the whole question.
-
-    # 283 privacy skills across 21 plugins (Apache-2.0). Only the
-    # gdpr-compliance-skills plugin is taken -- 18 of the 283. The other 20
-    # plugins are re-cuts of the same pool (healthcare, us-state, children's
-    # privacy, ...) and scanning the repo would enable all of it.
-    privacy-skills = {
-      url = "github:mukul975/Privacy-Data-Protection-Skills";
-      flake = false;
-    };
-
-    # One skill per compliance framework, 33 of them (MIT): GDPR, ISO 27001,
-    # SOC 2, EU AI Act, HIPAA, PCI, NIST, WCAG and the rest. Scanned whole --
-    # the framework a question lands on is not knowable in advance, and each
-    # skill is inert until its own name comes up.
-    grc-skills = {
-      url = "github:Sushegaad/Claude-Skills-Governance-Risk-and-Compliance";
-      flake = false;
-    };
-
-    # 400+ skills across 100 plugins (MIT), of which exactly one is wanted:
-    # ra-qm-team/skills/gdpr-dsgvo-expert, which covers German BDSG on top of
-    # GDPR and ships DPIA/DSAR scripts. Named by hand in claude.nix; do not
-    # scan this input.
-    alireza-skills = {
-      url = "github:alirezarezvani/claude-skills";
       flake = false;
     };
   };

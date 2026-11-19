@@ -4,9 +4,8 @@
 #  Stay awake on AC
 #
 #  For a Mac that is administered over ssh: closing the lid or walking away
-#  should not take it off the network. jhlsMacBookAir runs the OpenClaw
-#  gateway and is reached over Tailscale, so a sleeping laptop reads to
-#  everyone else as an outage.
+#  should not take it off the network. jhlsMacBookAir is reached over
+#  Tailscale, so a sleeping laptop reads to everyone else as an outage.
 #
 #  -- Why pmset and not power.sleep --------------------------------------
 #

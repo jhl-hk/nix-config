@@ -9,9 +9,8 @@
 #  API key for WakaTime
 #
 #  Decryption only. The key is read by wakatime-cli, which every consumer on
-#  these machines goes through: the opencode-wakatime plugin
-#  (home/jhl/common/core/opencode.nix), Zed's wakatime extension, and the
-#  wakatime cask.
+#  these machines goes through: omp's wakatime extension, Zed's wakatime
+#  extension, and the wakatime cask.
 #
 #  -- How the key reaches wakatime-cli ------------------------------------
 #
@@ -77,8 +76,8 @@ in {
     }
   ];
 
-  # mode 0400 with owner set to the user: wakatime-cli is spawned by opencode
-  # and Zed, both of which run as the user and could not read a root-only file.
+  # mode 0400 with owner set to the user: wakatime-cli is spawned by omp and
+  # Zed, both of which run as the user and could not read a root-only file.
   sops.secrets."wakatime/api_key" = {
     inherit sopsFile;
     owner = config.hostSpec.username;

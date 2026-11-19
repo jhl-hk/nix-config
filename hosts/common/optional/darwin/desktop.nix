@@ -56,7 +56,6 @@
       "wakatime"
 
       # Editors
-      "antigravity" # Google's agentic IDE
       "cursor"
       # Office apps one by one: the microsoft-office suite cask always
       # installs OneNote too, with no way to leave it out.
@@ -92,10 +91,7 @@
       "spotify"
 
       # AI
-      "claude-code@latest"
-      "codex"
       "chatgpt"
-      "grok-build" # config inherited from ~/.claude, see home/jhl/common/core/grok.nix
       "grok-bot"
       "grammarly-desktop"
 

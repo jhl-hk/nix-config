@@ -17,7 +17,7 @@
 #     separate option trees, so a rename there fails silently here -- wrangler
 #     would simply fall back to asking you to log in.
 #
-#  Terminal only, like ./jyl-usage.nix and unlike ./llm.nix: wrangler is a
+#  Terminal only, unlike ./llm.nix: wrangler is a
 #  CLI, so there is no Dock-launched consumer to justify putting a second copy
 #  of the token into the login-session-global environment via launchctl setenv.
 #
