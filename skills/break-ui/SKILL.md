@@ -7,25 +7,18 @@ description: Use when asked to stress-test, break, or find edge cases in a compo
 
 ## Overview
 
-Find the realistic worst case for every value a UI renders, put it beside the demo data behind a dev-only toggle, and report what broke with a fix for each. This skill does not redesign the component, critique its taste (emil-design-eng), or review its motion (improve-animations).
+Find the realistic worst case for every value a UI renders, put it beside the demo data behind a dev-only toggle, and report what broke with a fix for each.
 
 ## When to Use
 
 - A component or screen looks right with demo data and needs testing against real data.
 - Before shipping a list, table, card, avatar row, header count, or anything that renders user-provided strings.
 
-Not for: functional bugs, styling decisions without data stress.
+Not for: redesigning the component, functional bugs, styling decisions without data stress.
 
 ## Core Pattern
 
-You are the most annoying real user this component will ever meet. Your name is Aleksandra Wiśniewska-Kowalczyk, your colleague's email is `bartholomew.fitzgerald@northwind-industries-holdings.example.com`, your intern is called Jo, and your workspace has 1,284 members. None of that is contrived. Every one of those people exists in production somewhere, and the UI was designed against "Jane Doe, jane@acme.com, 12 members".
-
-Demo data is chosen, usually without anyone noticing, to make the design look good: names that fit on one line, counts that never need a separator, every optional field filled in. The job here is to undo that choice, one field at a time.
-
-Two failure modes, and the first is worse:
-
-1. **Nonsense data.** `"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"` and 5,000-character names prove nothing. The designer will rightly say "that never happens" and stop listening. Every worst-case value must be something a real user could plausibly produce, or the longest value the backend actually accepts.
-2. **Stopping at long text.** Long names are the obvious break. The ones that ship are the short name that leaves an orphaned dash, the missing avatar, the count of exactly 1 ("1 members"), the empty list, the badge whose text got translated.
+Demo data is chosen to make the design look good ("Jane Doe, jane@acme.com, 12 members"); real users are Aleksandra Wiśniewska-Kowalczyk, `bartholomew.fitzgerald@northwind-industries-holdings.example.com`, an intern called Jo, and a workspace with 1,284 members. Undo that choice one field at a time.
 
 ## Hard Rules
 
@@ -100,7 +93,7 @@ Each of these appears in the screenshot. The cause in the right column is almost
 | Email or URL runs past the edge | No break opportunities in the string | `overflow-wrap: anywhere` on that element |
 | Trailing action (••• menu, button) pushed off-screen or clipped | Middle content took all the space | `min-width: 0` on the middle, `flex-shrink: 0` on the action |
 | Badge wraps onto two lines | Badge allowed to shrink | `white-space: nowrap; flex-shrink: 0` on the badge, and decide what yields instead |
-| Avatar centered against a three-line name looks adrift | `align-items: center` on rows of varying height | Top-align (`align-items: flex-start`) once text can wrap, |
+| Avatar centered against a three-line name looks adrift | `align-items: center` on rows of varying height | Top-align (`align-items: flex-start`) once text can wrap |
 | Last row cut off at a hard edge mid-glyph | Fixed-height container with no fade or scroll affordance | Visible scrollbar or a fade mask, and ensure `overflow` is intended |
 | Long word breaks mid-word in a heading | `word-break: break-all` | `overflow-wrap: anywhere` breaks only when it has to |
 | Wrong initials (`"J"` for "Jo", `"CI"` for "… Montgomery III", `"�"` for an emoji-first name) | `.split(' ')[0][0]` style code | Initials from grapheme clusters (`Intl.Segmenter`), first + last word, fallback icon |
@@ -127,9 +120,9 @@ Every long string forces this choice. Make it per field, not globally:
 
 **Completion criterion:** every catalog row that applies has been tried, every width and environment above has been checked, and every break has a signature, a cause, and a fix.
 
-### Phase 5 — Report and stop
+### Phase 5 — Report
 
-Present the findings in the format below, leave the toggle running, and stop. The user flips the toggle, looks, and decides.
+Present the findings in the format below and leave the toggle running (Hard Rule 5). The user flips the toggle, looks, and decides.
 
 ### Phase 6 — Fix on request
 
@@ -138,6 +131,8 @@ When the user says which to fix, apply those fixes in the component, using the p
 Keep the worst-case fixture afterward unless the user says otherwise. It's the regression test for the next time someone touches the component. The toggle stays dev-only either way.
 
 ## Required Output Format
+
+Tone: matter-of-fact, never smug. The component isn't badly built; it was built against kind data, which is how nearly everything gets built. Name the break, show the value that caused it, give the fix. If nothing breaks for a field, say so. A short report on a sturdy component is a good result.
 
 ### Part 1 — What broke
 
@@ -166,11 +161,14 @@ Close with where the toggle is (URL or file path), the states it has, and: "Say 
 
 | Invocation | Behavior |
 | --- | --- |
-| `<component or screen>` | Full workflow: map → worst case → toggle → break → report, then stop |
+| `<component or screen>` | Full workflow: map → worst case → toggle → break → report (Hard Rule 5) |
 | `<component> + fix` | Same, then apply every fix that isn't in "Decisions for you" |
 | `fix all` / `fix 1, 3` | Apply the named fixes from the last report, re-verify all states |
 | `data only <component>` | Produce the worst-case fixture and toggle without the report |
 
-## Tone
+## Common Mistakes
 
-Matter-of-fact, never smug. The component isn't badly built; it was built against kind data, which is how nearly everything gets built. Name the break, show the value that caused it, give the fix. If nothing breaks for a field, say so. A short report on a sturdy component is a good result.
+| Mistake (worst first) | Fix |
+| --- | --- |
+| **Nonsense data.** `"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"` and 5,000-character names prove nothing; the designer will rightly say "that never happens" and stop listening. | Every worst-case value is something a real user could plausibly produce, or the longest value the backend actually accepts (Hard Rule 1). |
+| **Stopping at long text.** Long names are the obvious break. | Hunt the ones that ship: the short name that leaves an orphaned dash, the missing avatar, the count of exactly 1 ("1 members"), the empty list, the badge whose text got translated. |

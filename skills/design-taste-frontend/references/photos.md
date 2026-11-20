@@ -227,11 +227,10 @@ bun <skill>/scripts/photos.mjs credits --out . --write     # the footer line and
 - **No print, grade or effect on any photograph**: no halftone, dither, duotone, engraving, grain, glitch, filter or
   blend mode, and no canvas over half of it. Mixed light gets a crop and one ratio system, not an effect. A print is a
   tech page's one effect, on a non-photo ground.
-- **Hover** (PH-25, one wording with `motion.md`): a photograph in a card that links zooms to 1.03 (1.02 to 1.03 is the
-  range) over 600 ms inside its own mask (the frame is `overflow: hidden`, never grows or moves); a photograph outside a
+- **Hover** (PH-25): the photograph hover is the hover layer's (`motion.md`, The hover layer); a photograph outside a
   linked card does nothing, so on a place every photograph that leads somewhere is a link (a room to its booking,
-  goods to their card, the place to its story) and the hover shows in every section. No tilt, no rotation, no Ken Burns at rest; on a place the photograph never changes
-  opacity. The linked card also lifts 2px (`motion.md`).
+  goods to their card, the place to its story) and the hover shows in every section. No tilt, no rotation, no Ken Burns
+  at rest; on a place the photograph never changes opacity.
 - Place photographs are square-cornered, with no border, shadow, overlay or frame; product and service use one radius
   for every photograph; software windows one radius of 12 to 20px.
 

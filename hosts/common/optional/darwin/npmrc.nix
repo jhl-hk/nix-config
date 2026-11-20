@@ -1,6 +1,7 @@
 {
   config,
   inputs,
+  lib,
   ...
 }:
 #############################################################
@@ -51,10 +52,28 @@
 #
 #############################################################
 let
+  sopsFile = "${inputs.nix-secrets}/secrets/shared.yaml";
   user = config.hostSpec.username;
 in {
+  assertions = [
+    {
+      assertion =
+        builtins.pathExists sopsFile
+        && lib.hasInfix "npm:\n    jianyuelab_token:" (builtins.readFile sopsFile);
+      message = ''
+        hosts/common/optional/darwin/npmrc.nix needs npm.jianyuelab_token in
+        secrets/shared.yaml.
+
+          just sops-edit shared
+
+            npm:
+                jianyuelab_token: ghp_xxxxxxxxxxxx
+      '';
+    }
+  ];
+
   sops.secrets."npm/jianyuelab_token" = {
-    sopsFile = "${inputs.nix-secrets}/secrets/shared.yaml";
+    inherit sopsFile;
     owner = user;
     mode = "0400";
   };

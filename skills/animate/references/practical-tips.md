@@ -14,28 +14,7 @@ GPU/CPU rendering handoff moves the element by 1px.
 
 ## Sequential tooltips feel slow
 
-First tooltip: delay + animation. Subsequent tooltips while one is open: instant.
-
-```css
-.tooltip {
-  transition:
-    transform 125ms ease-out,
-    opacity 125ms ease-out;
-  transform-origin: var(--transform-origin);
-}
-
-.tooltip[data-starting-style],
-.tooltip[data-ending-style] {
-  opacity: 0;
-  transform: scale(0.97);
-}
-
-.tooltip[data-instant] {
-  transition-duration: 0ms;
-}
-```
-
-Radix UI and Base UI set `data-instant`.
+First tooltip: delay + animation. Subsequent tooltips while one is open: instant, via `data-instant`. Code: RECIPES.md › Tooltip.
 
 ## Transform-origin variables
 
@@ -68,25 +47,25 @@ Tailwind v4's `hover:` variant applies only on devices that support hover.
 
 ## Small tap targets
 
-Minimum 44px (Apple and WCAG). Enlarge the hit area with a pseudo-element, without changing layout:
+Minimum sizes: 44×44pt (Apple HIG); 24×24 CSS px (WCAG 2.5.8, AA); 44×44 CSS px (WCAG 2.5.5, AAA). Enlarge the hit area with a pseudo-element, without changing layout:
 
 ```css
 @utility touch-hitbox {
   position: relative;
-}
 
-@utility touch-hitbox::before {
-  content: "";
-  position: absolute;
-  display: block;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  width: 100%;
-  height: 100%;
-  min-height: 44px;
-  min-width: 44px;
-  z-index: 9999;
+  &::before {
+    content: "";
+    position: absolute;
+    display: block;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 100%;
+    height: 100%;
+    min-height: 44px;
+    min-width: 44px;
+    z-index: 9999;
+  }
 }
 ```
 
@@ -98,22 +77,7 @@ Minimum 44px (Apple and WCAG). Enlarge the hit area with a pseudo-element, witho
 
 ## Still feels off after easing and timing: add blur
 
-Subtle blur blends the two states so the eye reads one object in motion.
-
-```css
-.button-transition {
-  transition:
-    transform 150ms ease-out,
-    filter 150ms ease-out;
-}
-
-.button-transition:active {
-  transform: scale(0.97);
-  filter: blur(2px);
-}
-```
-
-Keep blur under 20px; larger blur is expensive, especially in Safari.
+Subtle blur blends the two states so the eye reads one object in motion. Code (crossfade and press variants, the 20px limit): RECIPES.md › Masking a crossfade that won't settle.
 
 ## Perceived speed
 

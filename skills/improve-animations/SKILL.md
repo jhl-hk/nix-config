@@ -1,6 +1,6 @@
 ---
 name: improve-animations
-description: Use when reviewing existing animation or motion code — auditing a codebase's motion ("improve the animations", "audit the motion", "make this app feel better", a roadmap of animation fixes); reviewing the transitions, keyframes, easing, springs or Framer Motion code in a diff, PR, component or file; asking "what could be animated here?" or to "make this feel more alive"; or when an app "feels slow", "has too much animation", "feels over-animated", the user wants to "tone down the motion" or asks which animations to remove. Not for building a new animation; use animate. Not for diagnosing jank or dropped frames; use animation-performance. Not for implementing reduced-motion support; use accessible-animation.
+description: Use when reviewing existing animation or motion code — auditing a codebase's motion ("improve the animations", "audit the motion", "make this app feel better", a roadmap of animation fixes); reviewing the transitions, keyframes, easing, springs or Framer Motion code in a diff, PR, component or file; asking "what could be animated here?"; or when an app "feels slow", "has too much animation", "feels over-animated", the user wants to "tone down the motion" or asks which animations to remove. Not for building a new animation; use animate. Not for diagnosing jank or dropped frames; use animation-performance. Not for implementing reduced-motion support; use accessible-animation. Not for reviewing non-motion code; use requesting-code-review.
 ---
 
 # Improve Animations
@@ -15,14 +15,8 @@ Judge existing motion with a high craft bar and with restraint. Motion that runs
 |---|---|---|
 | "Improve the animations", "audit the motion", "make this app feel better", a roadmap of fixes across a codebase | Audit | `plans/` only |
 | Review the motion in a diff, PR, component or file | Review | nothing |
-| "What could be animated here?", "make this feel more alive" | Find | nothing |
-| "Feels slow", "too much animation", "over-animated", "tone down the motion", "what should we remove?" | Remove | source, subtraction only |
-
-Not for:
-
-- Building a new animation: use animate. Find mode proposes motion; implementation goes through a plan.
-- Jank in a known animation: use animation-performance.
-- Reviewing non-motion code: use a general code review skill.
+| "What could be animated here?" | Find | nothing |
+| "Feels slow", "too much animation", "over-animated", "tone down the motion", "what should we remove?" | Remove | source, subtraction only ([references/remove-mode.md](references/remove-mode.md)) |
 
 ## Core Pattern
 
@@ -35,21 +29,14 @@ Every animation goes through these tests in order; the first match decides. Find
 | 1 | Keyboard-triggered: shortcut, command palette, focus jump, arrow-key navigation | Reject | Delete |
 | 2 | Seen 100+ times/day: core navigation, tab switches, list rows, route changes inside the app | Reject | Delete |
 | 3 | On functional data the user reads or acts on: charts, tables, numbers, dashboards | Reject | Delete, unless it shows a real change in value on user action (a number ticking old → new). Re-animating on every refresh or mount is decoration |
-| 4 | No purpose from the list below | Reject, unless a rare/first-time moment (delight) | Delete, unless a rare/first-time moment (onboarding, empty state, success): Keep |
-| 5 | Seen tens of times/day: hover, frequent toggles, list expansion | Near-imperceptible motion only (fast, subtle) | Reduce (see Remove mode) |
+| 4 | No purpose (animate's list, below) | Reject, unless a rare/first-time moment (delight) | Delete, unless a rare/first-time moment (onboarding, empty state, success): Keep |
+| 5 | Seen tens of times/day: hover, frequent toggles, list expansion | Near-imperceptible motion only (fast, subtle) | Reduce ([references/remove-mode.md](references/remove-mode.md)) |
 | 6 | Over budget: only works slow and showy, UI animation > 300ms, or a slide/scale where a fade carries the same meaning | Reject | Reduce |
 | — | None of the above | Eligible | Keep |
 
-Keyboard-initiated actions are a disqualifier, not a judgment call: repeated hundreds of times a day, animation makes them feel slow and disconnected. Raycast has no open/close animation; that is the optimal experience.
+Keyboard-initiated actions are a disqualifier, not a judgment call: repeated hundreds of times a day, animation makes them feel slow and disconnected.
 
-Purposes — name one explicitly; "it looks cool" is not one:
-
-- **Feedback** — the interface heard the user (press scale, hold-to-confirm fill).
-- **Spatial consistency** — where something came from or went (toast enters and exits the same edge; panel grows from its trigger).
-- **State indication** — a state change made legible (morphing button, expanding accordion).
-- **Preventing a jarring change** — content that would teleport, appear or vanish with no bridge.
-- **Explanation** — demonstrates how a feature works (marketing and onboarding only).
-- **Delight** — rare/first-time moments only.
+Purposes: the list in animate (Implementation › Purpose). Name one explicitly; "it looks cool" is not one.
 
 Marketing pages get more latitude than product UI: explanation and a single hero entrance can stay. Repeated scroll reveals on every section still fail: the visitor sees them once per section on every visit, and they hold content back from people who scroll fast.
 
@@ -57,12 +44,12 @@ Marketing pages get more latitude than product UI: explanation and a single hero
 
 | Before | After | Why |
 | --- | --- | --- |
-| `transition: all 300ms` | `transition: transform 200ms ease-out` | Specify exact properties; `all` animates unintended properties off-GPU |
+| `transition: all 300ms` | `transition: transform 200ms var(--ease-out)` | Specify exact properties; `all` animates unintended properties off-GPU |
 | `transform: scale(0)` | `transform: scale(0.95); opacity: 0` | Nothing appears from nothing — `scale(0)` looks like it came from nowhere |
-| `ease-in` on dropdown | `ease-out` + custom curve | `ease-in` delays the moment the user watches most; feels sluggish |
+| `ease-in` on dropdown | `ease-out` via animate's `--ease-out` token | `ease-in` delays the moment the user watches most; feels sluggish |
 | `transform-origin: center` on popover | `var(--transform-origin)` (Base UI) | Popovers scale from their trigger, not center (modals are exempt) |
 
-Cite every finding as `file:line`. Copy each curve, duration and spring config from [AUDIT.md](AUDIT.md); never approximate.
+Cite every finding as `file:line`. Copy each curve, duration and spring config from animate, and every other value from [AUDIT.md](AUDIT.md); never approximate. What to flag, and how hard: the Severity table.
 
 ## Quick Reference
 
@@ -80,8 +67,8 @@ Prefer earlier fixes over later ones:
 
 1. **Delete the animation** (high-frequency, no purpose, keyboard-triggered).
 2. **Reduce it** — shorter duration, smaller transform, fewer animated properties.
-3. **Fix the easing** — `ease-in` → `ease-out` or a strong custom cubic-bezier.
-4. **Fix the origin/physicality** — correct `transform-origin`; `scale(0)` → `scale(0.95)` + opacity.
+3. **Fix the easing** — curves: animate; example row in Findings.
+4. **Fix the origin/physicality** — example rows in Findings.
 5. **Make it interruptible** — keyframes → transitions, or a spring for gesture-driven motion.
 6. **Move it to the GPU** — layout properties → `transform`/`opacity`; Motion shorthand before 14.2 → upgrade or full `transform` string; WAAPI for programmatic CSS.
 7. **Asymmetric timing** — slow the deliberate phase, snap the response.
@@ -92,8 +79,9 @@ Prefer earlier fixes over later ones:
 
 | File | Read when |
 |---|---|
-| [AUDIT.md](AUDIT.md) | Any mode, when a finding or suggestion needs a value; Audit mode for the eight categories; Find mode for §8 seams; Remove mode for the §1 hunt list |
+| [AUDIT.md](AUDIT.md) | Any mode, when a finding or suggestion needs a value (curves, durations and springs come from animate); Audit mode for the eight categories; Find mode for §8 seams; Remove mode for the §1 hunt list |
 | [PLAN-TEMPLATE.md](PLAN-TEMPLATE.md) | Writing a plan |
+| [references/remove-mode.md](references/remove-mode.md) | Remove mode, before any edit: subtraction rules, reduction table, removal hazards, cleanup, workflow and report format |
 
 ## Implementation
 
@@ -154,7 +142,7 @@ Survey the codebase, then write self-contained plans that any agent, including a
 Default to flagging; approval is earned. Motion code only.
 
 1. Measure every animation in scope against AUDIT.md categories 1–7 and the severity table. Every hit is a finding.
-2. Fix each by the remedial hierarchy, with exact values from AUDIT.md.
+2. Fix each by the remedial hierarchy, with exact values (curves, durations, springs from animate; the rest from AUDIT.md).
 3. **Part 1 — Findings table (required):** one `Before | After | Why` row per issue, as in Core Pattern. Never a "Before:/After:" list.
 4. **Part 2 — Verdict (required):** remaining commentary grouped by tier, highest first, empty tiers omitted:
    1. **Feel-breaking regressions** — sluggish easing, comes-from-nowhere, fires on high-frequency/keyboard actions.
@@ -167,7 +155,7 @@ Default to flagging; approval is earned. Motion code only.
 
 ### Find mode
 
-A filter as much as a finder: expect to reject most candidates. A finder that suggests motion everywhere produces the over-animated interface this skill exists to prevent.
+A filter as much as a finder: expect to reject most candidates. A finder that suggests motion everywhere produces the over-animated interface this skill exists to prevent. Find mode only proposes motion; implementation goes through a plan.
 
 1. **Recon.**
 2. **Sweep** the seams in AUDIT.md §8. Done when every seam class has yielded candidates with `file:line` evidence or been explicitly cleared.
@@ -179,9 +167,9 @@ A filter as much as a finder: expect to reject most candidates. A finder that su
 | # | Location | Today | Purpose | Frequency | Suggested motion |
 | --- | --- | --- | --- | --- | --- |
 | 1 | `Toast.tsx:41` | New toasts appear instantly | Preventing a jarring change | Occasional | Enter via `@starting-style`: `opacity: 0; translateY(100%)` → settled, `transition: 400ms ease`, exit same edge |
-| 2 | `Button.tsx:18` | No press feedback | Feedback | Tens/day | `:active { transform: scale(0.97) }`, `transition: transform 160ms ease-out` — subtle enough for the frequency tier |
+| 2 | `Button.tsx:18` | No press feedback | Feedback | Tens/day | `:active { transform: scale(0.97) }`, `transition: transform 160ms var(--ease-out)` — subtle enough for the frequency tier |
 
-Each "Suggested motion" carries exact curve, duration and properties from AUDIT.md; animates `transform` and `opacity` only; includes reduced-motion handling (gentler, not zero); and gates hover behind `@media (hover: hover) and (pointer: fine)`.
+Each "Suggested motion" carries exact curve and duration from animate and properties from AUDIT.md; animates `transform` and `opacity` only; includes reduced-motion handling (gentler, not zero); and gates hover behind `@media (hover: hover) and (pointer: fine)`.
 
 **Part 2 — Rejected candidates (required):** 2–5 places considered and not suggested, each with the test that killed it:
 
@@ -192,69 +180,7 @@ Each "Suggested motion" carries exact curve, duration and properties from AUDIT.
 
 ### Remove mode
 
-The burden of proof is reversed: an animation stays only if it passes the gate. "It's already there" and "it looks nice" are not defenses. Deleting everything is also wrong: motion that bridges a jarring change (a toast that would otherwise teleport in, a panel that shows where it came from) earns its place, and removing it trades a slow interface for a disorienting one.
-
-Rules:
-
-1. **Only subtract.** Every edit deletes an animation, reduces it, or removes code it orphaned. Never add motion, change a curve or retune a spring; list a badly built keeper in the report instead.
-2. **Check the hazards** below before every Delete and Reduce. A removal that leaves an element invisible or breaks unmount timing is a regression.
-3. **Ask before removing a dependency.** Uninstalling a motion library touches the lockfile and other people's work; propose it.
-
-**Reducing** — a smaller version of the same motion, never a different animation:
-
-| Today | Reduced to |
-| --- | --- |
-| Hover with scale, lift or shadow growth | Color/opacity change only, ≤150ms, `ease` |
-| Slide or scale entrance on a frequent surface | Opacity only, 150ms, `ease-out` |
-| UI animation over 300ms | 200–250ms, same curve |
-| Stagger over 80ms per item, or over 300ms total | Cap at 30ms per item, or drop the stagger and fade the group as one |
-| Infinite loop (pulse, shimmer, glow) on a persistent element | Run once, or remove the loop and keep the static end state |
-
-If reducing would leave motion too small to carry its purpose, delete it.
-
-**Removal hazards:**
-
-- **Hidden start states.** Keyframes with `animation-fill-mode: forwards` from `opacity: 0`, Motion's `initial={{ opacity: 0 }}`, or a reveal class that starts at `opacity: 0` until an observer fires. Remove the start state with the animation, or the element stays invisible forever.
-- **Code that waits for the animation.** `onAnimationEnd`, `transitionend` listeners, `onExitComplete`, and `setTimeout` calls sized to a duration. Delete the wait too, or the UI keeps pausing for motion that no longer exists.
-- **Exit animations that delay unmount.** `AnimatePresence` holds a component in the DOM until its exit finishes, and `onExitComplete` fires after. Without the exit the component unmounts immediately — move whatever ran in `onExitComplete` to where the component is closed.
-- **Layout animations hiding a jump.** Motion's `layout` prop or a FLIP animation can mask a layout shift. If removing it reveals a jump, keep the animation and report the shift; fixing layout is out of scope.
-- **Focus timed after motion.** Focus moved in an animation callback must move immediately once the animation is gone.
-- **Tests and selectors.** Tests that wait for animation classes or durations need the same removal.
-
-**Cleanup** — delete what the removals orphaned:
-
-- `@keyframes` and animation utilities no longer referenced anywhere.
-- `motion.div` → `div` (and other `motion.*` elements) where no motion props remain.
-- Empty `AnimatePresence` wrappers and unused variants objects.
-- Motion imports in files that no longer animate.
-- Animation entries in the Tailwind config or token files with zero references.
-- If the motion library is no longer imported anywhere, say so and propose removing the dependency.
-
-Workflow:
-
-1. **Recon.**
-2. **Sweep** the hunt list in AUDIT.md §1. Done when every class has yielded candidates with `file:line` evidence or been explicitly cleared.
-3. **Gate** every candidate; record the deciding test.
-4. **Check hazards** for each Delete and Reduce.
-5. **Edit**: deletions and reductions, then cleanup.
-6. **Verify**: type checker and tests if the project has them; grep every removed keyframe, class and variant name to confirm nothing references it.
-7. **Report:**
-
-**Part 1 — Removed and reduced**, ordered by how often the user hits it:
-
-| # | Location | Was | Verdict | Deciding test |
-| --- | --- | --- | --- | --- |
-| 1 | `CommandMenu.tsx:24` | 200ms scale + fade on open/close | Deleted | Keyboard-triggered |
-| 2 | `ProjectCard.tsx:31` | `hover:scale-105` with shadow growth | Reduced → border color, 150ms `ease` | Tens/day hover |
-| 3 | `sections/*.tsx` | `whileInView` fade-up on 9 sections | Deleted, `initial` opacity removed | No purpose |
-
-**Part 2 — Kept (required):** 2–5 animations considered and kept, each with the purpose that saved it, then keepers that are badly built, for a plan:
-
-- `Toast.tsx:41` — enter from bottom edge. **Kept: prevents a jarring change; occasional frequency.**
-- `Onboarding.tsx:88` — success confetti. **Kept: rare, first-time moment.**
-- `Dropdown.tsx:12` — `ease-in` on enter. Kept; should be `ease-out`.
-
-**Part 3 — Cleanup and verdict:** orphaned code removed and any dependency proposed for removal, then one paragraph: how over-animated the interface was, how it feels now, and what needs a human on a real device (hover feel, perceived speed).
+Subtraction only, burden of proof reversed: an animation stays only if it passes the gate. Read [references/remove-mode.md](references/remove-mode.md) before the first edit; it holds the rules, reduction table, removal hazards, cleanup list, workflow and the three-part report.
 
 ## Common Mistakes
 

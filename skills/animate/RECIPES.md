@@ -1,7 +1,5 @@
 # Animation Recipes
 
-Ready-to-build implementations for the cases that come up most. Start from the recipe, then adapt — don't rebuild from scratch.
-
 Curves are the `--ease-out`, `--ease-in-out`, and `--ease-drawer` tokens defined in SKILL.md.
 
 ---
@@ -73,7 +71,7 @@ Same shape as a popover, faster, plus the detail most implementations miss.
 }
 ```
 
-The initial delay prevents accidental activation. After that, skipping both the delay and the animation makes the whole toolbar feel faster.
+The initial delay prevents accidental activation. After that, skipping both the delay and the animation makes the whole toolbar feel faster. Radix UI and Base UI set `data-instant`.
 
 ---
 
@@ -242,7 +240,7 @@ Marketing surfaces only. Don't do this to functional UI a user visits daily.
 ```css
 .reveal {
   clip-path: inset(0 0 100% 0);
-  transition: clip-path 600ms var(--ease-in-out);
+  transition: clip-path 600ms var(--ease-out);
 }
 
 .reveal[data-visible] {
@@ -306,6 +304,21 @@ When two states overlap visibly during a transition and no amount of easing or d
 }
 ```
 
+On a press, blur the button with its scale:
+
+```css
+.button-transition {
+  transition:
+    transform 150ms var(--ease-out),
+    filter 150ms var(--ease-out);
+}
+
+.button-transition:active {
+  transform: scale(0.97);
+  filter: blur(2px);
+}
+```
+
 Without blur the eye reads two distinct objects swapping. Blur blends them into one perceived transformation. Keep it under 20px — heavy blur is expensive, especially in Safari.
 
 ---
@@ -317,7 +330,7 @@ When the motion needs JS control but not a dependency, WAAPI gives you CSS-grade
 ```js
 element.animate(
   [{ clipPath: 'inset(0 0 100% 0)' }, { clipPath: 'inset(0 0 0 0)' }],
-  { duration: 1000, fill: 'forwards', easing: 'cubic-bezier(0.77, 0, 0.175, 1)' }
+  { duration: 1000, fill: 'forwards', easing: 'cubic-bezier(0.23, 1, 0.32, 1)' } // --ease-out
 );
 ```
 

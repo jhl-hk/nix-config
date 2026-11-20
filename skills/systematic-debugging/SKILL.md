@@ -29,17 +29,16 @@ Use for ANY technical issue:
 - Build failures
 - Integration issues
 
-**Use this ESPECIALLY when:**
-- Under time pressure (emergencies make guessing tempting)
-- "Just one quick fix" seems obvious
-- You've already tried multiple fixes
-- Previous fix didn't work
-- You don't fully understand the issue
+Simple-looking issues, emergencies and repeated failed fixes included: see Red flags and rationalizations.
 
-**Don't skip when:**
-- Issue seems simple (simple bugs have root causes too)
-- You're in a hurry (rushing guarantees rework)
-- Manager wants it fixed NOW (systematic is faster than thrashing)
+## Quick Reference
+
+| Phase | Key Activities | Success Criteria |
+|-------|---------------|------------------|
+| **1. Root Cause** | Read errors, reproduce, check changes, gather evidence | Understand WHAT and WHY |
+| **2. Pattern** | Find working examples, compare | Identify differences |
+| **3. Hypothesis** | Form theory, test minimally | Confirmed or new hypothesis |
+| **4. Implementation** | Create test, fix, verify | Bug resolved, tests pass |
 
 ## The Four Phases
 
@@ -167,6 +166,8 @@ You MUST complete each phase before proceeding to the next.
 
 ### Phase 4: Implementation
 
+**REQUIRED SUB-SKILL:** Use using-git-worktrees before the first fix edit: every fix goes on a new branch in an isolated worktree.
+
 **Fix the root cause, not the symptom:**
 
 1. **Create Failing Test Case**
@@ -213,7 +214,7 @@ You MUST complete each phase before proceeding to the next.
 
 ## Red flags and rationalizations
 
-Any of these means: stop and return to Phase 1. If 3+ fixes have failed, question the architecture (Phase 4, step 5).
+Any of these means: stop and return to Phase 1.
 
 | Thought | Reality |
 |---|---|
@@ -226,7 +227,7 @@ Any of these means: stop and return to Phase 1. If 3+ fixes have failed, questio
 | "I don't fully understand but this might work" | Say what you don't understand; research or ask. |
 | "Pattern says X but I'll adapt it" / "Reference too long" | Partial understanding guarantees bugs. Read it completely. |
 | "Here are the main problems: [fixes]" before tracing data flow | That is proposing solutions without investigation. |
-| "One more fix attempt" after 2+ failures, or each fix reveals a new problem elsewhere | 3+ failures = architectural problem. Question the pattern. |
+| "One more fix attempt" after 2+ failures, or each fix reveals a new problem elsewhere | 3+ failures = architectural problem: Phase 4, steps 4–5. |
 
 ## Signals from the user that you are doing it wrong
 
@@ -237,15 +238,6 @@ Any of these means: stop and return to Phase 1. If 3+ fixes have failed, questio
 - "We're stuck?" (frustrated) — your approach isn't working.
 
 When you see these: stop and return to Phase 1.
-
-## Quick Reference
-
-| Phase | Key Activities | Success Criteria |
-|-------|---------------|------------------|
-| **1. Root Cause** | Read errors, reproduce, check changes, gather evidence | Understand WHAT and WHY |
-| **2. Pattern** | Find working examples, compare | Identify differences |
-| **3. Hypothesis** | Form theory, test minimally | Confirmed or new hypothesis |
-| **4. Implementation** | Create test, fix, verify | Bug resolved, tests pass |
 
 ## When Process Reveals "No Root Cause"
 

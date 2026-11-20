@@ -7,17 +7,14 @@ description: Use when facing 2+ independent tasks that can be worked on without 
 
 ## Overview
 
-Each agent gets isolated context crafted for its task — never your session's history — which keeps it focused and preserves your own context for coordination.
-
-When you have multiple unrelated failures (different test files, different subsystems, different bugs), investigating them sequentially wastes time. Each investigation is independent and can happen in parallel.
-
-**Core principle:** Dispatch one agent per independent problem domain. Let them work concurrently.
+**Core principle:** Dispatch one agent per independent problem domain (different test files, subsystems, bugs) and let them work concurrently instead of investigating one after another. Why subagents get crafted context: see subagent-driven-development.
 
 ## When to Use
 
 ```mermaid
 flowchart TD
-    multi{"Multiple failures?"} -->|yes| indep{"Are they independent?"}
+    multi{"Multiple failures?"} -->|no| direct["Investigate it yourself (systematic-debugging)"]
+    multi -->|yes| indep{"Are they independent?"}
     indep -->|no - related| single["Single agent investigates all"]
     indep -->|yes| par{"Can they work in parallel?"}
     par -->|yes| dispatch["Parallel dispatch, one agent per problem domain"]
@@ -50,37 +47,13 @@ Each domain is independent - fixing tool approval doesn't affect abort tests.
 ### 2. Create Focused Agent Tasks
 
 Each agent gets:
-- **Specific scope:** One test file or subsystem
-- **Clear goal:** Make these tests pass
-- **Constraints:** Don't change other code
-- **Expected output:** Summary of what you found and fixed
+- **Specific scope:** one test file or subsystem. "Fix all the tests" gets the agent lost.
+- **Self-contained context:** paste the error messages and test names. "Fix the race condition" leaves it not knowing where.
+- **Clear goal:** make these tests pass.
+- **Constraints:** "Don't change other code", "Do NOT change production code", "Fix tests only". Without them the agent may refactor everything.
+- **Expected output:** "Return a summary of root cause and changes." "Fix it" leaves you not knowing what changed.
 
-### 3. Dispatch in Parallel
-
-Dispatch all three subagents at once, then wait for their results:
-
-```text
-Dispatch a subagent: "Fix agent-tool-abort.test.ts failures"
-Dispatch a subagent: "Fix batch-completion-behavior.test.ts failures"
-Dispatch a subagent: "Fix tool-approval-race-conditions.test.ts failures"
-# All three run concurrently.
-```
-
-### 4. Review and Integrate
-
-When agents return:
-1. **Review each summary** — understand what changed.
-2. **Check for conflicts** — did agents edit the same code?
-3. **Run the full suite** — verify all fixes work together.
-4. **Spot check** — agents can make systematic errors.
-5. Integrate all changes.
-
-## Agent Prompt Structure
-
-Good agent prompts are:
-1. **Focused** - One clear problem domain
-2. **Self-contained** - All context needed to understand the problem
-3. **Specific about output** - What should the agent return?
+Example prompt:
 
 ```markdown
 Fix the 3 failing tests in src/agents/agent-tool-abort.test.ts:
@@ -103,19 +76,25 @@ Do NOT just increase timeouts - find the real issue.
 Return: Summary of what you found and what you fixed.
 ```
 
-## Common Mistakes
+### 3. Dispatch in Parallel
 
-**❌ Too broad:** "Fix all the tests" - agent gets lost
-**✅ Specific:** "Fix agent-tool-abort.test.ts" - focused scope
+Dispatch all three subagents at once, then wait for their results:
 
-**❌ No context:** "Fix the race condition" - agent doesn't know where
-**✅ Context:** Paste the error messages and test names
+```text
+Dispatch a subagent: "Fix agent-tool-abort.test.ts failures"
+Dispatch a subagent: "Fix batch-completion-behavior.test.ts failures"
+Dispatch a subagent: "Fix tool-approval-race-conditions.test.ts failures"
+# All three run concurrently.
+```
 
-**❌ No constraints:** Agent might refactor everything
-**✅ Constraints:** "Do NOT change production code" or "Fix tests only"
+### 4. Review and Integrate
 
-**❌ Vague output:** "Fix it" - you don't know what changed
-**✅ Specific:** "Return summary of root cause and changes"
+When agents return:
+1. **Review each summary** — understand what changed.
+2. **Check for conflicts** — did agents edit the same code?
+3. **Run the full suite** — verify all fixes work together.
+4. **Spot check** — agents can make systematic errors.
+5. Integrate all changes.
 
 ## Real-World Impact
 

@@ -5,7 +5,7 @@ The parent dispatches a subagent with this file as its instructions. When the ha
 
 You record a project's design system after the build is done. Ground truth is the shipped artifact: every token and rule you write must be evidenced by the built code, never by what was planned.
 
-Complete the check within your turn ceiling. Batch Reads, take `reference/document.md` and the stylesheets first, and sample components rather than walking the tree. When changes are needed, start writing by the midpoint; when the recorded system still matches, leave it untouched and report the evidence checked.
+Complete the check within your turn ceiling. Batch reads, take `reference/document.md` and the stylesheets first, and sample components rather than walking the tree. When changes are needed, start writing by the midpoint; when the recorded system still matches, leave it untouched and report the evidence checked.
 
 ## Input Contract
 

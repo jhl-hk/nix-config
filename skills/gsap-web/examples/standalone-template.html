@@ -20,7 +20,10 @@
     .title { font-size: clamp(2.5rem, 9vw, 6rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1; }
     .sub   { font-size: clamp(1rem, 3.2vw, 1.6rem); margin-top: 1.2rem; color: #aab; }
     .cta   { display: inline-block; margin-top: 2.4rem; padding: 0.9rem 1.8rem;
-             border-radius: 999px; background: #5b6cff; color: #fff; font-weight: 600; }
+             border-radius: 999px; background: #5b6cff; color: #fff; font-weight: 600;
+             transition: background-color 150ms cubic-bezier(0.23, 1, 0.32, 1); }
+    @media (hover: hover) and (pointer: fine) { .cta:hover { background: #7482ff; } }
+    :root[data-state="hover"] .cta { background: #7482ff; }  /* ?state=hover for a screenshot */
   </style>
 </head>
 <body>
@@ -31,14 +34,19 @@
   </main>
 
   <script>
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // ── Harness params (animate › references/standalone-harness.md) ──────────
+    const q = new URLSearchParams(location.search);
+    const s = q.get("state");                       // ?state=hover forces a settled state
+    if (s) document.documentElement.dataset.state = s;
+    const reduce = q.get("reduce") === "1"          // ?reduce=1 forces the JS reduced path
+      || matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     // ── One master timeline: a single playhead the harness can seek ──────────
     const tl = gsap.timeline({ defaults: { ease: "power3.out", duration: 0.7 } });
 
     if (reduce) {
-      // Reduced motion: no spatial movement — just make the final state visible.
-      gsap.set([".title", ".sub", ".cta"], { opacity: 1, y: 0 });
+      // Reduced motion: no spatial movement, a short opacity fade only.
+      tl.from([".title", ".sub", ".cta"], { opacity: 0, duration: 0.2, ease: "power4.out" });
     } else {
       tl.from(".title", { yPercent: 110, opacity: 0, ease: "power4.out", duration: 0.9 })
         .from(".sub",   { y: 24, opacity: 0 }, "-=0.45")
@@ -46,7 +54,7 @@
     }
 
     // ── Seek harness: ?t=N freezes the timeline at N seconds for a clean shot ─
-    const t = new URLSearchParams(location.search).get("t");
+    const t = q.get("t");
     if (t !== null) { tl.pause(); tl.seek(parseFloat(t)); }   // deterministic frozen frame
     // no ?t → plays normally on load
 

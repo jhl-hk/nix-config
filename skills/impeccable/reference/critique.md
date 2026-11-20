@@ -5,14 +5,14 @@ Resolve one stable target, run two independent assessments, synthesize a design 
 ### Hard Invariants
 
 - Assessment A (design review) and Assessment B (detector/browser evidence) are both required, except on a native platform (see Assessment Orchestration).
-- Assessment A and B MUST run as two isolated sub-agents when the harness can dispatch subagents. Running them inline is a degraded run, allowed only when the harness cannot dispatch subagents. Native platforms run A alone (see Assessment Orchestration).
+- Assessment A and B MUST run as two isolated subagents when the harness can dispatch subagents. Running them inline is a degraded run, allowed only when the harness cannot dispatch subagents, never because it is faster. Native platforms run A alone (see Assessment Orchestration).
 - If you degrade for any reason, the report's first line MUST be a banner: `⚠️ DEGRADED: single-context (<reason>)`. A silent degraded critique is a failed critique.
 - Assessment A must finish before detector findings enter the parent synthesis context. Detector output is deterministic, but it still anchors judgment.
 - A skipped detector is a failed critique run unless `impeccable detect` is missing or crashes after a real attempt, or the platform is native (see Assessment Orchestration).
 - Viewable targets require browser inspection when available.
 - Any local server started only for critique visualization must run in the background, have a recorded stop method, and be stopped before final reporting unless the user asks to keep it.
 - Do not claim a user-visible overlay exists unless script injection succeeded and the detector ran in the page.
-- The question is the LAST thing in the response. Write the entire report out first, then ask; nothing follows the question. Prose emitted after a structured question is withheld until the user answers it, so a report written after the question reads as if the critique never ran.
+- The question is the LAST thing in the response. Write the entire report out first, then ask; nothing follows the question. In harnesses that withhold prose after a structured question until the user answers it, a report written after the question reads as if the critique never ran.
 - A run that ends with neither the targeted questions nor a literal `Questions skipped: <reason>` line is an incomplete run. The report is not the finish; the close is.
 
 ### Setup
@@ -30,14 +30,14 @@ Resolve one stable target, run two independent assessments, synthesize a design 
 
 ### Assessment Orchestration
 
-**Native platforms** (`ios` / `android` / `adaptive`): Assessment B does not apply, because `impeccable detect` and the browser overlay read only web markup. Run Assessment A alone in this context and skip the sub-agent gate below; this is the complete native method and carries no degraded banner. Do not run `impeccable detect` on native source; its empty result reads as clean.
+**Native platforms** (`ios` / `android` / `adaptive`): Assessment B does not apply, because `impeccable detect` and the browser overlay read only web markup. Run Assessment A alone in this context and skip the subagent gate below; this is the complete native method and carries no degraded banner. Do not run `impeccable detect` on native source; its empty result reads as clean.
 
-Delegate Assessment A and Assessment B to separate sub-agents. They must not see each other's output. Do not show findings to the user until synthesis.
+A and B must not see each other's output. Do not show findings to the user until synthesis.
 
-Sub-agent gate:
-- Spawn A and B as two isolated, parallel sub-agents whenever the harness can dispatch subagents. This is mandatory; do not run them inline because it is faster.
-- Desktop apps (see **Desktop apps** under Assessment B) are the one exception to parallel: both sub-agents would drive the app's single window at once. Seed the window, spawn A, wait until it has finished and put the window back, then spawn B. They are still two isolated sub-agents, so this is not the degraded path.
-- Only when the harness cannot dispatch subagents, fall back sequentially: finish and record Assessment A, then run Assessment B, then synthesize, and emit the degraded banner.
+Subagent gate (procedure; the mandate and the banner are in Hard Invariants):
+- Spawn A and B in parallel.
+- Desktop apps (see **Desktop apps** under Assessment B) are the one exception to parallel: both subagents would drive the app's single window at once. Seed the window, spawn A, wait until it has finished and put the window back, then spawn B. They are still two isolated subagents, so this is not the degraded path.
+- Degraded path (harness cannot dispatch subagents): finish and record Assessment A, then run Assessment B, then synthesize.
 - Whichever path you take, declare it in the report header (see Report header provenance).
 
 If browser automation is available, each assessment creates its own new tab. Never reuse an existing tab, even if it is already at the right URL. Desktop apps are the exception (see **Desktop apps** under Assessment B).
@@ -85,7 +85,7 @@ Browser visualization is required for a viewable target when browser automation 
 3. Run `"<skill-base-dir>/scripts/impeccable" detect --cdp 9222 --target <part of the page URL or title> --json`. It returns the same JSON as a URL scan and leaves the page as found. With several pages open it fails and lists them; rerun with a `--target` that names one.
 4. Take screenshots through the harness's CDP tooling (`Page.captureScreenshot` on the same target). Skip the live-server overlay: there is no `[Human]` tab.
 
-The app has one window, so the assessments take turns in it instead of opening tabs (A, then B; see the sub-agent gate), and each must leave it as found: put back any route, scroll, theme, or panel it changed. Tauri on macOS (WKWebView) and on Linux (WebKitGTK) expose no CDP: run Assessment A and the source scan only, and say so in Run Notes.
+The app has one window, so the assessments take turns in it instead of opening tabs (A, then B; see the subagent gate), and each must leave it as found: put back any route, scroll, theme, or panel it changed. Tauri on macOS (WKWebView) and on Linux (WebKitGTK) expose no CDP: run Assessment A and the source scan only, and say so in Run Notes.
 
 Return: CLI findings JSON/counts, browser console findings if applicable, false positives, and skipped/failed browser steps with concrete reasons.
 
@@ -101,9 +101,9 @@ Structure your feedback as a design director would:
 
 #### Report header provenance
 
-The report's first line MUST declare how the assessments were run, so a degraded run is never silent:
+The report's first line declares how the assessments were run:
 - Dual-agent: `Method: dual-agent (A: <agent-id> · B: <agent-id>)`
-- Degraded: `⚠️ DEGRADED: single-context (<reason, e.g. no sub-agent tool exposed>)`
+- Degraded: `⚠️ DEGRADED: single-context (<reason, e.g. cannot dispatch subagents>)`
 - Native: `Method: design review only (detector not applicable, native platform)`
 
 #### Design Health Score

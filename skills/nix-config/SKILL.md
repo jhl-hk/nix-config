@@ -9,13 +9,7 @@ description: Use when working in ~/Documents/nix-src/nix-config or ../nix-secret
 
 `/Users/jhl/Documents/nix-src/nix-config` is a public flake for one user (`jhl`) on six machines across three lanes; private data comes from the sibling flake `../nix-secrets`. Hosts are discovered from directories, modules are auto-imported, optionals are cherry-picked, and every module reads machine data from `hostSpec`.
 
-| Lane | Host dir | Output | Machines | Builder |
-|---|---|---|---|---|
-| nix-darwin | `hosts/darwin/<Host>/` | `darwinConfigurations.<Host>` | `jhlsMacBookPro`, `jhlsMacBookAir`, `SeandeMac-Studio` | `mkDarwinHost` (aarch64-darwin) |
-| standalone home-manager | `hosts/home/<Host>/` | `homeConfigurations."jhl@<Host>"` | `jhlsRogZephyrus`, `jhlsTokyoDesktop` | `mkHomeHost` (x86_64-linux) |
-| NixOS | `hosts/nixos/<Host>/` | `nixosConfigurations.<Host>` | `DevEnv` | `mkNixosHost` (x86_64-linux) |
-
-Every machine also has `home/jhl/<Host>.nix`. The standalone lane has no system configuration: its host file sets only `hostSpec`, and root-level concerns belong to the distro.
+The lane table (host dirs, outputs, machines), the silent failure modes and the secret rules are in this repo's `CLAUDE.md`; this skill does not repeat them. Working from `../nix-secrets`, that file is not loaded: read it first. Every machine also has `home/jhl/<Host>.nix`. Per-lane builders (`mkDarwinHost` aarch64-darwin, `mkNixosHost` and `mkHomeHost` x86_64-linux): `references/architecture.md`.
 
 ## When to Use
 
@@ -23,7 +17,7 @@ Every machine also has `home/jhl/<Host>.nix`. The standalone lane has no system 
 - Rebuilding, deploying, checking, or debugging an evaluation/activation failure.
 - Configuring omp, MCP servers, agent instructions or skill deployment through Nix.
 
-Not for: the content of a skill under `skills/` (writing-skills and `skills/README.md`); running `sops` or editing ciphertext (user-operated, see Common Mistakes).
+Not for: the content of a skill under `skills/` (writing-skills and `skills/README.md`); running `sops` or editing ciphertext (user-operated; CLAUDE.md, `references/nix-secrets.md`).
 
 ## Core Pattern
 
@@ -70,14 +64,14 @@ Full catalog and `scripts/rebuild.sh` behaviour: `references/commands.md`.
 ## Implementation
 
 1. Pick the recipe from the table; read it in `references/recipes.md`.
-2. Write the files. New file → `git add --intent-to-add .`.
+2. Write the files. New file → `git add --intent-to-add .` (the flake ignores untracked files; `just rebuild`/`build`/`deploy` do it in `rebuild-pre`).
 3. Evaluate the affected host:
    - darwin: `nix eval .#darwinConfigurations.<Host>.config.system.build.toplevel.drvPath`
    - NixOS: `nix eval .#nixosConfigurations.<Host>.config.system.build.toplevel.drvPath`
    - standalone: `nix eval .#homeConfigurations.\"jhl@<Host>\".activationPackage.drvPath`
-4. For a generated file, build and read it: `nix build .#darwinConfigurations.<Host>.config.home-manager.users.jhl.xdg.configFile."<path>".source` (standalone: `.#homeConfigurations."jhl@<Host>".config.xdg.configFile."<path>".source`).
-5. `just fmt` (or `nix run nixpkgs#alejandra -- --check <files>`). `just check` is the pre-push gate; there is no CI.
-6. Secret involved → name the YAML key and file, stop, hand off.
+
+   Then build and read any generated file, `just fmt`, and `just check` before pushing (CLAUDE.md § Before claiming anything works).
+4. Secret involved → name the YAML key and file, stop, hand off.
 
 | Reference | Read when |
 |---|---|
@@ -89,11 +83,11 @@ Full catalog and `scripts/rebuild.sh` behaviour: `references/commands.md`.
 
 ## Common Mistakes
 
+CLAUDE.md § Silent failure modes, § Secrets are user-operated and § Before claiming anything works always apply (the full secret rules: `references/nix-secrets.md` § What agents must not do). The rows below are the rest.
+
 | Mistake | Fix |
 |---|---|
-| New `.nix` file has no effect | Flake ignores untracked files: `git add --intent-to-add .` (`just rebuild`/`build`/`deploy` do it in `rebuild-pre`). |
-| File in `hosts/common/optional/**` does nothing | Not auto-imported; name it in the host's `imports`. `modules/**` is auto-imported. |
-| `relativeToRoot ./hosts/...` fails | Takes a string: `map lib.custom.relativeToRoot [ "hosts/common/core" ]`. |
+| Key removed from Nix stays in Zed `settings.json` | `programs.zed-editor` uses `mutableUserSettings = true`, a one-way merge; remove it from `settings.json` by hand. |
 | `system.stateVersion` type error | Integer on Darwin (`6`), string on NixOS (`"26.05"`); standalone has only `home.stateVersion = "26.05"` (`home/jhl/common/core/default.nix`). Never bump without release notes. |
 | `attribute 'hm' missing` | `lib` was put in `extraSpecialArgs`. Pass it via `specialArgs.lib` (system) or top-level `lib` of `homeManagerConfiguration` (standalone). See `architecture.md`. |
 | `attribute 'custom' missing` in home-manager | `lib` defaulted to `pkgs.lib`; same fix as above. |
@@ -104,15 +98,7 @@ Full catalog and `scripts/rebuild.sh` behaviour: `references/commands.md`.
 | Host can't override a shared value | `lib.mkDefault` in shared layers, plain assignment in host files; `mkForce` in a shared file is a smell. |
 | Home module reads `config.hostSpec` | Destructure `{ hostSpec, ... }`; `modules/common` is not imported into HM. |
 | Module reads `inputs.nix-secrets.<x>` | Read `config.hostSpec.<x>`. Only `"${inputs.nix-secrets}/secrets/<file>.yaml"` as `sopsFile` (and `agents/AGENTS.md` as a source) may name the input. |
-| `hosts/home/<Host>/default.nix` sets `imports` or NixOS options | It is `evalModules`'d against `modules/common/host-spec.nix` alone; only `hostSpec`. Keep `hosts/common/core/host-spec.nix` free of `imports` and other options too. |
-| Darwin-only path in `home/jhl/common/core/*.nix` | `/opt/homebrew`, `/etc/profiles/per-user`, `launchd`, `targets.darwin` reach Linux; move to `common/core/darwin.nix` or `common/core/darwin/`. |
 | NixOS-only setting in `home/jhl/common/core/linux.nix` | `linux.nix` loads on standalone hosts too; use `hosts/common/core/nixos.nix`. |
 | `optional/nix/standalone.nix` imported on a Mac | Its `~/.config/nix/nix.conf` outranks nix-darwin's `/etc/nix/nix.conf`. Standalone hosts only. |
 | `optional/sops/standalone.nix` on a Mac or NixOS host | System sops already provides the secrets there; standalone hosts only. |
 | Standalone consumer reads `/run/secrets/...` | Doesn't exist there; repoint with `mkForce` in `sops/standalone.nix` (Recipe 8b). |
-| Brew removed from `apps.nix` / manual `brew install` | `onActivation.cleanup = "zap"` uninstalls anything undeclared. |
-| Store-managed file written by its own tool | `home.file`/`xdg.configFile` are read-only symlinks. Don't manage omp `config.yml`/`mcp.json`, or Zed UI settings; omp uses the `nix.yml` overlay. |
-| Key removed from Nix stays in Zed `settings.json` | `programs.zed-editor` uses `mutableUserSettings = true`, a one-way merge; remove it on disk too. |
-| Writing through a `sops.templates`/`sops.secrets` path | It is a symlink into `/run/secrets`; writes are wiped next activation. Change the YAML. |
-| Running `sops`, `just rekey`, `just age-key`, editing `.sops.yaml` or `secrets/` | User-operated. Write the Nix, add a `lib.hasInfix "<key>:"` assertion, name the key and file, stop. See `nix-secrets.md`. |
-| Local `../nix-secrets` change has no effect | Locked input: user pushes, then `just update-nix-secrets`. |

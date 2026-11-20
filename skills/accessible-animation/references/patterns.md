@@ -76,7 +76,7 @@ mm.add({
 `MotionConfig reducedMotion="user"` makes every child `motion` component automatically drop transform/layout animations while keeping opacity. Set it once at the root.
 
 ```jsx
-import { MotionConfig, motion } from 'framer-motion';
+import { MotionConfig, motion } from 'motion/react';
 
 export function App() {
   return (
@@ -95,7 +95,7 @@ export function App() {
 For per-component control, Framer's own hook:
 
 ```jsx
-import { useReducedMotion } from 'framer-motion';
+import { useReducedMotion } from 'motion/react';
 
 function Hero() {
   const reduced = useReducedMotion();
@@ -108,7 +108,7 @@ function Hero() {
 
 ## Lenis: start/stop on live toggle
 
-Lenis hijacks scroll (Tier 1). Destroy it when reduced motion turns on, recreate when it turns off.
+Lenis hijacks scroll (Tier 1). Destroy it when reduced motion turns on, recreate when it turns off. This standalone rAF loop is for pages without GSAP; with GSAP/ScrollTrigger, drive Lenis from `gsap.ticker` as in gsap-web and start/stop that wiring instead.
 
 ```js
 import Lenis from 'lenis';
@@ -191,6 +191,3 @@ For each animation in the codebase, ask in order:
 - Chrome DevTools: Rendering panel > "Emulate CSS media feature prefers-reduced-motion".
 - Verify the `change` listener: toggle the OS setting with the page open and confirm motion stops without reload.
 - Confirm `transitionend`/`animationend`-dependent flows still complete (the `0.01ms` rule).
-
----
-Honor prefers-reduced-motion at every tier and motion stays inclusive by default. Built by **[iart.ai](https://iart.ai/?utm_source=github&utm_medium=readme&utm_campaign=web-animation-skills&utm_content=skill_footer&utm_term=accessible-animation)** — the AI motion agent for editable, on-brand motion graphics.

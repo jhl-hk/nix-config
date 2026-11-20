@@ -22,6 +22,8 @@ Tech, gaming and software pages also get: loops inside a card's visual (diagram 
 
 ## Tokens
 
+These are the kit's tokens: they apply on tasteskill pages (built on the kit). Motion outside the kit uses the animate skill's values.
+
 | Token | Value | Use |
 |---|---|---|
 | `--m-in` / `--m-out` | 150ms / 120ms | hover in / out |
@@ -35,7 +37,7 @@ Tech, gaming and software pages also get: loops inside a card's visual (diagram 
 Curves:
 
 - `--ease` in `system.css` = cubic-bezier(.2,.8,.2,1), the one UI ease-out for every UI step (`--m-ease` and the fragments' `--u-ease` read it).
-- `--m-ease-enter` cubic-bezier(.22,1,.36,1) for an entrance settling (the hero, a moment, a digit roll; `--u-spring` in `ui/base.css` is the same curve).
+- `--m-ease-enter` cubic-bezier(.22,1,.36,1) for an entrance settling (the hero, a moment, a digit roll; `--u-spring` in `ui/base.css` is the same curve, a cubic-bezier despite its name, not a spring).
 - `--m-ease-io` cubic-bezier(.65,0,.35,1) only for travel.
 - Linear for loops and drifts. No curve passes its mark: no bounce, no overshoot.
 
@@ -55,7 +57,7 @@ Hover moves only for a fine pointer (`(hover: hover) and (pointer: fine)`); keyb
 | Nav | the words take the drawn underline (no gliding pill); the panel opens after 150ms of intent, fades in with a 6px drop with its columns together (one surface), closes in 120ms; with one open the next word swaps it at once; the chevron turns 180 degrees on tech, flips at once on other | 200ms, 120ms |
 | Current page | a 2px bar under its nav word (`aria-current="page"`) | still |
 | Tabs (software, click only) | one indicator slides to the clicked tab by transform alone (it takes the new tab's size at once, starts scaled to the old one and settles to scale 1): the ink pill `system.css` draws, its label in the ground colour; the panel swaps (200ms at most); every panel one fixed height; on other no tabs | 240ms |
-| Card with a link | lifts 2px, its border darkens a step, an optional soft shadow (blur 24px, 10% ink at most, only on hover) | 180ms in, 120ms out |
+| Card with a link | lifts 2px, its border darkens a step, an optional soft shadow (blur 24px, 10% ink at most, only on hover) | 180ms in (a literal in `motion.css`, no token), 120ms out |
 | Card without a link | nothing (`.m-nolift`) | |
 | Photograph in a linked card or link | scales 1.02 to 1.03 inside its frame (`overflow: hidden`); the frame, card and boxes never grow; never dims, fades or takes an overlay; a product card's name underlines with it (`.m-zoom` for any other wrapper) | 600ms in, 400ms out |
 | Focus | a 2px ring in the action colour, 2px off the control, drawn in full in the frame the focus lands; no transition | none |
@@ -110,7 +112,7 @@ House rule: a bit faster, and repeating.
 - **One timed loop** a page, in the hero or the `[data-visual]` frame, in whatever form (a story, a reel, a lit border, a live ground, a turning object, a marquee); its life signs are part of it. One timed loop plus the one effect at most; with a live effect in the hero, no other timed loop runs. Never two self-moving things in one 900px window, never two loops in one panel. Card loops (one per card group), diagram pulses (one per diagram card) and the dealt moments are outside this count.
 - **A count** once a page (`data-m-count` or the `counter-rolls` moment, never both): on load in the hero (1000ms, 1.2 s at most), or as the dealt counter moment in its own section. On the open ground, never in a card, panel or `[data-visual]`; its width reserved; the final figure in the HTML, shown under reduced motion, without script and on phones; never a year, price or phone number. A live counter changes only its last one to three digits.
 - **Load:** the hero's entrance, on every kind. On tech also at most one load-once motion inside the `[data-visual]` frame (a visual assembling, 600 to 1200ms), settled by 1.5 s; a click swap 400 to 600ms. No gate, loader or intro.
-- **Pause:** anything still moving 5 s after it is seen has one round pause button per panel: a solid 32px disc, 12px in from the bottom-right (in a card beside its title), always shown or fading in on hover and focus, the same size and place on every card, never over copy, never on a still. A click freezes the frame and swaps to a play glyph (`ui.pausable(panel, ctrl)` for your own movers). Scroll-driven moments need none.
+- **Pause:** anything still moving 5 s after it is seen has one round pause button per panel, put there by ui.js when the loop starts to move: a solid 32px disc in the page colours, always shown or fading in on hover and focus, the same size and place on every card, never over copy, never on a still. In a `.card` it sits beside the card's title, at the right of the text column (the title keeps 44px clear for it), so it never covers a cropped panel's UI, which runs into every corner. In `[data-ui-pause-host]`, or a `.panel`/`.frame` outside a card, it sits 12px in from the bottom-right corner (keep that corner clear); a fragment with no panel gets it under its bottom-right corner, in 44px kept free. A place that already holds a `.loop-pause` gets no second one. A click freezes the frame and swaps to a play glyph (`ui.pausable(panel, ctrl)` for your own movers, an object or a moving ground: `ctrl` has `pause()` and `resume()`). Scroll-driven moments need none.
 - **Timed loops start on load** and never start, stop or resume on scroll; an IntersectionObserver only mounts lazily. A canvas may skip drawing off screen only on a clock from load, so no visible start shows on return. A hidden tab may pause everything.
 
 ## Scroll

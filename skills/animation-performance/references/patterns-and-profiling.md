@@ -13,7 +13,7 @@ Read when confirming a fix is compositor-only or when a full runnable example is
 .acc-wrap {
   display: grid;
   grid-template-rows: 0fr;
-  transition: grid-template-rows 280ms cubic-bezier(0.2,0,0,1);
+  transition: grid-template-rows 200ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)); /* animate's accordion duration and token */
 }
 .acc-wrap.open { grid-template-rows: 1fr; }
 .acc-content { overflow: hidden; min-height: 0; }
@@ -47,7 +47,7 @@ function flipReorder(container, mutate) {
     if (dx || dy) {
       el.animate(
         [{ transform: `translate(${dx}px, ${dy}px)` }, { transform: 'none' }],
-        { duration: 300, easing: 'cubic-bezier(0.2,0,0,1)' }
+        { duration: 300, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' } // animate's --ease-out
       );
     }
   });
@@ -101,13 +101,6 @@ addEventListener('scroll', () => {
 
 ## Headless verification
 
-Freeze a deterministic frame, then screenshot:
+Freeze frames with the harness in animate (`references/standalone-harness.md`).
 
-- CSS `@keyframes`: `?t=N` sets `el.style.animationDelay = (-N)+'s'; el.style.animationPlayState = 'paused'`.
-- WAAPI: keep the animation object, `anim.pause(); anim.currentTime = N*1000`.
-
-```bash
-bunx playwright screenshot --wait-for-timeout=500 "file://$PWD/anim.html?t=0.3" frame.png
-```
-
-Screenshot start, mid and end: check no `scaleX` text distortion and that FLIP lands on the real layout. For cost, capture a CDP trace and assert no `Layout`/`Paint` events fire during the animation window.
+Screenshot start, mid and end: check no `scaleX` text distortion and that FLIP lands on the real layout. The CDP trace check for cost is in the same harness file.

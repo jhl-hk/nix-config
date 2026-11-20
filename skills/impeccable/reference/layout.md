@@ -10,7 +10,7 @@ Preserve the established visual world. A layout command changes structure inside
 
 ## Two isolated assessments
 
-When a sub-agent tool is available and permitted, run these independently; otherwise run them yourself in this order.
+When you can dispatch subagents, run these independently; otherwise run them yourself in this order.
 
 1. **Layout assessment:** inspect representative states and viewports. Answer every question below with rendered or source evidence:
    - **Reading order:** Apply the squint test. With detail blurred, can you still identify the primary element, the secondary element, and the major groups in order?

@@ -12,3 +12,4 @@
 - Removed the `EXTREMELY-IMPORTANT` blocks, the `superpowers:` prefixes and the `frontend-design` example.
 - Red-flags table cut from 12 rows to 5.
 - Removed `references/*-tools.md` and the Platform Adaptation section.
+- H1 and Overview added (the subagent skip line moved into it); "before entering plan mode" scoped to harnesses that have a plan mode.

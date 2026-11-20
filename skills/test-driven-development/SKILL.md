@@ -26,8 +26,6 @@ Write the test first. Watch it fail. Write minimal code to pass.
 - Generated code
 - Configuration files
 
-Thinking "skip TDD just this once"? Stop. That's rationalization.
-
 ## The Iron Law
 
 ```
@@ -206,20 +204,22 @@ Any of these means: delete the code and start over with TDD.
 
 | Thought | Reality |
 |---|---|
-| Code before test; test written after implementation; tests added "later" | Tests written after pass immediately — which proves nothing. They may test the wrong thing, test the implementation instead of the behavior, or miss the edge case you forgot. You never watched it fail, so you never proved it can catch the bug. |
+| Code before test; test written after implementation; tests added "later" | Tests written after pass immediately and prove nothing: you never watched them fail, so they may test the wrong thing or the implementation instead of the behavior, or miss the edge case you forgot. |
 | Test passes immediately; can't explain why it failed | You are testing existing behavior or the wrong thing. Fix the test. |
 | "Too simple to test" | Simple code breaks. The test takes 30 seconds. |
-| "Tests after achieve the same goals" / "It's about spirit not ritual" | Tests-after answer "what does this do?"; tests-first answer "what should this do?" Tests written after are biased by the code you already wrote — you verify the cases you remembered, not the ones you'd have discovered. Coverage without proof the tests work. |
-| "I already manually tested it" / "Manual test is faster" | Manual testing is ad hoc: no record of what you covered, no way to re-run it when the code changes, easy to forget cases under pressure, and it doesn't prove edge cases. "Worked when I tried it" ≠ comprehensive. |
-| "Already spent X hours, deleting is wasteful" | Sunk cost — that time is spent either way. The real choice: rewrite with TDD (high confidence) vs. bolt tests on after (low confidence, likely bugs). Keeping code you can't trust is the waste. |
+| "Tests after achieve the same goals" / "It's about spirit not ritual" | Tests-after answer "what does this do?", tests-first "what should this do?"; tests-after are biased by your code and check only the cases you remembered: coverage without proof the tests work. |
+| "I already manually tested it" / "Manual test is faster" | Manual testing is ad hoc: no record, no re-run when the code changes, cases and edge cases forgotten under pressure; "worked when I tried it" ≠ comprehensive. |
+| "Already spent X hours, deleting is wasteful" | Sunk cost: the time is spent either way; rewriting with TDD gives high confidence, bolting tests on gives low confidence and likely bugs, and keeping code you can't trust is the waste. |
 | "Keep it as reference" / "adapt existing code" | You'll adapt it. That's testing after. Delete means delete. |
 | "Need to explore first" | Fine. Throw the exploration away, then start with TDD. |
 | "Test is hard to write" | Listen to the test. Hard to test = hard to use; the design is unclear. |
-| "TDD is dogmatic / will slow me down, I'm being pragmatic" | TDD is the pragmatic path: it catches bugs before commit, prevents regressions, and lets you refactor without fear. Shortcuts mean debugging in production. |
+| "TDD is dogmatic / will slow me down, I'm being pragmatic" | TDD is the pragmatic path: it catches bugs before commit, prevents regressions and makes refactoring safe; shortcuts mean debugging in production. |
 | "Existing code has no tests" | You're improving it. Add tests for the existing code. |
 | "Just this once" / "This is different because..." | That is the rationalization. |
 
 ## Example: Bug Fix
+
+Never fix a bug without a test: write a failing test reproducing it, then follow the cycle; the test proves the fix and prevents regression.
 
 **Bug:** Empty email accepted
 
@@ -279,18 +279,3 @@ Can't check all boxes? You skipped TDD. Start over.
 | Test too complicated | Design too complicated. Simplify interface. |
 | Must mock everything | Code too coupled. Use dependency injection. |
 | Test setup huge | Extract helpers. Still complex? Simplify design. |
-
-## Debugging Integration
-
-Bug found? Write failing test reproducing it. Follow TDD cycle. Test proves fix and prevents regression.
-
-Never fix bugs without a test.
-
-## Final Rule
-
-```
-Production code → test exists and failed first
-Otherwise → not TDD
-```
-
-No exceptions without your human partner's permission.

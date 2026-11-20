@@ -1,6 +1,6 @@
 # Choreography Recipes
 
-Copy-ready patterns for the relationships in [SKILL.md](SKILL.md). The values are starting points, so tune them on a recording.
+Patterns for the relationships in [SKILL.md](SKILL.md). Values are starting points; tune them on a recording. Curve tokens (`--ease-out`, ...) are defined in animate.
 
 ## Overlap: CSS stagger with an index variable
 
@@ -17,8 +17,8 @@ For one-shot entrances (a hero, a personal site intro). The delay is computed pe
 
 ```css
 .stagger > * {
-  --step: 120ms;
-  animation: enter 0.6s ease both;
+  --step: 60ms;
+  animation: enter 0.6s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)) both;
   animation-delay: calc(var(--step) * var(--i));
 }
 
@@ -135,7 +135,7 @@ const fadeDuration = useMemo(() => {
 
 <motion.div
   animate={{ height: bounds.height }}
-  transition={{ duration: 0.27, ease: [0.25, 1, 0.5, 1] }}
+  transition={{ duration: 0.27, ease: [0.23, 1, 0.32, 1] }}
   style={{ overflow: "hidden" }}
 >
   <div ref={ref}>
@@ -145,7 +145,7 @@ const fadeDuration = useMemo(() => {
         initial={{ opacity: 0, scale: 0.96 }}
         animate={{ opacity: 1, scale: 1 }}
         exit={{ opacity: 0, scale: 0.96 }}
-        transition={{ duration: fadeDuration, ease: [0.26, 0.08, 0.25, 1] }}
+        transition={{ duration: fadeDuration, ease: [0.25, 0.46, 0.45, 0.94] }}
       >
         {content}
       </motion.div>

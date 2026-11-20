@@ -9,6 +9,11 @@ description: Use when the user asks "what's it called when…" about a web anima
 
 Reverse-lookup glossary: a vague description of a motion effect in, the exact term out.
 
+## When to Use
+
+- A user describes an effect by how it looks or feels and needs the term, to prompt an AI, brief a designer or search docs.
+- Telling close terms apart (*Clip-path* vs *Mask*, *Pop in* vs *Bounce*).
+
 ## Core Pattern
 
 Answer format:
@@ -24,12 +29,7 @@ Answer format:
 5. **Stay within the glossary.** Never invent a term; explain the concept in these words instead.
 6. **Lead with the term**; expand only if asked.
 
-### Examples
-
-User: "What's it called when a popover seems to grow out of the button you clicked instead of from its middle?"
-```
-**Origin-aware animation** — An element animates out of its trigger, like a popover growing from the button that opened it instead of from its own center which is the default in CSS.
-```
+### Example
 
 User: "The thing where one image turns into another image."
 ```
@@ -38,11 +38,6 @@ User: "The thing where one image turns into another image."
 Close alternates:
 - **Crossfade** — if they simply fade over each other in the same spot.
 - **Shared element transition** — if an element travels and transforms from one position into another.
-```
-
-User: "That iOS scroll where it resists and snaps back when you pull too far."
-```
-**Rubber-banding** — Resistance and snap-back when you drag past a boundary (the iOS overscroll feel).
 ```
 
 ## Glossary
@@ -149,7 +144,7 @@ User: "That iOS scroll where it resists and snaps back when you pull too far."
 - **Dropped frame** — A frame the browser missed its deadline to draw, causing a tiny hitch in motion.
 - **Compositing** — Letting the GPU move or fade an element on its own layer without redoing layout or paint.
 - **will-change** — A CSS hint that an element is about to animate, so the browser can promote it to its own layer ahead of time.
-- **Layout thrashing** — Animating properties like width, height, top, or left that force the browser to recalculate layout every frame, causing jank.
+- **Layout thrashing** — Interleaving layout reads (`offsetWidth`, `getBoundingClientRect`) with style writes, so the browser recalculates layout synchronously again and again within a frame, causing jank. Not the same as animating width, height, top or left, which recalculates layout once every frame (also costly; see *Compositing*).
 
 ### Principles to Know — concepts that guide when and how to animate
 - **Purposeful animation** — Motion should serve a function — orient, give feedback, show relationships — not just decorate.

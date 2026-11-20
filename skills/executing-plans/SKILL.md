@@ -1,19 +1,19 @@
 ---
 name: executing-plans
-description: Use when you have a written implementation plan to execute in a separate session with review checkpoints
+description: Use when executing a written implementation plan inline, because the user asked for inline execution or the harness has no subagents. Not the default; use subagent-driven-development.
 ---
 
 # Executing Plans
 
 Load the plan, review it critically, execute every task, report when complete.
 
-If subagents are available, use the subagent-driven-development skill instead of this one.
+Fallback only. The default for executing a plan is subagent-driven-development.
 
 ## Process
 
 ### 1. Load and review the plan
 
-1. **REQUIRED SUB-SKILL:** Use using-git-worktrees to create or verify an isolated workspace. Never start implementation on main/master without explicit user consent.
+1. **REQUIRED SUB-SKILL:** Use using-git-worktrees to create or verify an isolated workspace on a new branch. Never implement on main/master.
 2. Read the plan file.
 3. Review it critically for questions or concerns. Raise any with the user before starting.
 4. No concerns: put the plan's items on the todo list and proceed.

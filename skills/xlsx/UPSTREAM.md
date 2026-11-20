@@ -8,4 +8,5 @@
 
 ## Local changes
 
-None yet.
+- Description: the Word-document exclusion became `Not for a Word document deliverable; use docx.`; the other exclusions (HTML report, Python script, database pipeline, Google Sheets API) stay.
+- Dropped the upstream-sandbox claim that `openpyxl`, `pandas` and `markitdown` are preinstalled: import directly and `pip install` only on failure (intro note and Dependencies).

@@ -28,6 +28,7 @@ flowchart TD
 ```
 Error: git init failed in ~/project/packages/core
 ```
+`.git` was created in `packages/core/`, the source code.
 
 ### 2. Find Immediate Cause
 **What code directly causes this?**
@@ -56,6 +57,11 @@ const context = setupCoreTest(); // Returns { tempDir: '' }
 Project.create('name', context.tempDir); // Accessed before beforeEach!
 ```
 
+**Root cause:** top-level variable initialization read `context.tempDir` before `beforeEach` set it.
+
+### 6. Fix at the Source
+Make `tempDir` a getter that throws if accessed before `beforeEach`. Then add validation at each layer the value passed through: [defense-in-depth.md](defense-in-depth.md) shows the four layers added for this bug.
+
 ## Adding Stack Traces
 
 When you can't trace manually, add instrumentation:
@@ -75,11 +81,13 @@ async function gitInit(directory: string) {
 }
 ```
 
-**Critical:** Use `console.error()` in tests (not logger - may not show)
+- Use `console.error()` in tests, not a logger: the logger may be suppressed.
+- Log before the dangerous operation, not after it fails.
+- Include context: directory, cwd, environment variables, timestamps. `new Error().stack` shows the complete call chain.
 
 **Run and capture:**
 ```bash
-npm test 2>&1 | grep 'DEBUG git init'
+bun test 2>&1 | grep 'DEBUG git init'
 ```
 
 **Analyze stack traces:**
@@ -89,64 +97,11 @@ npm test 2>&1 | grep 'DEBUG git init'
 
 ## Finding Which Test Causes Pollution
 
-If something appears during tests but you don't know which test:
-
-Use the bisection script `find-polluter.sh` in this directory:
+If something appears during tests but you don't know which test, run `find-polluter.sh` (in this skill's directory) from the project root:
 
 ```bash
-./find-polluter.sh '.git' 'src/**/*.test.ts'
+<skill-dir>/find-polluter.sh '.git' 'src/**/*.test.ts'
+TEST_CMD='bunx vitest run' <skill-dir>/find-polluter.sh '.git' 'src/**/*.test.ts'
 ```
 
-Runs tests one-by-one, stops at first polluter. See script for usage.
-
-## Real Example: Empty projectDir
-
-**Symptom:** `.git` created in `packages/core/` (source code)
-
-**Trace chain:**
-1. `git init` runs in `process.cwd()` ← empty cwd parameter
-2. WorktreeManager called with empty projectDir
-3. Session.create() passed empty string
-4. Test accessed `context.tempDir` before beforeEach
-5. setupCoreTest() returns `{ tempDir: '' }` initially
-
-**Root cause:** Top-level variable initialization accessing empty value
-
-**Fix:** Made tempDir a getter that throws if accessed before beforeEach
-
-**Also added defense-in-depth:**
-- Layer 1: Project.create() validates directory
-- Layer 2: WorkspaceManager validates not empty
-- Layer 3: NODE_ENV guard refuses git init outside tmpdir
-- Layer 4: Stack trace logging before git init
-
-## Key Principle
-
-```mermaid
-flowchart TD
-    found(["Found immediate cause"]) --> up{"Can trace one level up?"}
-    up -->|yes| back["Trace backwards"]
-    up -->|no| never["NEVER fix just the symptom"]
-    back --> src{"Is this the source?"}
-    src -->|no - keeps going| back
-    src -->|yes| fix["Fix at source"]
-    fix --> layers["Add validation at each layer"]
-    layers --> impossible(["Bug impossible"])
-```
-
-**NEVER fix just where the error appears.** Trace back to find the original trigger.
-
-## Stack Trace Tips
-
-**In tests:** Use `console.error()` not logger - logger may be suppressed
-**Before operation:** Log before the dangerous operation, not after it fails
-**Include context:** Directory, cwd, environment variables, timestamps
-**Capture stack:** `new Error().stack` shows complete call chain
-
-## Real-World Impact
-
-From debugging session (2025-10-03):
-- Found root cause through 5-level trace
-- Fixed at source (getter validation)
-- Added 4 layers of defense
-- 1847 tests passed, zero pollution
+It runs the test files one by one (`TEST_CMD`, default `bun test`) and stops at the first that creates the path. It exits with an error if the path already exists before the first test. See the script header for usage.

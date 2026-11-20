@@ -147,13 +147,6 @@ BEFORE adding a mock or test helper:
     Unmock it or delete the assertion.
 ```
 
-## Tests Ship With the Implementation
-
-The TDD cycle — failing test, minimal implementation, refactor — is what
-"complete" means. Ship the tests the behavior needs and only those:
-trivial code and human prose earn none, and a test written to satisfy
-process costs maintenance forever.
-
 ## The Mutation Check
 
 Before finishing, mentally mutate the production code; at least one test
@@ -170,29 +163,15 @@ test as tautological.
 
 ## Quick Reference
 
-| When you... | Do |
-|-------------|-----|
-| Write any test | Name the break it catches — a bug, not a decision |
-| Build an expected value | Derive it by hand; never with the code under test |
-| Test a script or document | Run it / pressure-test its consumer; never grep its text |
-| Reach for a dependency test | Test your boundary contract, not their documented mechanics |
-| Want to assert on a mocked element | Test the real component, or unmock it |
-| Are about to mock a method | Learn its side effects; mock the slow/external level |
-| Build a mock response | Mirror the real structure completely |
-| Need cleanup only tests use | Put it in test utilities |
-| Watch mock setup balloon | Switch to an integration test with real components |
-| Finish a test file | Run the mutation check |
-
-## Warning Signs
-
-- Setup and assertion share the same object, guaranteeing equality
-- The test can fail only through a panic, crash, or missing selector
-- The test fails on every intentional change, never on accidental breakage
-- Expected values are hidden behind loops, builders, or helpers
-- The test greps source text, or asserts a removed symbol stays removed
-- The test would still matter if only the framework remained
-- The test exists for coverage, checking no side effect or outcome
-- An assertion checks a `*-mock` test ID, or fails if you remove the mock
-- A method is called only from test files
-- Mock setup is more than half the test, or you can't explain why the mock is needed
-- Mocking "just to be safe"
+| When you... | Do | Warning sign |
+|-------------|-----|--------------|
+| Write any test | Name the break it catches — a bug, not a decision | It fails on every intentional change, never on accidental breakage; it can fail only through a panic, crash, or missing selector; it exists for coverage, checking no side effect or outcome (a test written to satisfy process costs maintenance forever) |
+| Build an expected value | Derive it by hand; never with the code under test | Setup and assertion share the same object, guaranteeing equality; expected values are hidden behind loops, builders, or helpers |
+| Test a script or document | Run it / pressure-test its consumer; never grep its text | The test greps source text, or asserts a removed symbol stays removed |
+| Reach for a dependency test | Test your boundary contract, not their documented mechanics | The test would still matter if only the framework remained |
+| Want to assert on a mocked element | Test the real component, or unmock it | An assertion checks a `*-mock` test ID, or fails if you remove the mock |
+| Are about to mock a method | Learn its side effects; mock the slow/external level | Mocking "just to be safe" |
+| Build a mock response | Mirror the real structure completely | |
+| Need cleanup only tests use | Put it in test utilities | A method is called only from test files |
+| Watch mock setup balloon | Switch to an integration test with real components | Mock setup is more than half the test, or you can't explain why the mock is needed |
+| Finish a test file | Run the mutation check | |

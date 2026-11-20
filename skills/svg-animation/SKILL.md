@@ -1,6 +1,6 @@
 ---
 name: svg-animation
-description: Use when animating SVG — a line drawing itself on (stroke-dasharray / stroke-dashoffset, pathLength, signature animation), morphing one shape into another (MorphSVG, Flubber, animating d), moving an element along a path (MotionPath, offset-path, animateMotion), animated icons and logos (hamburger ↔ close, play ↔ pause), or animated SVG gradients and filters (feTurbulence, feDisplacementMap). Not for general GSAP timelines or ScrollTrigger; use gsap-web. Not for liquid-glass refraction surfaces; use glassmorphism.
+description: Use when animating SVG — a line drawing itself on (stroke-dasharray / stroke-dashoffset, pathLength, signature animation), morphing one shape into another (MorphSVG, Flubber, animating d), moving an element along a path (MotionPath, offset-path, animateMotion), animated icons and logos (hamburger ↔ close, play ↔ pause), or animated SVG gradients and filters (feTurbulence, feDisplacementMap). Not for general GSAP timelines or ScrollTrigger; use gsap-web. Not for liquid-glass refraction surfaces; use glassmorphism. Not for non-SVG component feedback (hover, press, toggle, toast); use micro-interaction.
 version: 0.1.0
 ---
 
@@ -48,7 +48,7 @@ Dash array as long as the path, offset fully (invisible), animate offset to 0:
 .path {
   stroke-dasharray: var(--len);
   stroke-dashoffset: var(--len);
-  animation: draw 1.4s ease forwards;
+  animation: draw 1.4s var(--ease-in-out, cubic-bezier(0.77, 0, 0.175, 1)) forwards; /* curve tokens: animate */
 }
 @keyframes draw { to { stroke-dashoffset: 0; } }
 ```
@@ -122,7 +122,7 @@ Animate `gradientTransform` or stop offsets. Sheen sweep:
 </linearGradient>
 ```
 
-Filters: `feDisplacementMap` `scale` for gooey/wobble, `feGaussianBlur` `stdDeviation` for focus pulls, `feColorMatrix`/`feFlood` for glow. Filters are paint-heavy; animate sparingly, prefer `transform`/`opacity`.
+Filters: `feDisplacementMap` `scale` for gooey/wobble, `feGaussianBlur` `stdDeviation` for focus pulls, `feColorMatrix`/`feFlood` for glow. Filters are paint-heavy: re-rendering a primitive every frame is the jank source.
 
 ### Authoring
 
@@ -133,26 +133,7 @@ Filters: `feDisplacementMap` `scale` for gooey/wobble, `feGaussianBlur` `stdDevi
 
 ### Standalone deliverable
 
-One HTML file with the inline `<svg>` and one driver (CSS `@keyframes`, GSAP from CDN, or SMIL). `?t=N` freezes a frame with the matching mechanism:
-
-```html
-<script>
-  const t = new URLSearchParams(location.search).get("t");
-  if (t !== null) {
-    const N = parseFloat(t);
-    // SMIL: pause the SVG's own clock and scrub it
-    const svg = document.querySelector("svg");
-    svg.pauseAnimations(); svg.setCurrentTime(N);
-    // CSS @keyframes draw-on: el.style.animationDelay=(-N)+"s"; el.style.animationPlayState="paused";
-    // GSAP timeline: tl.pause(); tl.seek(N);
-  }
-  window.__ready = true;
-</script>
-```
-
-```bash
-bunx playwright screenshot --wait-for-timeout=500 "file://$PWD/icon.html?t=0.7" frame-mid.png
-```
+One HTML file with the inline `<svg>` and one driver (CSS `@keyframes`, GSAP from CDN, or SMIL). Freeze frames with the harness in animate (`references/standalone-harness.md`); `?t=N` uses the mechanism matching the driver.
 
 Screenshot start / mid / end and confirm: no console errors; stroke draws in the right direction, morph endpoints clean; no path clipped by `viewBox`, no stroke vanishing from a stale dashoffset, no seam jank; reduced motion honored; no accidental `linear` draw-on.
 
@@ -164,9 +145,5 @@ Screenshot start / mid / end and confirm: no console errors; stroke draws in the
 
 | Mistake | Fix |
 |---|---|
-| Draw-on does nothing | Path is a filled outline; use strokes |
-| Draws backwards | Reverse point order or negate offset |
-| Morph jumps or scrambles | Match command structure, or MorphSVG/Flubber |
-| CSS/JS can't reach internals | Inline the SVG, not `<img>` |
 | Animated IDs broken after SVGO | Disable `cleanupIds` and ID-renaming plugins |
-| Janky filter animation | Animate filters sparingly |
+| Janky filter animation | Keep the filter static and animate `transform`/`opacity` on the filtered layer or its wrapper; animate a primitive (`scale`, `stdDeviation`) only on small elements, briefly |

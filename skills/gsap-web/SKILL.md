@@ -1,6 +1,6 @@
 ---
 name: gsap-web
-description: Use when building GSAP motion — timelines, hero entrance timelines, ScrollTrigger (pin, scrub, horizontal scroll, snap, batch, parallax), scroll-driven storytelling, SplitText word/line reveals, Flip layout changes, quickTo pointer follow — or when Lenis/Locomotive smooth scroll is jittery, ScrollTrigger markers drift, or pins break with Lenis/Locomotive. Not for ordering decisions between elements; use choreograph. Not for MorphSVG/MotionPath on SVG; use svg-animation. Not for reduced-motion policy; use accessible-animation.
+description: Use when building GSAP motion — timelines, hero entrance timelines, ScrollTrigger (pin, scrub, horizontal scroll, snap, batch, parallax), scroll-driven storytelling, SplitText word/line reveals, Flip layout changes, quickTo pointer follow — or when Lenis/Locomotive smooth scroll is jittery, ScrollTrigger markers drift, or pins break with Lenis/Locomotive. Not for ordering decisions between elements; use choreograph. Not for MorphSVG/MotionPath on SVG; use svg-animation. Not for reduced-motion policy; use accessible-animation. Not for frame-rate or jank diagnosis; use animation-performance.
 version: 0.1.0
 ---
 
@@ -8,7 +8,7 @@ version: 0.1.0
 
 ## Overview
 
-GSAP drives code-driven web motion: sequenced timelines, scroll-driven scenes, text reveals and layout transitions. Since GSAP 3.12 every plugin (ScrollTrigger, SplitText, Flip, MotionPath, MorphSVG, Draggable, Observer, CustomEase) is free, including commercial use.
+GSAP drives code-driven web motion: sequenced timelines, scroll-driven scenes, text reveals and layout transitions. Since GSAP 3.13 every plugin (ScrollTrigger, SplitText, Flip, MotionPath, MorphSVG, Draggable, Observer, CustomEase) is free, including commercial use.
 
 ## When to Use
 
@@ -49,17 +49,19 @@ Position parameter:
 | `"<0.2"` | 0.2s after previous tween's start |
 | `"myLabel"` | Label from `tl.addLabel("myLabel")` |
 
-Easing:
+Easing: curves, durations and stagger come from animate. GSAP equivalents of its tokens:
 
-| Ease | Use |
-|---|---|
-| `power2/3.out` | Entrances |
-| `power2.inOut` | Moves between two on-screen states |
-| `back.out(1.7)` | Overshoot/pop (number = overshoot) |
-| `elastic.out(1, 0.3)` | Bouncy, sparingly |
-| `none` | Scrubbed scroll tweens |
-| `steps(n)` | Sprite/stepped motion |
-| `CustomEase.create("x", "M0,0 C0.2,0 0,1 1,1")` | Custom cubic-bezier |
+| Use | animate token | GSAP |
+|---|---|---|
+| Entrances, exits | `--ease-out` | `power4.out` (≈); exact: `CustomEase.create("easeOut", "0.23,1,0.32,1")`. `power2/3.out` are softer |
+| Moves between two on-screen states | `--ease-in-out` | `power3.inOut` (≈) |
+| Drawers, sheets | `--ease-drawer` | `CustomEase.create("drawer", "0.32,0.72,0,1")` |
+| Overshoot/pop | `--ease-overshoot` | `back.out(1.7)` (number = overshoot) |
+| Bouncy, sparingly | — | `elastic.out(1, 0.3)` |
+| Scrubbed scroll tweens | — | `none` |
+| Sprite/stepped motion | — | `steps(n)` |
+
+`CustomEase.create` also takes an SVG path: `CustomEase.create("x", "M0,0 C0.2,0 0,1 1,1")`.
 
 ## Implementation
 
@@ -123,21 +125,34 @@ Lenis smooths on its own rAF while ScrollTrigger reads scroll on GSAP's ticker; 
 ```js
 import Lenis from "lenis";
 
-const lenis = new Lenis({ duration: 1.2, smoothWheel: true });
+const lenis = new Lenis({ duration: 1.2, smoothWheel: true }); // do not enable Lenis's own rAF
+const update = (t) => lenis.raf(t * 1000);   // gsap.ticker passes SECONDS, lenis.raf() wants MILLISECONDS
 
-lenis.on("scroll", ScrollTrigger.update);          // 1. update ScrollTrigger on every Lenis scroll
-gsap.ticker.add((t) => lenis.raf(t * 1000));       // 2. ticker drives Lenis (seconds → ms)
-gsap.ticker.lagSmoothing(0);                        // 3. stop catch-up jitter on heavy frames
+lenis.on("scroll", ScrollTrigger.update);    // 1. triggers, markers and pins track the smoothed scroll
+gsap.ticker.add(update);                     // 2. ticker drives Lenis: same frame, same order
+gsap.ticker.lagSmoothing(0);                 // 3. stop catch-up jitter on heavy frames
+
+// SPA unmount / route change, else loops stack per navigation:
+const teardown = () => {
+  gsap.ticker.remove(update);
+  lenis.destroy();
+  ScrollTrigger.getAll().forEach((t) => t.kill()); // or ctx.revert()
+};
 ```
 
-`gsap.ticker` passes **seconds**, `lenis.raf()` wants **milliseconds**. Do not also run a standalone `requestAnimationFrame(raf)` loop — that double-drives Lenis. On SPA unmount: `gsap.ticker.remove(update)` + `lenis.destroy()`, else loops stack per navigation. Under reduced motion skip Lenis and use native scroll.
+Never also run a standalone `requestAnimationFrame(raf)` loop for Lenis: it double-drives Lenis. Delete any tutorial `function raf(time){ lenis.raf(time); requestAnimationFrame(raf) }`. Under reduced motion skip Lenis and use native scroll; ScrollTrigger works with or without it. Locomotive, anchors, nested scroll areas, React: `references/scrolltrigger-lenis.md`.
 
 | Symptom | Cause / fix |
 |---|---|
-| Jitter/stutter | Leftover `requestAnimationFrame(raf)` loop, or missing `lagSmoothing(0)` |
-| Markers drift from triggers | `ScrollTrigger.update` not subscribed to `lenis.on("scroll", …)` |
-| Pins break | Lenis: do NOT set `scrollerProxy` (it scrolls the document). Locomotive: MUST wire `scrollerProxy` + `pinType` and set `scroller:` on every trigger |
-| Scroll stuck / direction flipped | Missing `* 1000`, or two loops out of order |
+| Jitter/stutter | Leftover `requestAnimationFrame` loop near `lenis.raf` (search for it), or missing `lagSmoothing(0)` (jitter only on heavy frames) |
+| Markers drift from triggers | `ScrollTrigger.update` not subscribed to `lenis.on("scroll", …)`. Diagnose with `markers: true`: markers at the *native* position while content follows the smoothed scroll = missing subscription or a mis-set proxy |
+| Pins break / jump | Lenis: do NOT set `scrollerProxy` (it scrolls the document). Locomotive: MUST wire `scrollerProxy` + `pinType` and set `scroller:` on every trigger |
+| Scroll stuck / barely moves / direction flipped | Missing `* 1000`, or two loops out of order |
+| Animations a frame behind | Two loops; consolidate onto the one ticker |
+| Triggers fire at the wrong scroll position | No `ScrollTrigger.refresh()` after content, fonts, images or layout change |
+| Worse after each route change | No teardown; loops and triggers accumulate |
+| Anchor links jump then snap back | Native `#hash` jump not routed through `lenis.scrollTo` |
+| Inner scroll container won't scroll | Lenis intercepts it; add `data-lenis-prevent` |
 
 ### SplitText
 
@@ -158,7 +173,7 @@ Record state, change the DOM instantly, animate the difference:
 const state = Flip.getState(".item");   // 1. capture BEFORE
 container.classList.toggle("grid");      // 2. mutate DOM/CSS (instant)
 Flip.from(state, {                        // 3. animate the delta
-  duration: 0.6, ease: "power2.inOut", stagger: 0.05,
+  duration: 0.6, ease: "power3.inOut", stagger: 0.05,
   absolute: true,                         // out of flow during move (prevents reflow jitter)
 });
 ```
@@ -180,37 +195,13 @@ useEffect(() => {
 
 ### Standalone deliverable
 
-A self-contained hero, reveal, loop or micro-scene is one HTML file: GSAP + plugins from CDN, markup, and all motion on **one master timeline** in one inline `<script>`. `?t=N` seeks and pauses it for screenshots:
-
-```html
-<script>
-  // ... build your master timeline as `tl` ...
-  const t = new URLSearchParams(location.search).get("t");
-  if (t !== null) { tl.pause(); tl.seek(parseFloat(t)); }  // frozen at t seconds
-  window.__ready = true;
-  console.log("duration", tl.duration());
-</script>
-```
-
-```bash
-bunx playwright screenshot --wait-for-timeout=500 "file://$PWD/anim.html?t=1.2" frame-mid.png
-```
+A self-contained hero, reveal, loop or micro-scene is one HTML file: GSAP + plugins from CDN, markup, and all motion on **one master timeline** in one inline `<script>`. Freeze frames with the harness in animate (`references/standalone-harness.md`); `?t=N` seeks and pauses `tl`, and logging `tl.duration()` gives the end frame.
 
 Screenshot `?t=0`, `?t=<dur/2>`, `?t=<dur>` (end from `tl.duration()`) and confirm: no console errors or missing CDN; matches the brief; no clipped text, off-canvas elements, FOUC before fonts, or seam jank; reduced motion simplifies or skips the timeline; no accidental `linear` on spatial motion. Template with the harness wired in: `examples/standalone-template.html`.
 
 ### References
 
 - `references/scrolltrigger-cookbook.md` — read for pin, scrub, horizontal scroll, snap, `ScrollTrigger.batch()`, parallax, nested triggers, SPA cleanup.
-- `references/scrolltrigger-lenis.md` — read for full Lenis/Locomotive wiring, `scrollerProxy`, anchor links, `data-lenis-prevent`, reduced motion, React (`useGSAP`/`useEffect`), debugging checklist.
+- `references/scrolltrigger-lenis.md` — read for Locomotive (`scrollerProxy`), refresh/resize, anchor links, `data-lenis-prevent`, the reduced-motion gate, React (`useGSAP`/`useEffect`).
 - `examples/hero-timeline.js` — runnable hero entrance with SplitText, staggered reveals, reduced-motion handling.
-- `examples/standalone-template.html` — CDN GSAP, one master timeline, `?t=N` harness, reduced-motion handling.
-
-## Common Mistakes
-
-| Mistake | Fix |
-|---|---|
-| Plugin not registered | `gsap.registerPlugin(...)` before use |
-| Eased scrubbed tween | `ease: "none"` |
-| `markers: true` shipped | Remove for prod |
-| SplitText before fonts load | `document.fonts.ready.then(...)` |
-| No cleanup in SPA | `gsap.context()` + `ctx.revert()` |
+- `examples/standalone-template.html` — CDN GSAP, one master timeline, harness (`?t=N`, `?state`, `?reduce=1`), reduced-motion handling.

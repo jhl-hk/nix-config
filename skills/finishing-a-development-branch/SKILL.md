@@ -1,6 +1,6 @@
 ---
 name: finishing-a-development-branch
-description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work
+description: Use when implementation is complete, all tests pass, and you need to decide how to integrate the work (merge, PR, keep; discard only on explicit request) and clean up the worktree. Not for creating a workspace; use using-git-worktrees.
 ---
 
 # Finishing a Development Branch
@@ -28,6 +28,9 @@ Tests failing (<N> failures). Must fix before completing:
 ```bash
 GIT_DIR=$(cd "$(git rev-parse --git-dir)" 2>/dev/null && pwd -P)
 GIT_COMMON=$(cd "$(git rev-parse --git-common-dir)" 2>/dev/null && pwd -P)
+# Submodule guard (same check as using-git-worktrees Step 0): GIT_DIR != GIT_COMMON
+# inside a submodule too. Non-empty output = submodule: treat as a normal repo.
+SUPERPROJECT=$(git rev-parse --show-superproject-working-tree 2>/dev/null)
 # Capture now, while still inside the workspace — Step 5 changes directory
 # before cleanup (Step 6) needs this value
 WORKTREE_PATH=$(git rev-parse --show-toplevel)
@@ -37,9 +40,9 @@ This determines which menu to show and how cleanup works:
 
 | State | Menu | Cleanup |
 |-------|------|---------|
-| `GIT_DIR == GIT_COMMON` (normal repo) | Standard 3 options | No worktree to clean up |
-| `GIT_DIR != GIT_COMMON`, named branch | Standard 3 options | Provenance-based (see Step 6) |
-| `GIT_DIR != GIT_COMMON`, detached HEAD | Reduced 2 options (no merge) | Externally managed — leave in place |
+| `GIT_DIR == GIT_COMMON` (normal repo), or `SUPERPROJECT` non-empty (submodule) | Standard 3 options | No worktree to clean up |
+| Linked worktree (`GIT_DIR != GIT_COMMON`, not a submodule), named branch | Standard 3 options | Provenance-based (see Step 6) |
+| Linked worktree, detached HEAD | Reduced 2 options (no merge) | Externally managed — leave in place |
 
 ## Step 3: Determine Base Branch
 
@@ -73,18 +76,17 @@ Implementation complete. You're on a detached HEAD (externally managed workspace
 Which option?
 ```
 
-Present the menu exactly as written — concise, with every option coming
-from the list above. Discarding the work happens only in response to your
-human partner explicitly asking for it (see "If your human partner asks to
-discard the work" below). Wait for their answer; the integration decision
-is theirs.
+Discarding the work is never a menu option; it happens only when your
+human partner explicitly asks (see "If your human partner asks to discard
+the work" below). Wait for their answer; the integration decision is theirs.
 
 ## Step 5: Execute Choice
 
 ### Option 1: Merge Locally
 
 ```bash
-# Get main repo root for CWD safety
+# Linked worktree only: move to the main repo root for CWD safety
+# (normal repo or submodule: you are already at its root; skip these two lines)
 MAIN_ROOT=$(git -C "$(git rev-parse --git-common-dir)/.." rev-parse --show-toplevel)
 cd "$MAIN_ROOT"
 
@@ -146,6 +148,7 @@ Type 'discard' to confirm.
 Wait for that exact confirmation. When it arrives:
 
 ```bash
+# Linked worktree only (normal repo or submodule: skip)
 MAIN_ROOT=$(git -C "$(git rev-parse --git-common-dir)/.." rev-parse --show-toplevel)
 cd "$MAIN_ROOT"
 ```
@@ -161,13 +164,16 @@ git branch -D <feature-branch>
 **Runs for Option 1 and confirmed discards.** Options 2 and 3 always
 preserve the worktree. Both callers have already changed directory to the
 main repo root — worktree removal must run from outside the worktree —
-and use the `GIT_DIR`/`GIT_COMMON`/`WORKTREE_PATH` values captured in
-Step 2, from before that directory change.
+and use the `GIT_DIR`/`GIT_COMMON`/`SUPERPROJECT`/`WORKTREE_PATH` values
+captured in Step 2, from before that directory change.
 
-**If `GIT_DIR == GIT_COMMON`:** Normal repo, no worktree to clean up. Done.
+**If `GIT_DIR == GIT_COMMON` or `SUPERPROJECT` is non-empty:** normal repo
+or submodule, no worktree to clean up. Done.
 
-**If `WORKTREE_PATH` is under `.worktrees/` or `worktrees/`:** the
-using-git-worktrees skill created this worktree — we own cleanup:
+**If `WORKTREE_PATH` is under `.worktrees/`, `worktrees/`, or the worktree
+directory declared in your instructions** (using-git-worktrees Step 1b,
+directory selection item 1): the using-git-worktrees skill created this
+worktree — we own cleanup:
 
 ```bash
 git worktree remove "$WORKTREE_PATH"

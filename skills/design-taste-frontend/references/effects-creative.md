@@ -21,7 +21,6 @@ A laptop's graphics chip shares about 2 GB with everything else; too many live c
 - **Stills render once.** An effect that does not move (speed and drift 0) goes through `still()` in `shared.js` (or `fill(el, id, { still: true })` for type): drawn once as it nears the screen, copied into a plain picture, its context freed. Stills draw one after another, so they never hold more than one context at a time. Never leave a still mounted with its frame loop running, and never give a still a pause button (Play would start its loop).
 - **Screenshots wait for the stills.** On a CPU renderer each still takes about a second, so a screen captured a fixed time after a scroll catches some blank and a panel cut by two screens comes out half lit. While stills near the screen have no picture yet, `<html data-cx-baking="n">` says how many; a screenshot must wait until it is gone. `shoot.mjs` and `consistency.mjs` do not wait on it yet: shoot a page with stills (filled stats, type in an effect, painted panels) with `--wait 1500` and look for unfilled digits before judging.
 - `fx-dither-object` runs once per dither cell (a ninth of the CSS pixels); `painterly-landscape` at 0.6.
-- A loop that runs on its own for more than about 5 s has a pause button.
 - What holds a context: `fx-dither-object` (20 fps), `fx-prompt`, `fx-globe`, `fx-avatar` and `fx-progress`, each only while near the screen; `fx-button` only while pointed at (freed 4 s later); `fx-search` only while focused. A page carries one of these (the effect). Every other part is a still, and so is the dither object under reduced motion. `fx-map` (plain SVG) and `fx-photo` (the photograph itself) hold no context.
 
 ## Feature cards with inset panels (`fx-feature-card`)
@@ -69,7 +68,7 @@ A visit or contact section shows the real streets around the place, as a map app
 
 ## A photograph with copy (`fx-photo`)
 
-- The client's photograph in its natural colour, the copy on its calm, dark corner (white type, no scrim); in a link it zooms 1.02 to 1.03 inside its frame (`motion.md`). Words on a photograph only in the hero and one band a page, never on a place.
+- The client's photograph in its natural colour, the copy on its calm, dark corner (white type, no scrim); in a link it takes the photograph hover (`motion.md`, The hover layer). Words on a photograph only in the hero and one band a page, never on a place.
 - No filter over it: no halftone, dither, dissolve, print, duotone or blur (`data-cx-grade` stays off).
 - The photographer's credit goes in the page's one footer credit line.
 - Its `effects` list is empty on purpose and `data-cx-effect` is ignored. No WebGL, nothing at rest; under reduced motion the zoom is off.

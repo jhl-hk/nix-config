@@ -2,7 +2,7 @@
 
 A moment is the award-site part of a page (house rule 8): the one place, or two, where a page does
 something a visitor remembers, in a section of its own; besides it the page has only the hero's
-entrance and the hover layer (`motion.md`, The rule). Each is a folder in `assets/moments/<id>/`
+entrance and the hover layer (`motion.md`, Three places move, nothing else). Each is a folder in `assets/moments/<id>/`
 (`moment.js`, `moment.css`, `meta.json`, a full `demo.html`); `index.json` lists them,
 `gallery.html` links the demos and `moments.js` runs them. Thirteen are dealt by kind (below);
 five folders are retired (`meta.retired`, weight 0, never dealt).
@@ -64,7 +64,7 @@ bun <skill>/scripts/moments.mjs pick --page <kind> --count 1|2 --fits section,st
   `photo`, `cursor-spotlight` on `product`, `collage`, `film` and `centred`, `liquid-type` on
   `statement` (tech, a headline of six words or fewer), and none on the others. Off touch only;
   reduced motion rests. Two moments in all at most.
-- **The WebGL budget.** A page holds at most 4 live contexts (`perf.md`). The deal adds up what the
+- **The WebGL budget.** A page holds at most 4 live contexts (`effects-usage.md`). The deal adds up what the
   page already spends and never deals a moment whose own `webgl` (in its `meta.json`: only
   `liquid-hover` has 1) would push the total over 4: pass the big scene as `--scene <id>` (its `webgl`
   is read from `assets/scenes/index.json`), each dealt effect in `--effects a,b` (counted as one
@@ -172,8 +172,8 @@ model.
   own photographs (or library ones that pass `photos.md`), each used once on the page, and its
   words are the page's real copy; never a stand-in picture to give the moment something to move.
 - **One count a page:** `counter-rolls` or `data-m-count` (`motion.md`), never both.
-- **Nothing blinks, bounces or overshoots.** Ease-outs (cubic-bezier(.22,1,.36,1) for a settle),
-  600-1,000 ms for a reveal, 1.6-1.8 s for a photograph developing; a scrubbed wipe or change takes
+- **Nothing blinks, bounces or overshoots.** Curves and the develop time: `motion.md`, Tokens and
+  Scroll; 600-1,000 ms for a reveal; a scrubbed wipe or change takes
   about half of its chapter's share of the scroll and holds for the rest; a loop runs its rounds and
   rests, or carries a pause button.
 - **The page's edges.** A moment's text sits in a `.container` or `.wrap` like every other section: its

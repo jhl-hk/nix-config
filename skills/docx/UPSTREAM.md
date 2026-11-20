@@ -8,4 +8,6 @@
 
 ## Local changes
 
-None yet.
+- Description: the closing exclusion now names the neighbouring skills (`Not for PDFs, spreadsheets or slide decks; use pdf / xlsx / pptx.`); Google Docs and unrelated coding stay excluded.
+- Dropped the upstream-sandbox claim that `docx` is preinstalled: require it directly and `bun add docx` only if the require fails (gotchas intro and Dependencies).
+- "then Read the images" (harness tool name) → "then view the images".

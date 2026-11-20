@@ -12,7 +12,7 @@ The test: a category-fluent user trusts the interface immediately instead of pau
 - **Colour:** pick the strategy from [new-work.md](new-work.md) §4. Operate surfaces usually take Restrained (world-tinted neutrals plus one accent, with colour still doing the jobs listed under Directions) and a single surface can earn Committed. A grey screen with one accent is not Restrained. Standardise the state vocabulary: hover, focus, active, disabled, selected, loading, error, warning, success, info. The accent marks primary actions, current selection and state, not decoration; no full-saturation accents on inactive states. Add a second neutral layer for sidebars, toolbars and panels, slightly cooler or warmer than the content surface.
 - **Layout:** responsive behaviour is structural (collapsing sidebar, responsive table, breakpoint-driven columns), not fluid type.
 - **Empty states** teach the interface instead of saying "nothing here".
-- **Motion** conveys state (change, feedback, loading, reveal) and nothing else. No orchestrated page-load sequences. Durations: the shortest rows of the table in [animate.md](animate.md).
+- **Motion** conveys state (change, feedback, loading, reveal) and nothing else. No orchestrated page-load sequences. Durations: the shortest rows of the animate skill's duration table.
 - **Consistency:** keep standard affordances (form controls, modals, navigation); never reinvent them for flavour. The same visual vocabulary screen to screen is a virtue; delight is for moments, not pages.
 - **Permitted here:** system fonts and familiar sans defaults; standard navigation (top bar plus side nav, breadcrumbs, tabs, command palettes); density (many rows, many labels) when users need it.
 

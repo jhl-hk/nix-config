@@ -17,32 +17,30 @@ Dispatch a subagent:
 
     ## Context
 
-    [Scene-setting: where this fits, dependencies, architectural context]
+    [CONTEXT]
 
-    ## Before You Begin
+    ## Questions
 
-    If you have questions about:
-    - The requirements or acceptance criteria
-    - The approach or implementation strategy
-    - Dependencies or assumptions
-    - Anything unclear in the task description
-
-    **Ask them now.** Raise any concerns before starting work.
+    You cannot pause mid-task to ask. If anything is unclear — the
+    requirements or acceptance criteria, the approach, dependencies or
+    assumptions, something unexpected you hit while working — don't guess:
+    report NEEDS_CONTEXT with the specific questions, before starting or
+    as soon as the question arises.
 
     ## Your Job
 
-    Once you're clear on requirements:
-    1. Implement exactly what the task specifies
-    2. Write tests (following TDD if task says to)
-    3. Verify implementation works
-    4. Commit your work
-    5. Self-review (see below)
-    6. Report back
+    1. Implement exactly what the task specifies, test first: follow the
+       test-driven-development skill (write the failing test, run it and
+       watch it fail for the expected reason, then write the minimal code
+       that passes). This is not optional unless the brief marks the task
+       as a TDD exception (configuration, generated code); then report the
+       verification you ran instead.
+    2. Verify implementation works
+    3. Commit your work
+    4. Self-review (see below)
+    5. Report back
 
-    Work from: [directory]
-
-    **While you work:** If you encounter something unexpected or unclear, **ask questions**.
-    It's always OK to pause and clarify. Don't guess or make assumptions.
+    Work from: [WORK_DIR]
 
     While iterating, run the focused test for what you're changing; run the
     full suite once before committing, not after every edit.
@@ -74,8 +72,8 @@ Dispatch a subagent:
 
     ## When You're in Over Your Head
 
-    It is always OK to stop and say "this is too hard for me." Bad work is worse than
-    no work. You will not be penalized for escalating.
+    Bad work is worse than no work. It is always OK to stop and say "this is
+    too hard for me." You will not be penalized for escalating.
 
     **STOP and escalate when:**
     - The task requires architectural decisions with multiple valid approaches
@@ -110,7 +108,7 @@ Dispatch a subagent:
 
     **Testing:**
     - Do tests actually verify behavior (not just mock behavior)?
-    - Did I follow TDD if required?
+    - Did I write each test first and watch it fail before implementing?
     - Are tests comprehensive?
     - Is the test output pristine (no stray warnings or noise)?
 
@@ -130,7 +128,7 @@ Dispatch a subagent:
     Write your full report to [REPORT_FILE]:
     - What you implemented (or what you attempted, if blocked)
     - What you tested and test results
-    - **TDD Evidence** (if TDD was required for this task):
+    - **TDD Evidence** (required unless the brief marks a TDD exception; then the verification you ran):
       - RED: command run, relevant failing output before implementation, and why the failure was expected
       - GREEN: command run and relevant passing output after implementation
     - Files changed
@@ -152,3 +150,17 @@ Dispatch a subagent:
     Use BLOCKED if you cannot complete the task. Use NEEDS_CONTEXT if you need
     information that wasn't provided. Never silently produce work you're unsure about.
 ```
+
+**Placeholders:**
+- `[MODEL]` — REQUIRED: implementer model per SKILL.md Model Selection
+- `N`, `[task name]` — the task's number and heading from the plan
+- `[BRIEF_FILE]` — REQUIRED: the path `scripts/task-brief PLAN_FILE N` printed
+- `[CONTEXT]` — one line on where this task fits, interfaces and decisions
+  from earlier tasks the brief cannot know, your resolution of any
+  ambiguity in the brief, and pointers to ledger entries parked in this area
+- `[WORK_DIR]` — the worktree directory the implementer works in
+- `[REPORT_FILE]` — REQUIRED: the brief's path with `-brief.md` replaced by
+  `-report.md`
+
+**Implementer returns:** status, commits, a one-line test summary, concerns,
+and the report file path; the full report is in `[REPORT_FILE]`.

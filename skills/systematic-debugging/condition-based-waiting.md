@@ -22,8 +22,7 @@ flowchart TD
 - Waiting for async operations to complete
 
 **Don't use when:**
-- Testing actual timing behavior (debounce, throttle intervals)
-- Always document WHY if using arbitrary timeout
+- Testing actual timing behavior (debounce, throttle intervals): see When Arbitrary Timeout IS Correct
 
 ## Core Pattern
 
@@ -34,7 +33,7 @@ const result = getResult();
 expect(result).toBeDefined();
 
 // ✅ AFTER: Waiting for condition
-await waitFor(() => getResult() !== undefined);
+await waitFor(() => getResult() !== undefined, 'result');
 const result = getResult();
 expect(result).toBeDefined();
 ```
@@ -43,11 +42,11 @@ expect(result).toBeDefined();
 
 | Scenario | Pattern |
 |----------|---------|
-| Wait for event | `waitFor(() => events.find(e => e.type === 'DONE'))` |
-| Wait for state | `waitFor(() => machine.state === 'ready')` |
-| Wait for count | `waitFor(() => items.length >= 5)` |
-| Wait for file | `waitFor(() => fs.existsSync(path))` |
-| Complex condition | `waitFor(() => obj.ready && obj.value > 10)` |
+| Wait for event | `waitFor(() => events.find(e => e.type === 'DONE'), 'DONE event')` |
+| Wait for state | `waitFor(() => machine.state === 'ready', 'ready state')` |
+| Wait for count | `waitFor(() => items.length >= 5, '5 items')` |
+| Wait for file | `waitFor(() => fs.existsSync(path), path)` |
+| Complex condition | `waitFor(() => obj.ready && obj.value > 10, 'ready with value > 10')` |
 
 ## Implementation
 
@@ -73,7 +72,7 @@ async function waitFor<T>(
 }
 ```
 
-See `condition-based-waiting-example.ts` in this directory for complete implementation with domain-specific helpers (`waitForEvent`, `waitForEventCount`, `waitForEventMatch`) from actual debugging session.
+See `condition-based-waiting-example.ts` in this directory for domain-specific helpers (`waitForEvent`, `waitForEventCount`, `waitForEventMatch`) from a real debugging session. It imports Lace types, so it is a sample to adapt, not code that compiles here.
 
 ## Common Mistakes
 
@@ -90,7 +89,7 @@ See `condition-based-waiting-example.ts` in this directory for complete implemen
 
 ```typescript
 // Tool ticks every 100ms - need 2 ticks to verify partial output
-await waitForEvent(manager, 'TOOL_STARTED'); // First: wait for condition
+await waitForEvent(threadManager, threadId, 'TOOL_STARTED'); // First: wait for condition
 await new Promise(r => setTimeout(r, 200));   // Then: wait for timed behavior
 // 200ms = 2 ticks at 100ms intervals - documented and justified
 ```
@@ -102,8 +101,4 @@ await new Promise(r => setTimeout(r, 200));   // Then: wait for timed behavior
 
 ## Real-World Impact
 
-From debugging session (2025-10-03):
-- Fixed 15 flaky tests across 3 files
-- Pass rate: 60% → 100%
-- Execution time: 40% faster
-- No more race conditions
+Replacing arbitrary timeouts this way fixed 15 flaky tests across 3 files: pass rate 60% → 100%, execution 40% faster.

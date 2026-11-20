@@ -64,12 +64,11 @@ It fetches every id the page's diagrams name (curated short names such as `gmail
 A missing icon shows the name's first letter, and the console says `diagram.js: N icons are not in .../assets/icons ...` with the fetch line: run it. A finished page has no such line.
 `data-icon-base` on the element or around it moves the folder.
 
-## Motion: one cycle of 2.5 to 4 s
+## Motion
 
 - A diagram card's pulse is its own loop (not one per card group). The program is laid out as a ripple: each spoke, branch or route
-  starts a beat after the one before it (0.24 to 0.5 s, the stagger), and the whole program is then fitted to ONE cycle of 3.2 s
-  (`"motion": {"cycle": 2.5..4}`), the lines fading in the rest. `d.T` is always 2.5 to 4 s. It repeats.
-  Below the hero two loops never share a screen: beside a looping fragment one of the two holds (`motion.md`).
+  starts a beat after the one before it (0.24 to 0.5 s, the stagger), and the whole program is then fitted to one `--m-cycle`
+  (`d.T`, `"motion": {"cycle": 2.5..4}`; 3.2 s default, 2.5 to 4 s: `motion.md`), the lines fading in the rest. It repeats.
 - It restarts from its first beat when the pointer enters the card (mouse and pen) or focus moves into it by keyboard.
 - It runs only on screen. On a phone (under 640px) and under reduced motion it holds one still, the busiest moment; `"pulse": "none"`
   holds it too. `data-dg-still` holds it by hand and plays it while the pointer is on the card. `data-ui-still` does not hold a

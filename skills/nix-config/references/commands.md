@@ -1,6 +1,6 @@
 # commands.md — justfile and rebuild flow
 
-All commands run from `/Users/jhl/Documents/nix-src/nix-config`. Source: `justfile`, `scripts/rebuild.sh`, `shell.nix`. Recipes under [Secrets](#secrets) are user-operated (SKILL.md § Common Mistakes).
+All commands run from `/Users/jhl/Documents/nix-src/nix-config`. Source: `justfile`, `scripts/rebuild.sh`, `shell.nix`. Recipes under [Secrets](#secrets) are user-operated (`nix-secrets.md` § What agents must not do).
 
 ## Contents
 

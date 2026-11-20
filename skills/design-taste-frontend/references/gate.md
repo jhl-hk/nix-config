@@ -12,7 +12,8 @@ bun <skill>/scripts/gate.mjs --start index.html --kind <kind> --category "<what 
 ```
 
 - A framework build names what a browser can open: its dev server's URL (`--start http://localhost:5173/`,
-  with the server running when the gate runs) or its built page (`--start dist/index.html --root dist`).
+  with the server running when the gate runs) or its built page (`--start dist/index.html --root dist`;
+  a Next.js export: `out`).
   A built page is checked as built: rebuild before every gate run, or the round is spent on the old build.
   The gate opens only a local page: a file, or a URL on `localhost`, `127.0.0.1`, `[::1]`, `*.localhost`
   or `*.test`.
@@ -103,6 +104,27 @@ bun <skill>/scripts/gate.mjs --start index.html --kind <kind> --category "<what 
   unchanged page reuses it instead of running the checks again (once more at most, when the agent was
   not yet told). Each check runs with a watchdog that kills it, and its Chrome, if the gate is
   killed; nothing else is ever killed.
+
+## Running the checks (step 6)
+
+- Only the skill's scripts, each running one headless Chrome with WebGL on the CPU, closed by its own
+  PID, one at a time in the foreground with a 10-minute timeout; never in the background, a windowed
+  browser or a browser tool.
+- Each serves the page file itself over http on 127.0.0.1 (never `file://`), so no server is needed;
+  for a built page whose links start at the site root (`/_astro/page.css`), pass `--root` with the
+  build folder (`dist`).
+- `--profile <dir>` is the Chrome profile: a folder of its own in the OS temp folder or in the
+  project's `.taste-skill` folder (`.taste-skill/chrome-check`), never outside the project (no `../`);
+  a relative one that leads out of it is replaced by `.taste-skill/chrome-<script>`.
+- Shoot 1024, 820x1180, 768x1024 and 390 as well as 1440. Every `check.mjs` finding fails the page (no
+  `--no-stress`). copy-lint opens no browser and takes under a second.
+- Fix every FAIL (a copy-lint WARN too, or say why it stays), read the copy aloud (`copy-voice.md`
+  section 6), shoot again and read every screenshot against the checklist (`SKILL.md`, Common
+  Mistakes). In fix rounds run `consistency.mjs --quick --widths 1440,390`.
+- Then the manual gate (below), in every harness, until its last line is `GATE: PASS` or `GATE: OPEN`,
+  three rounds at most. Where it also runs as a hook: As a hook.
+- A FAIL you judge false is waived (Waivers, above), never cleared by editing the kit or hiding
+  anything from the checker (`SKILL.md`, Never).
 
 ## The manual gate
 

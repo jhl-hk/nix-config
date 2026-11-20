@@ -1,6 +1,6 @@
 ---
 name: impeccable
-description: "Use when the user wants to design, redesign, shape, critique, audit, polish, simplify, harden, animate, or otherwise improve a frontend interface: websites, landing pages, dashboards, product UI, components, forms, settings, onboarding, empty states, and native iOS or Android screens. Handles UX review, hierarchy, layout, typography, color, motion, UX copy, accessibility, responsive behavior, edge cases, and capturing or documenting design systems (DESIGN.md, tokens). Also for making bland UI bolder, loud UI quieter, or ambitious visual effects. Not for backend-only or non-UI tasks. Not for adding or tuning a single animation or interaction (use animate, micro-interaction); not for janky or dropped-frame motion (use animation-performance); not for worst-case data stress tests (use break-ui); not for mobile-web viewport quirks like 100vh, notch or input zoom (use mobile-native); not for integrating @jianyuelab/tokens or @jianyuelab/ui (use jianyuelab-ui); not for building a marketing or company site from scratch (use design-taste-frontend)."
+description: "Use when the user wants to design, redesign, shape, critique, audit, polish, simplify, harden, animate, or otherwise improve a frontend interface: websites, landing pages, dashboards, product UI, components, forms, settings, onboarding, empty states, and native iOS or Android screens. Handles UX review, hierarchy, layout, typography, color, motion, UX copy, accessibility, responsive behavior, edge cases, and capturing or documenting design systems (DESIGN.md, tokens). Also for making bland UI bolder, loud UI quieter, or ambitious visual effects. Not for backend-only or non-UI tasks; not for a single animation or interaction (animate, micro-interaction), janky or dropped-frame motion (animation-performance), worst-case data stress tests (break-ui), mobile-web quirks like 100vh, notch or input zoom (mobile-native), @jianyuelab/tokens or @jianyuelab/ui integration (jianyuelab-ui), or a marketing or company site from scratch (design-taste-frontend)."
 version: 4.8.0
 user-invocable: true
 argument-hint: "[shape · audit|critique · animate|bolder|colorize|delight|layout|overdrive|quieter|typeset · adapt|clarify|distill · harden|onboard|optimize|polish · init|document|extract|live|generate] [target]"
@@ -31,7 +31,7 @@ Not for:
 | `@jianyuelab/tokens` / `@jianyuelab/ui` integration | jianyuelab-ui |
 | Building a marketing or company site from scratch | design-taste-frontend |
 
-When a project uses `@jianyuelab/tokens` or `@jianyuelab/ui`, defer to jianyuelab-ui for tokens and components. Usual stack: Astro with Vue or React islands, Tailwind (v4 `@theme` first), Vite, bun; check `package.json` first.
+When a project uses `@jianyuelab/tokens` or `@jianyuelab/ui`: **REQUIRED SUB-SKILL:** Use jianyuelab-ui for tokens and components. Usual stack: Astro with Vue or React islands, Tailwind (v4 `@theme` first), Vite, bun; check `package.json` first.
 
 ## Core Pattern
 

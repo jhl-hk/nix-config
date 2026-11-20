@@ -1,6 +1,6 @@
 > **Additional context needed**: the brand's emotional range.
 
-Delight is product character revealed through a useful interaction, a humane response or a considered detail, at moments that earn it. Interaction craft lives in other skills: `micro-interaction` (feedback motion), `emil-design-eng` (small details), `improve-animations` (Find mode) (where to animate). Authored motion follows [animate.md](animate.md).
+Delight is product character revealed through a useful interaction, a humane response or a considered detail, at moments that earn it. Interaction craft lives in other skills: `micro-interaction` (feedback motion), `emil-design-eng` (small details), `improve-animations` Find mode (where to animate). Authored motion follows [animate.md](animate.md).
 
 ## Visitor mode
 

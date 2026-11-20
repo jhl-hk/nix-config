@@ -10,7 +10,7 @@ If typography replacement would create a new identity, route through [new-work.m
 
 ## Two isolated assessments
 
-When a sub-agent tool is available and permitted, run these independently; otherwise run them yourself in this order. Do not let detector findings anchor the design assessment.
+When you can dispatch subagents, run these independently; otherwise run them yourself in this order. Do not let detector findings anchor the design assessment.
 
 1. **Typographic assessment:** inspect representative pages and styles. Answer every question below with a file, selector, or computed value:
    - **Authority and fit:** Which faces, weights, and roles are established? Do they fit the product and selected world, or are they unexamined defaults? Is every family necessary?

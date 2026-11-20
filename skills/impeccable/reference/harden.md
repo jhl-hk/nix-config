@@ -11,7 +11,7 @@ Harden the interface against the inputs, errors, languages and network condition
 ```css
 .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .line-clamp { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.wrap { overflow-wrap: break-word; hyphens: auto; }
+.wrap { overflow-wrap: anywhere; hyphens: auto; } /* anywhere, not break-word: also fixes flex/min-content overflow (break-ui) */
 .flex-item { min-width: 0; }               /* let flex items shrink below content size */
 .grid-item { min-width: 0; min-height: 0; }
 ```

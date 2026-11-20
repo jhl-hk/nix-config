@@ -16,7 +16,7 @@ Remove, one declaration at a time, the platform-layer tells (viewport, touch, sc
 
 Two failure modes, the first worse:
 
-1. **Fixing what the desktop shows you.** None of these bugs reproduce in Chrome's device emulation.
+1. **Fixing what the desktop shows you.** None of these bugs reproduce in Chrome's device emulation (§11).
 2. **Reaching for JavaScript when CSS or a meta tag does it.** A `useIsTouchDevice()` hook to hide hover states is wrong; a media query is right.
 
 ## Hard Rules
@@ -24,10 +24,8 @@ Two failure modes, the first worse:
 1. **Every fix ships with the reason.** Each rule below has a *why*. Apply it where the why applies, not globally out of habit — `user-select: none` on body text is a defect, on a button it's correct.
 2. **Media queries over device sniffing.** `(hover: hover)`, `(pointer: fine)`, `env()`, `dvh` — the platform tells you what it can do. Never branch on user agent strings or screen width to guess at touch.
 3. **Touch and mouse are not exclusive.** iPads with trackpads, laptops with touchscreens, phones with a mouse. Write for both at once; gate by capability, not by device.
-4. **Never disable zoom.** `user-scalable=no` and `maximum-scale=1` are accessibility failures. Fix the input font size instead, which is what was causing the zoom.
-5. **Test on hardware before calling it done.** Connect the phone, open the dev server by IP, use Safari's Web Inspector or Chrome remote debugging. Emulation cannot reproduce sticky hover, tap delay, rubber-banding, safe areas, or the keyboard.
 
-## The Symptom Table
+## Quick Reference
 
 Start here. Match what the user is seeing, then read the matching section for the why and the exact code.
 
@@ -45,7 +43,7 @@ Start here. Match what the user is seeing, then read the matching section for th
 | Status bar color doesn't match | `theme-color` per color scheme |
 | Right in Chrome, wrong on phone | Test on real hardware |
 
-## The Fixes
+## Implementation
 
 ### 1. Hover state stuck after tap
 
@@ -92,7 +90,7 @@ Set it once, globally. Then make sure every tappable element has its own `:activ
 
 ### 4. Page zooms into the input
 
-iOS Safari zooms the page when focus lands on an input whose font size is under 16px, and it does not zoom back out on blur. The user is left looking at a cropped, drifted layout. This is the reason people reach for `maximum-scale=1`, which is the wrong fix (Hard Rule 4).
+iOS Safari zooms the page when focus lands on an input whose font size is under 16px, and it does not zoom back out on blur. The user is left looking at a cropped, drifted layout. This is the reason people reach for `user-scalable=no` or `maximum-scale=1`, which is the wrong fix: disabling zoom is an accessibility failure. Fix the font size, which is what causes the zoom.
 
 ```css
 input, textarea, select {
@@ -126,7 +124,7 @@ button, a, [role="button"], .tappable {
 
 ```css
 .button {
-  transition: transform 100ms var(--ease-out), background 100ms;
+  transition: transform 100ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), background 100ms;
 }
 .button:active {
   transform: scale(0.97);
@@ -134,7 +132,7 @@ button, a, [role="button"], .tappable {
 }
 ```
 
-Keep press feedback at 100–160ms and `ease-out`. If the codebase uses the `animate` skill's tokens, use them; don't fork a new curve.
+Press timing and curve come from the animate skill (its press-feedback row and `--ease-out`); reuse the codebase's animate tokens rather than forking a new curve.
 
 ### 6. Pull-to-refresh hijacks scroll
 
@@ -223,14 +221,16 @@ The status bar and the browser chrome take their color from `theme-color`. One v
 <meta name="color-scheme" content="light dark" />
 ```
 
-Match the value to the color at the very top of your page — the header background, not the brand color. In Next.js set it through the `viewport` export (`themeColor: [{ media, color }]`). If the app switches theme with a class rather than the OS setting, update the tag from JavaScript on toggle. For an installed PWA, `apple-mobile-web-app-status-bar-style` and the manifest's `theme_color`/`background_color` are the same decision.
+Match the value to the color at the very top of your page — the header background, not the brand color. In Astro the tags go in the layout's `<head>` as written. Next.js only: set it through the `viewport` export (`themeColor: [{ media, color }]`). If the app switches theme with a class rather than the OS setting, update the tag from JavaScript on toggle. For an installed PWA, `apple-mobile-web-app-status-bar-style` and the manifest's `theme_color`/`background_color` are the same decision.
 
 ### 11. Right in Chrome, wrong on phone
+
+Test on hardware before calling anything done.
 
 Nothing above reproduces in device emulation. Sticky hover, the tap highlight, the URL bar's effect on `vh`, input zoom, the click delay, overscroll, safe areas, the software keyboard — every one is a real-hardware behavior.
 
 - Connect the phone over USB, run the dev server on `0.0.0.0`, open it by the machine's LAN IP.
-- iOS: Safari → Develop → the device. Android: `chrome://inspect`.
+- iOS: Safari → Develop → the device (Web Inspector). Android: `chrome://inspect` (Chrome remote debugging).
 - Test on a phone that's a few years old, not the newest one on your desk. Test with the keyboard open. Test in landscape once.
 - Test as an installed PWA if that's a target; standalone mode changes viewport, safe areas, and status bar behavior.
 
@@ -270,7 +270,7 @@ button, a, [role="button"] {
 
 `interactive-widget=resizes-content` makes the software keyboard shrink the layout viewport on Android Chrome, so `100dvh` and bottom-pinned inputs react to it the way they do on iOS. Drop `overscroll-behavior: none` from `html` if the app is a scrolling document where pull-to-refresh is welcome.
 
-## Never Ship
+## Common Mistakes
 
 Self-check before you finish.
 

@@ -17,6 +17,8 @@ Different layers catch different cases:
 - Environment guards prevent context-specific dangers
 - Debug logging helps when other layers fail
 
+In the example below all four layers were necessary; during testing each caught bugs the others missed: different code paths bypassed entry validation, mocks bypassed business logic checks, edge cases on different platforms needed environment guards, and debug logging identified structural misuse.
+
 ## The Four Layers
 
 ### Layer 1: Entry Point Validation
@@ -59,7 +61,8 @@ async function gitInit(directory: string) {
     const normalized = normalize(resolve(directory));
     const tmpDir = normalize(resolve(tmpdir()));
 
-    if (!normalized.startsWith(tmpDir)) {
+    // Compare against tmpDir + sep so /tmpfoo does not pass as inside /tmp
+    if (normalized !== tmpDir && !normalized.startsWith(tmpDir + sep)) {
       throw new Error(
         `Refusing git init outside temp dir during tests: ${directory}`
       );
@@ -75,7 +78,8 @@ async function gitInit(directory: string) {
 ```typescript
 async function gitInit(directory: string) {
   const stack = new Error().stack;
-  logger.debug('About to git init', {
+  // console.error, not a logger: loggers may be suppressed in tests
+  console.error('About to git init', {
     directory,
     cwd: process.cwd(),
     stack,
@@ -93,30 +97,12 @@ When you find a bug:
 3. **Add validation at each layer** - Entry, business, environment, debug
 4. **Test each layer** - Try to bypass layer 1, verify layer 2 catches it
 
-## Example from Session
+## Example
 
-Bug: Empty `projectDir` caused `git init` in source code
-
-**Data flow:**
-1. Test setup → empty string
-2. `Project.create(name, '')`
-3. `WorkspaceManager.createWorkspace('')`
-4. `git init` runs in `process.cwd()`
-
-**Four layers added:**
-- Layer 1: `Project.create()` validates not empty/exists/writable
-- Layer 2: `WorkspaceManager` validates projectDir not empty
+The empty-`projectDir` bug traced in [root-cause-tracing.md](root-cause-tracing.md) (`git init` ran in the source tree). Layers added:
+- Layer 1: `Project.create()` validates the directory is not empty, exists and is a directory
+- Layer 2: `Session.initializeWorkspace()` validates projectDir not empty
 - Layer 3: `WorktreeManager` refuses git init outside tmpdir in tests
 - Layer 4: Stack trace logging before git init
 
 **Result:** All 1847 tests passed, bug impossible to reproduce
-
-## Key Insight
-
-All four layers were necessary. During testing, each layer caught bugs the others missed:
-- Different code paths bypassed entry validation
-- Mocks bypassed business logic checks
-- Edge cases on different platforms needed environment guards
-- Debug logging identified structural misuse
-
-**Don't stop at one validation point.** Add checks at every layer.

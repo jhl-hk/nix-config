@@ -1,6 +1,6 @@
 ---
 name: choreograph
-description: Use when several elements animate in response to one event — a staggered list, a hero entrance, a view swap inside a container, a multi-step flow, an element leaving while siblings close the gap, a morph between rich states, or parts moving together (icon + background + lines, panel + content, items flying into a target). Triggers on stagger, staggerChildren, delayChildren, animation-delay, sequence, orchestration, choreography, cascade, wave, timeline, "one after another", "at the same time", crossfade, popLayout, mode="wait". Not for one element's easing or duration; use animate. Not for GSAP timeline API; use gsap-web. Not for whether something should animate at all; use improve-animations.
+description: Use when several elements animate in response to one event — a staggered list, a hero entrance, a view swap inside a container, a multi-step flow, an element leaving while siblings close the gap, a morph between rich states, or parts moving together (icon + background + lines, panel + content, items flying into a target). Triggers on stagger, staggerChildren, delayChildren, animation-delay, sequence, orchestration, choreography, cascade, wave, timeline, "one after another", "at the same time", crossfade, popLayout, mode="wait". Not for one element's easing or duration; use animate. Not for GSAP timeline API; use gsap-web. Not for whether something should animate at all; use improve-animations. Not for route changes; use page-transition-animation.
 ---
 
 # Choreographing Motion
@@ -12,8 +12,6 @@ Choreography decides the relationships between animations: order, overlap, timin
 ## When to Use
 
 - Two or more things move in response to the same event.
-- A single animation's easing, duration and origin: animate.
-- Whether something should animate at all: improve-animations.
 
 ## Core Pattern
 
@@ -36,10 +34,12 @@ Choreography decides the relationships between animations: order, overlap, timin
 
 ### Budgets
 
-| Context | Stagger step | Entrance | Total |
-|---|---|---|---|
-| Product UI | 30–80ms | — | ≲300ms; stagger only the first handful, rest arrive with the last |
-| Marketing / first-run / hero | 100–150ms | 0.5–0.6s | seen once per visit |
+Step 30–80ms and product UI under 300ms come from animate. On top of that:
+
+| Context | Rule |
+|---|---|
+| Product UI | Total ≲300ms; stagger only the first handful, the rest arrive with the last |
+| Marketing / first-run / hero | Seen once per visit: entrances may run 0.5–0.6s; the step stays 30–80ms |
 
 ## Implementation
 
@@ -163,14 +163,3 @@ Use the lightest tool that expresses the relationships; recipes in [RECIPES.md](
 **Part 3 — Feel check**: what code can't show (does the stagger read as a wave, the crossfade as one object); name the moment to scrub on a recording.
 
 Talk in relationships and moments ("the lines land with the click"), not adjectives. When a sequence is fine, or the right choreography is none, say so.
-
-## Common Mistakes
-
-| Mistake | Fix |
-|---|---|
-| Parent entrance plus child stagger | One entrance; the container carries its content |
-| `mode="wait"` for a simple view swap | `popLayout` crossfade |
-| Exit direction from stale state | `custom` on `AnimatePresence` and child |
-| Reverse-staggered exits | Everything leaves at once |
-| Fixed duration for variable-size resize | Clamp duration from the delta |
-| Idle loop fighting a reset | `await Promise.all(...)` of the reset first |

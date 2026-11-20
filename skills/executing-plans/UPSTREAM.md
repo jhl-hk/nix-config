@@ -11,3 +11,4 @@
 - Removed the harness list note (pointed at deleted `using-superpowers/references/`), `superpowers:` prefixes and the "announce" lines.
 - Removed the "Remember" list (duplicated the process); its main/master rule moved into step 1.
 - Worktree and finishing references marked `REQUIRED SUB-SKILL`.
+- Repositioned as the inline fallback to subagent-driven-development; never implement on main/master.

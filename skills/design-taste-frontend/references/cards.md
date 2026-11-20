@@ -13,8 +13,8 @@ Motion: `assets/ui/ui.js`. Objects instead of photographs: `assets/ui/_lab/objec
   `#070708`, as x.ai's dark cards read against their page), or no border at all when the photograph
   or flat fill is the card.
 - Border 1px, ink at 8 to 14%; inner top highlight 1px (white 5-7%, dark only). No blurred shadow at
-  rest (a hard zero-blur offset is allowed as the rest style); a card with a link may show a soft
-  shadow on hover only (`motion.md`). A card with a link lifts 2px on hover; a card without one
+  rest (a hard zero-blur offset is allowed as the rest style); a card with a link takes the hover
+  layer, its soft shadow on hover only (`motion.md`); a card without one
   carries `.m-nolift`. Never tilted, never a carousel: rows show whole cards; press quotes stack.
 - Rows on the grid: two-up 6+6, three-up 4+4+4, four-up 3+3+3+3, the first card on the left line,
   the last on the right, one height per row, every row full (`layout-v4.md` section 4). Mark every
@@ -153,7 +153,7 @@ A card holds a picture, and the picture holds the product. That is all:
 Shader grounds in panels are for tech pages (software and hardware; a gaming page has no feature
 cards of UI), one card group a page, still, from the family of the
 page's one effect (`effects-usage.md`). On a product or service page a panel holds the client's
-photograph (`<img class="frame__img">`, zooming 1.02 to 1.03 inside it when the card links), real
+photograph (`<img class="frame__img">`, zooming inside it when the card links: the hover layer, `motion.md`), real
 icons or a still diagram on a flat `--g-alt` or `--g-main` panel; a place has no feature cards.
 Other tech card groups take a flat panel, the lit ground plain, a photograph or a diagram.
 
@@ -200,16 +200,16 @@ Every page must run on an integrated laptop GPU (2 GB shared), so:
   light (the featured plan's lap), an object (`effects-usage.md`). Never two of them on a page.
   `ui.grounds` bakes the card grounds one at a time (one context while baking, none after:
   `effects-creative.md`, Cost) and caps the `fx` library at 3 live contexts; the page's cap of 4
-  (`perf.md`) counts everything live at once, the effect, a scene and a moment's canvas included.
+  (`effects-usage.md`) counts everything live at once, the effect, a scene and a moment's canvas included.
   It leaves `fx.config.maxDpr` alone.
 - An object or any raymarched canvas mounts when its panel nears the screen and is destroyed when
   it leaves (`_lab/object-card.html`); one per card group; never two objects and a moving ground in
-  one view. It renders at most 1 CSS px per pixel (0.75 when large), about 1.5 megapixels, and
-  stops off screen and in a hidden tab.
+  one view. Its render limits: `effects-usage.md`, Motion and cost; it stops off screen and in a
+  hidden tab.
 
 ## Motion
 
-Card loops are for tech pages; every number (cycle, restart, pause disc, life signs) is in
+Card loops are for tech pages; the cycle, restart, pause button and life-sign rules are in
 `motion.md`. The same rule as system.js, in one line: **put `data-ui-loop` on the group's one loop;
 every other fragment holds its finished picture.**
 
@@ -222,16 +222,10 @@ every other fragment holds its finished picture.**
   `data-ui-still` holds a fragment by hand; `data-ui-cycles="2"` plays two cycles when first
   seen, then rests on the finished picture, with no button.
 - Below the hero, two loops are never on one screen: a group next to a looping one holds still.
-- ui.js puts a pause button on every loop when it starts to move: a solid 32px disc in the page
-  colours. In a `.card` it sits beside the card's title, at the right of the text column (the
-  title keeps 44px clear for it), so it never covers a cropped panel's UI, which runs into every
-  corner. In `[data-ui-pause-host]`, or a `.panel`/`.frame` outside a card, it sits 12px in from
-  the bottom-right corner (keep that corner clear); a fragment with no panel gets it under its
-  bottom-right corner, in 44px kept free. A place that already holds a `.loop-pause` gets no
-  second one. Keyboard focus in a card plays a held fragment's cycle once; only a pointer resting
+- ui.js puts a pause button on every loop when it starts to move (its look and placement:
+  `motion.md`, Tech budget, Pause; an object or a moving ground gets the same button through
+  `ui.pausable`). Keyboard focus in a card plays a held fragment's cycle once; only a pointer resting
   on the card repeats it (a held fragment has no button).
-- Anything else that moves on its own for more than 5 s (an object, a moving ground) gets the
-  same button: `ui.pausable(panel, ctrl)`, where `ctrl` has `pause()` and `resume()`.
 - Loops start on the finished picture and never show an empty window or greyed text: the chat
   writes only its answer's last sentence again, and the voice its transcript line, each in under 0.8 s
   with no word below 72% ink (4.5:1 on white), then hold the finished text for the rest of the cycle. The files
@@ -239,10 +233,9 @@ every other fragment holds its finished picture.**
   in the page's language; without it only the line's number counts). A tile the panel cuts
   hides its name, never half a word. They stop off screen and hold still under
   reduced motion (no buttons then). Nothing moves because the page scrolled.
-- **Cadence and hover** (house rule 5): one cycle of 2.5 to 4 s that repeats and restarts when the
-  pointer or focus enters the card; every number is in `motion.md`, Loops inside a card's visual. A
-  card whose fragments are all held plays its top fragment while the pointer stays. The card itself
-  never moves by itself.
+- **Cadence and hover** (house rule 5): `motion.md`, Loops inside a card's visual. A card whose
+  fragments are all held plays its top fragment while the pointer stays. The card itself never
+  moves by itself.
 - **From the page**: `ui.restart(el)` restarts every fragment in `el` (a tab or panel shown
   again); a held one plays once. Every fragment root fires a bubbling `ui-cycle` event as each
   cycle starts, for a page that keeps a second piece in step.

@@ -2,8 +2,7 @@
 
 The move for each part of the page, distilled from a study of professional sites written before
 language models (2014 to 2021). Every example here is written for this file, for made-up clients: learn
-the move, never the line. The rules of `copy.md` hold throughout: the h1 names the category, every
-heading has its noun, buttons are a verb and an object, nothing is invented.
+the move, never the line. The rules of `copy.md` hold throughout and win.
 
 ## The hero
 

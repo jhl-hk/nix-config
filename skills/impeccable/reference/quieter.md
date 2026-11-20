@@ -37,7 +37,7 @@ Decide which few elements stay bold and which recede, what to remove outright, a
 
 **Motion**
 - Shorter distances (10–20px instead of 40px); keep functional motion, drop flourishes.
-- Easing and durations: [animate.md](animate.md). Stripping motion wholesale: `improve-animations` skill (Remove mode).
+- Easing and durations: the animate skill. Stripping motion wholesale: `improve-animations` skill (Remove mode).
 
 **Composition**
 - Smaller scale jumps; bring rogue elements back to the grid; even out spacing rhythm.

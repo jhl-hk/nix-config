@@ -7,6 +7,43 @@ hairline, one corner-control size, one link look, one block template repeated. S
 the hero frame, edges, splits and type sizes: `layout-v4.md`. Grounds: `backgrounds.md`. Every hover
 and loop number: `motion.md`.
 
+## Stack (step 0)
+
+- An empty folder builds a static page: copy `<skill>/assets` into `assets` and start from
+  `assets/starter.html`.
+- An existing project (usually Astro with React or Vue islands, Tailwind, `@jianyuelab/tokens`)
+  builds in its own stack: its components take the starter's markup and classes, and the kit is
+  copied into its public folder (`public/assets`) and loaded from there as plain files.
+- A brief that asks for Next.js builds a static export (`output: 'export'`), checked on its built
+  page (`--root out`).
+
+## Build (step 5)
+
+In `starter.html`:
+
+1. Set `<html lang data-type data-radius data-buttons data-motion>` (lang: the brief's language),
+   the three metas (`SKILL.md`, The kind of business decides everything), the head block (Head,
+   below) and the nav class; keep the skip link and the `m-enter` head line.
+2. Copy only the `<section class="hero …" data-enter>` of `assets/layout/hero-<id>.html`: never its
+   nav, other sections, footer or credit line; every word and picture becomes the client's.
+3. Move the dealt close and footer out of their `<template>`s and delete the rest.
+4. Every section is `main > section` with one `.wrap`, its h2 first, `--h: 1` or `2`. Build each to
+   its recipe with the system's classes and tokens; write page CSS only where a reference says page
+   CSS (inside a visual, `--p-h`, `.wall`, `.rail`, `.device`).
+5. Paste UI from `assets/ui/<name>/fragment.html` and rewrite every name, number and logo to the
+   client's (kit icons become `data-icon`, `cards.md`); a diagram card is `data-diagram="<preset>"`
+   with the client's labels.
+6. Mount an effect, object, moment or scene exactly as its reference says, never from your own
+   script. A moment's section is copied from `assets/moments/_demo/in-page.html` (place:
+   photo-chapters, word-highlight) or `in-page-service.html` (pinned-chapters, picture-develops
+   film); a moment's own `demo.html` shows it alone and is not a page model.
+7. A form is the starter's `booking-form` (Forms, below).
+8. Credits: the one footer line from `photos.mjs credits`, once the markup uses the photographs (it
+   reads the page).
+9. The share picture `share.jpg`, the hero's tile from `shoot.mjs`: Head, below.
+10. Last, run `icons.mjs scan index.html --out assets/icons --colour`, so every icon the page names
+    is a local file.
+
 ## Base
 
 - `*{box-sizing:border-box}`, `html,body{margin:0}` and `<meta name="viewport" content="width=device-width,
@@ -87,9 +124,10 @@ under the h2). A place sets `--t-h2: clamp(24px, .762vw + 21px, 32px)`.
 
 ## Radius and buttons
 
-- `<html data-radius>`: `sharp` 4/6/8, `soft` 8/12/20 (default), `round` 10/16/24. `--r-lg` cards
+- `<html data-radius>`: `sharp` 4/6/8 (fintech and developer tools), `soft` 8/12/20 (default),
+  `round` 10/16/24 (consumer apps). `--r-lg` cards
   and frames, `--r-md` panels, `--r-sm` controls, `--r-btn` buttons; software windows one radius
-  (12 to 20) with a 1px line. A place: `--r-lg: 0; --r-md: 0; --r-sm: 2px; --r-btn: 2px` (square
+  (12 to 20) with a 1px line. A place is square: `--r-lg: 0; --r-md: 0; --r-sm: 2px; --r-btn: 2px` (square
   photographs and cards, 2px buttons).
 - `.btn.btn--primary` and `.btn.btn--secondary`, 44px high (48 on a place, with
   `data-buttons="block"` and in the phone bar; the nav's button is the same `--btn-h`, never
@@ -116,7 +154,7 @@ under the h2). A place sets `--t-h2: clamp(24px, .762vw + 21px, 32px)`.
 - Four to six plain one-word nouns (ST-09; a place: Menu, Rooms, Workshop, Visit, About) at
   15px/500 that never wrap, each with its own anchor; a second action as a plain word only when the client has one
   (Sign in for an app with accounts, Gift cards for a shop that sells them); the main action as the
-  one button. One word opens a full-width flat panel on hover after 150ms (link columns and a
+  one button. One word opens a full-width flat panel on hover (link columns and a
   picture card, or picture cards; a place: its photographs with the name and the price from); a click
   on the word goes to its section. On other the panel has no shadow, only its ground and a 1px line.
   The current page: `aria-current="page"` on one word at most, a 2px bar under it.

@@ -16,8 +16,6 @@ Each frame must finish inside the budget: **16.7ms** at 60Hz, **8ms** at 120Hz (
 - Animating a layout change (reorder, resize, move between containers) or `height: auto`.
 - Jank only during navigation, fetching or hydration.
 
-Not for: picking easing or duration (animate), deciding whether motion should exist (improve-animations).
-
 ## Core Pattern
 
 ```css
@@ -45,21 +43,6 @@ Rules:
 5. **`will-change` is the last step.** Most jank is the wrong property or a busy main thread; it fixes neither.
 
 ## Quick Reference
-
-### Symptoms
-
-| Problem | Fix |
-|---|---|
-| Animation stutters | Animate `transform`/`opacity`, not `width`/`height`/`top`/`margin` |
-| Shadow animation is choppy | `filter: drop-shadow()`, or fade a shadow pseudo-element's `opacity` |
-| Jank only during navigation or loading | Move the animation to CSS or WAAPI (off the main thread) |
-| Motion `x`/`y` drops frames | Upgrade to `motion` 14.2+, or animate the full `transform` string |
-| Hand-rolled animation drops frames in React | Write to `ref.current.style`, not state |
-| Drag gets laggier as the list grows | Stop animating an inherited CSS variable; set `transform` directly |
-| Blur transition lags (especially Safari) | Keep animated `blur()` under 20px, or cross-fade two layers |
-| Unexpected properties animate | Replace `transition: all` with explicit properties |
-| Many elements measured per frame | Batch reads, then writes |
-| Element shifts 1px when motion starts or ends | `will-change: transform`, only once you see it |
 
 ### Property tiers
 
@@ -99,14 +82,9 @@ Reliably accelerated: `transform`, `opacity`. Gaining support: `filter`, `clip-p
 
 ### Busy main thread
 
-Watch motion that plays alongside heavy work: page transitions, tab indicators during navigation, anything during fetching or hydration. Vercel's dashboard tab indicator used a Framer Motion shared layout animation, dropped frames while the next page loaded, and was fixed by moving it to CSS.
+Watch motion that plays alongside heavy work: page transitions, tab indicators during navigation, anything during fetching or hydration (see Real-World Impact).
 
-Motion hands `opacity`, `transform`, `clip-path`, `filter` to WAAPI. Shorthands depend on version:
-
-```jsx
-<motion.div animate={{ x: 100 }} />                          // motion 14.2+: accelerated. Before: main thread
-<motion.div animate={{ transform: "translateX(100px)" }} />  // accelerated in every version
-```
+Motion hands `opacity`, `transform`, `clip-path`, `filter` to WAAPI. Before motion 14.2 the `x`/`y`/`scale` shorthands run on the main thread; a full `transform` string is accelerated in every version (snippet: animate SKILL.md › Implementation › 4. Properties).
 
 Always main thread: `layout`, `layoutId`, `onUpdate`, `transformTemplate`, inertia, values driven per frame by a motion value (drag, `useTransform`).
 
@@ -172,7 +150,7 @@ function flip(el, mutate) {
       { transformOrigin: 'top left', transform: `translate(${dx}px, ${dy}px) scale(${sx}, ${sy})` },
       { transformOrigin: 'top left', transform: 'none' },
     ],
-    { duration: 300, easing: 'cubic-bezier(0.2, 0, 0, 1)' }
+    { duration: 300, easing: 'cubic-bezier(0.23, 1, 0.32, 1)' } // animate's --ease-out
   );
 }
 
@@ -189,12 +167,12 @@ For many elements, read every rect before any mutation (reorder example in the r
   interpolate-size: allow-keywords;   /* or height: calc-size(auto, size) */
   height: 0;
   overflow: clip;
-  transition: height 300ms ease;
+  transition: height 200ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)); /* animate's accordion duration and token */
 }
 .panel.open { height: auto; }
 
 /* Cross-browser default */
-.wrapper { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 300ms ease; }
+.wrapper { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 200ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)); }
 .wrapper.open { grid-template-rows: 1fr; }
 .wrapper > .content { overflow: hidden; min-height: 0; }  /* required or it won't collapse */
 ```
@@ -237,15 +215,15 @@ A mid-flight CPU→GPU hand-off can shift the element by a pixel at start or end
    | Card hover | CSS transition | `all` | hover |
 
 2. **Diagnose**, in order of likelihood:
-   1. Non-`transform`/`opacity` properties: layout first, then `box-shadow` and `border-radius`.
-   2. Jank coincides with navigation, fetching, hydration or a long task → CSS or WAAPI.
-   3. React re-rendering per frame.
-   4. Worse as content grows → inherited CSS variable, or too many nodes animating.
-   5. Animated CSS variable, or Motion `x`/`y`/`scale` before 14.2.
-   6. Animated `blur()` above 20px.
-   7. Interleaved layout reads and writes.
-   8. Still shifting → `will-change: transform` on the animating element.
-3. **Confirm with a recording**, not by feel: Performance panel shows no per-frame purple Layout or green Paint, only Composite Layers. Profile on a real mid-range phone over remote debugging; desktop CPU throttling does not model a weak GPU or small memory. Read `references/patterns-and-profiling.md` for the Rendering-tab walkthrough, headless trace check, and runnable accordion, reorder and parallax examples.
+   1. Non-`transform`/`opacity` properties: layout first, then `box-shadow` and `border-radius` → Swaps table.
+   2. Jank coincides with navigation, fetching, hydration or a long task → CSS or WAAPI (off the main thread).
+   3. React re-rendering per frame → write to `ref.current.style` or a motion value.
+   4. Worse as content grows → inherited CSS variable (set `transform` on the element directly), or too many nodes animating.
+   5. Animated CSS variable, or Motion `x`/`y`/`scale` before 14.2 → upgrade to `motion` 14.2+, or animate the full `transform` string.
+   6. Animated `blur()` above 20px (lags most in Safari) → keep it under 20px, or cross-fade two layers.
+   7. Interleaved layout reads and writes (many elements measured per frame) → batch reads, then writes.
+   8. Element shifts 1px when motion starts or ends → `will-change: transform` on the animating element, only once you see it.
+3. **Confirm with a recording**, not by feel: Performance panel shows no per-frame purple Layout or green Paint, only Composite Layers. Profile on a real mid-range phone over remote debugging; desktop CPU throttling does not model a weak GPU or small memory. Read `references/patterns-and-profiling.md` for the Rendering-tab walkthrough, headless screenshot checks, and runnable accordion, reorder and parallax examples; the CDP trace check is in animate's `references/standalone-harness.md`.
 4. **Report** each finding, ordered by cost (layout before paint, busy main thread before idle), then stop. Apply fixes when asked.
 
    ```
@@ -260,9 +238,8 @@ A mid-flight CPU→GPU hand-off can shift the element by a pixel at start or end
 
 | Mistake | Fix |
 |---|---|
-| "Smooth on my machine" | Record on a mid-range phone; budget for 120Hz |
-| Sprinkling `will-change` as the fix | Fix the property or the thread first |
-| `scaleX`/`scaleY` for resizing text containers | FLIP |
-| Grid collapse content without `overflow: hidden; min-height: 0` | Add both |
-| Animating `filter`/`backdrop-filter` radius | Cross-fade layers via `opacity` |
 | Scroll handler reads layout per element | One `scrollY` read per rAF, `{ passive: true }` listener |
+
+## Real-World Impact
+
+Vercel's dashboard tab indicator used a Framer Motion shared layout animation, dropped frames while the next page loaded, and was fixed by moving it to CSS.

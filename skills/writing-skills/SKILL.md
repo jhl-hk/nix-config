@@ -66,11 +66,7 @@ flowchart TD
     found -->|no| done(["Bulletproof: deploy"])
 ```
 
-**RED.** Run the scenario with a subagent that does not have the skill. Record which choices it made, its rationalizations word for word, and which pressures triggered the violation. Read [testing-skills-with-subagents.md](testing-skills-with-subagents.md) for scenario design, pressure types and meta-testing.
-
-**GREEN.** Write the skill against those specific rationalizations; add nothing for hypothetical cases. Re-run the same scenarios with the skill. The agent should now comply.
-
-**REFACTOR.** New rationalization? Add an explicit counter and re-test until the agent complies under combined pressure.
+Read [testing-skills-with-subagents.md](testing-skills-with-subagents.md) for scenario design, pressure types, meta-testing and the signs that a skill is bulletproof.
 
 Which skills must go through this: skills/README.md F.3 (discipline skills always; wording changes get micro-tests; pure reference skills are exempt).
 
@@ -95,28 +91,11 @@ Whichever form you pick:
 
 This toolkit is for discipline failures only — an agent that knows the rule and skips it under pressure. For wrong-shaped output or omitted elements it backfires; use the forms above. Background on why it works: [persuasion-principles.md](persuasion-principles.md) (authority, commitment, scarcity, social proof, unity; Cialdini 2021, Meincke et al. 2025).
 
-**Close every loophole explicitly.** Don't only state the rule; forbid the specific workarounds:
-
-```markdown
-Write code before test? Delete it. Start over.
-
-**No exceptions:**
-- Don't keep it as "reference"
-- Don't "adapt" it while writing tests
-- Don't look at it
-- Delete means delete
-```
+**Close every loophole explicitly.** Don't only state the rule; forbid each specific workaround the baseline produced. A generic counter ("Don't cheat") fails; a specific one ("Don't keep it as reference") works. Model: the "No exceptions" list under test-driven-development's Iron Law.
 
 **Address "spirit vs letter" early:** "Violating the letter of the rules is violating the spirit of the rules." This cuts off a whole class of rationalizations.
 
-**One red-flags/rationalizations table.** Every excuse from baseline testing goes into a single table (skills/README.md C.2 — not again as a separate list):
-
-```markdown
-| Thought | Reality |
-|---|---|
-| "Too simple to test" | Simple code breaks. The test takes 30 seconds. |
-| "I'll test after" | Tests passing immediately prove nothing. |
-```
+**One red-flags/rationalizations table.** Every excuse from baseline testing goes into a single `| Thought | Reality |` table (skills/README.md C.2 — not again as a separate list); test-driven-development's table is the model.
 
 **Put violation symptoms in the description** — the moment the agent is about to break the rule: `Use when implementing any feature or bugfix, before writing implementation code.`
 
@@ -160,17 +139,18 @@ Put each item on the todo list.
 
 **RED**
 - [ ] Pressure scenarios written (3+ combined pressures for discipline skills)
-- [ ] Scenarios run without the skill; baseline behavior recorded verbatim
+- [ ] Scenarios run without the skill; choices, rationalizations and the pressures that triggered them recorded verbatim
 - [ ] Failure patterns identified and classified (Match the form to the failure)
 
 **GREEN**
 - [ ] Skill written to skills/README.md (frontmatter, shape, cross-references, flowcharts)
-- [ ] Guidance addresses the recorded baseline failures, in the form matching the failure type
+- [ ] Guidance addresses the recorded baseline failures, in the form matching the failure type, and nothing for hypothetical cases
 - [ ] Behavior-shaping wording micro-tested against a no-guidance control (5+ runs, every flagged match read) — N/A for pure reference skills
 - [ ] Scenarios re-run with the skill; agent complies
 
 **REFACTOR**
-- [ ] New rationalizations countered explicitly; table updated
+- [ ] New rationalizations countered explicitly; table and description (violation symptoms) updated
+- [ ] Meta-tested for clarity (testing-skills-with-subagents.md)
 - [ ] Re-tested until compliant under combined pressure
 
 **Deploy** — skills/README.md F and G: line-by-line comparison for edits, `nix eval`, read the generated skill directory, commit and push; for a third-party skill, consider an upstream PR.

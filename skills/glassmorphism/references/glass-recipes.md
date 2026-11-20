@@ -1,6 +1,6 @@
 # Glassmorphism Recipes
 
-Copy-paste recipes for frosted translucent panels, the "edge of glass" highlight, animated liquid-glass refraction, and the reduced-transparency fallback. All standalone CSS + optional inline SVG — no build step.
+Frosted panels, the edge-of-glass highlight, animated liquid-glass refraction and the fallbacks. Standalone CSS plus optional inline SVG; no build step. Curve tokens (`--ease-out`, `--ease-in-out`) are defined in animate.
 
 ## 1. The base glass card
 
@@ -86,23 +86,25 @@ Heavy `blur()` over a smooth gradient produces visible color **banding** (steppe
 
 ## 4. Motion: animate the glass on hover / enter / scroll
 
-Animate the *qualities* of the glass, not its geometry. Frost deepening and the highlight brightening on hover reads as the panel "leaning into the light."
+Animate the *qualities* of the glass, not its geometry. Frost deepening and the highlight brightening on hover reads as the panel "leaning into the light." Hover is high-frequency: ≤200ms, gated to real pointers.
 
 ```css
 .glass {
   transition:
-    backdrop-filter 0.4s ease,
-    background 0.4s ease,
-    box-shadow 0.4s ease,
-    transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+    backdrop-filter 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease,
+    transform 0.2s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
 }
-.glass:hover {
-  backdrop-filter: blur(24px) saturate(180%);
-  background: rgba(255, 255, 255, 0.18);
-  transform: translateY(-4px);
-  box-shadow:
-    0 16px 48px rgba(0, 0, 0, 0.3),
-    inset 0 1px 0 rgba(255, 255, 255, 0.5);
+@media (hover: hover) and (pointer: fine) {
+  .glass:hover {
+    backdrop-filter: blur(24px) saturate(180%);
+    background: rgba(255, 255, 255, 0.18);
+    transform: translateY(-4px);
+    box-shadow:
+      0 16px 48px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  }
 }
 ```
 
@@ -112,7 +114,7 @@ Caveat: animating `backdrop-filter` itself is the most expensive thing here — 
 
 ```css
 .glass[data-enter] {
-  transition: opacity 0.5s ease, backdrop-filter 0.6s ease, transform 0.5s ease;
+  transition: opacity 0.5s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), backdrop-filter 0.6s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), transform 0.5s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
 }
 @starting-style {
   .glass[data-enter] {
@@ -132,13 +134,19 @@ Caveat: animating `backdrop-filter` itself is the most expensive thing here — 
 .glass .sweep::before {
   content: ""; position: absolute; top: 0; left: -60%; width: 50%; height: 100%;
   background: linear-gradient(105deg, transparent, rgba(255,255,255,0.35), transparent);
-  transform: skewX(-15deg);
-  animation: sweep 4s ease-in-out infinite;
+  transform: translateX(0) skewX(-15deg);
+  animation: sweep 4s var(--ease-in-out, cubic-bezier(0.77, 0, 0.175, 1)) infinite;
 }
-@keyframes sweep { 0%,100% { left: -60%; } 50% { left: 110%; } }
+/* translateX % is of the glint's own width (50%): 340% = the old left: -60% → 110% travel */
+@keyframes sweep {
+  0%, 100% { transform: translateX(0) skewX(-15deg); }
+  50%      { transform: translateX(340%) skewX(-15deg); }
+}
 ```
 
-## 5. Liquid glass — SVG refraction (the 2026 look)
+Moving it with `left` would trigger layout every frame; `transform` stays on the compositor.
+
+## 5. Liquid glass — SVG refraction
 
 Apple-style "liquid glass" bends the background as if seen through a thick, wobbling lens. Drive a `feDisplacementMap` from animated `feTurbulence` and apply it via `filter` (note: `filter`, not `backdrop-filter` — it distorts the element's own rendered content; layer it over a `backdrop-filter` frost for the full effect).
 
@@ -174,11 +182,7 @@ Cost warning: SVG displacement filters are heavy and force off-GPU paths in some
 
 ## 6. Performance — backdrop-filter is expensive
 
-- Each `backdrop-filter` element re-samples and blurs everything behind it. **Limit the count** — a dozen glass cards on screen will tank scroll FPS.
-- Promote heavy glass to its own compositor layer: `transform: translateZ(0)` or `will-change: transform` (remove `will-change` after the animation; leaving it on wastes memory).
-- Avoid stacking `backdrop-filter` elements over each other (nested blur re-blurs the blur — quadratic cost).
-- Prefer animating `transform`/`opacity`/`box-shadow` over animating the blur radius. If you must animate blur, keep the radius delta small.
-- Big blur radii (>40px) over large areas are the single worst case; cap the radius and the panel size.
+Rules (count limit, layer promotion, no stacked blur, radius cap, animate `transform`/`opacity`/`box-shadow` over blur radius): SKILL.md › Performance.
 
 ## 7. Accessibility — non-negotiable
 
@@ -203,10 +207,7 @@ Glass is decorative; the content on it must stay legible and the effect must be 
 }
 ```
 
-**Contrast over busy backgrounds.** Translucent panels over photos can drop text below WCAG contrast. Defenses:
-- Put a contrast floor *under* the text: a semi-opaque scrim or a darkening gradient inside the panel.
-- Add `text-shadow: 0 1px 2px rgba(0,0,0,0.4)` to body text on glass.
-- Target ≥ 4.5:1 for body text, ≥ 3:1 for large text — and verify against the *brightest* region of the backdrop, not the average.
+**Contrast over busy backgrounds:** SKILL.md › Accessibility.
 
 **Feature fallback** for browsers without `backdrop-filter`:
 
@@ -218,25 +219,4 @@ Glass is decorative; the content on it must stay legible and the effect must be 
 
 ## 8. Standalone freeze harness
 
-Glass demos verify by *state* (rest / hover / enter) and *time* (the sweep/refraction loop). Wire both so a screenshot lands deterministically:
-
-```html
-<script>
-  const p = new URLSearchParams(location.search);
-  const state = p.get("state");           // ?state=hover → force the hover look
-  if (state) document.documentElement.dataset.state = state;
-  const t = p.get("t");                    // ?t=2 → freeze CSS animations at 2s
-  if (t !== null) {
-    document.getAnimations().forEach(a => { a.currentTime = parseFloat(t) * 1000; a.pause(); });
-    // SVG SMIL (the <animate>): pin the refraction frame too
-    document.querySelector("svg")?.pauseAnimations?.();
-    document.querySelector("svg")?.setCurrentTime?.(parseFloat(t));
-  }
-  window.__ready = true;
-</script>
-```
-
-CSS drives the forced state: `:root[data-state="hover"] .glass { /* hover values */ }`.
-
----
-Frosted glass that reads as glass — blur, edge light, and refraction, with a clean fallback. Built by **[iart.ai](https://iart.ai/?utm_source=github&utm_medium=readme&utm_campaign=web-animation-skills&utm_content=skill_footer&utm_term=glassmorphism)** — the AI motion agent for editable, on-brand motion graphics.
+State and time targets, the `:root[data-state="hover"]` hook and the confirm list: SKILL.md › Standalone deliverable.

@@ -7,9 +7,7 @@ description: Use when building, fixing or reviewing gesture-driven or Apple-styl
 
 ## Overview
 
-An interface feels physical when motion starts from the current on-screen value, inherits the user's velocity, projects momentum forward, and can be grabbed and reversed at any instant. A gesture has two phases: while the pointer is down the UI *is* the finger; once it lifts, physics (a spring) finishes the motion.
-
-Source: Apple WWDC talks — *Designing Fluid Interfaces* (2018), *Designing Audio-Haptic Experiences*, *The Details of UI Typography* (2020), *Principles of Great Design* (2026) — translated to CSS, Pointer Events, `requestAnimationFrame` and Motion / Framer Motion.
+An interface feels physical when motion starts from the current on-screen value, inherits the user's velocity, projects momentum forward, and can be grabbed and reversed at any instant. A gesture has two phases: while the pointer is down the UI *is* the finger (position maps 1:1 to the pointer; no easing, duration or spring); once it lifts, physics finishes the motion (a spring seeded with the release velocity, never a keyframe).
 
 ## When to Use
 
@@ -19,12 +17,6 @@ Source: Apple WWDC talks — *Designing Fluid Interfaces* (2018), *Designing Aud
 - Translucent chrome, depth, Apple-style typography, multimodal feedback, design-principle review.
 
 **Build or use a library:** a correct drawer needs momentum dragging, overlay opacity tied to drag progress, velocity-aware dismissal, focus trapping and Escape-to-close. For a bottom sheet / drawer default to [Vaul](https://vaul.emilkowal.ski/). Hand-roll only interactions no library covers (custom swipe cards, bespoke drag).
-
-```mermaid
-flowchart TD
-  A{Pointer down?} -->|yes| T[Track phase: position maps 1:1 to pointer; no easing, duration or spring]
-  A -->|no| R[Release phase: spring seeded with release velocity; never a keyframe]
-```
 
 ## Core Pattern
 
@@ -67,18 +59,18 @@ Apple uses two parameters instead of mass/stiffness/damping:
 - **Damping ratio** — `1.0` critically damped (no overshoot); `< 1.0` overshoots; lower = bouncier.
 - **Response** — seconds to reach the target; lower = snappier. Not a duration: settle time emerges from the parameters.
 
-| Interaction | Damping | Response |
-|---|---|---|
-| Default UI | `1.0` | `0.3–0.4` |
-| Move / reposition (PiP) | `1.0` | `0.4` |
-| Rotation | `0.8` | `0.4` |
-| Drawer / sheet | `0.8` | `0.3` |
-| After a flick / throw / drag release | `~0.8` | `0.3–0.4` |
+| Interaction | Damping | Response | Motion |
+|---|---|---|---|
+| Default UI | `1.0` | `0.3–0.4` | `bounce: 0, duration: 0.3–0.4` |
+| Move / reposition (PiP) | `1.0` | `0.4` | `bounce: 0, duration: 0.4` |
+| Rotation | `0.8` | `0.4` | `bounce: 0.2, duration: 0.4` |
+| Drawer / sheet | `0.8` | `0.3` | `bounce: 0.2, duration: 0.3` |
+| After a flick / throw / drag release | `~0.8` | `0.3–0.4` | `bounce: 0.2, duration: 0.3–0.4` |
 
 - Bounce only when the gesture carried momentum; a button-triggered close gets zero bounce.
 - Bounce scales inversely with element size: smaller elements need more to read the same.
 - A spring that feels "weird" usually needs more damping.
-- Motion's `bounce` + `duration` maps closely to damping + response.
+- Motion's `bounce` + `duration` maps closely to damping + response: `bounce` ≈ 1 − damping ratio (animate's conversion rule), `duration` ≈ response.
 
 ```js
 import { animate } from 'motion';
@@ -96,9 +88,8 @@ animate(el, { y: target }, { type: 'spring', bounce: 0.2, duration: 0.4 }); // a
 | Tap hit padding | ~10px hysteresis around the target |
 | Hit target | ≥ 44×44px; enlarge with an invisible `::before` |
 | Projection deceleration | `0.998` normal scroll feel, `0.99` snappier |
-| Vaul iOS sheet curve | `cubic-bezier(0.32, 0.72, 0, 1)` over 500ms |
-| Small floating drawer | 200ms `cubic-bezier(0.165, 0.84, 0.44, 1)` |
-| Press feedback | `scale(0.97)`, 100ms `ease-out` on `:active` |
+| Vaul iOS sheet curve | animate's `--ease-drawer` (`cubic-bezier(0.32, 0.72, 0, 1)`) over 500ms, full-width edge-attached sheets only |
+| Small floating drawer | 200ms quart ease-out from animate's table (`cubic-bezier(0.165, 0.84, 0.44, 1)`) |
 | Reverse vs commit | velocity **sign** at release, not position |
 
 ## Implementation
@@ -112,14 +103,14 @@ Directness collapses as soon as lag appears.
 - Feedback is continuous during the interaction (drag, slider, drawer), never only at completion.
 
 ```css
-.button:active { transform: scale(0.97); transition: transform 100ms ease-out; }
+.button:active { transform: scale(0.97); transition: transform 100ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)); } /* animate's token */
 ```
 
 ### 2. Track phase
 
 - Pointer Events with `setPointerCapture` so tracking continues outside the element; respect the grab offset.
 - Keep a short position + timestamp history of recent `pointermove` events to compute release velocity.
-- Write `transform` on the dragged element itself. Never move children via a CSS variable on a parent: variables inherit, so each change restyles all descendants (this made Vaul laggy past ~20 list items).
+- Write `transform` on the dragged element itself. Never move children via a CSS variable on a parent; see animation-performance.
 - No React state per move event; motion values and direct style writes bypass rendering.
 
 ```js
@@ -178,7 +169,7 @@ Overlay fade, background scale and similar values derive from drag progress (`us
 
 ### 8. Sheets with CSS: the Vaul curve
 
-`cubic-bezier(0.32, 0.72, 0, 1)` over 500ms is steep at the start, so it feels snappy and settles like a spring. The 500ms timing only fits a full-width, edge-attached sheet. Small floating drawers:
+animate's `--ease-drawer` (`cubic-bezier(0.32, 0.72, 0, 1)`) over 500ms is steep at the start, so it feels snappy and settles like a spring. The 500ms timing only fits a full-width, edge-attached sheet. Small floating drawers take animate's quart ease-out at 200ms:
 
 ```css
 [vaul-drawer]  { transition: transform 0.2s cubic-bezier(0.165, 0.84, 0.44, 1); }
@@ -217,23 +208,7 @@ Overlay fade, background scale and similar values derive from drag progress (`us
 
 ### 13. Materials and depth
 
-- Nav, toolbars and sheets as translucent layers (`backdrop-filter: blur()` + semi-transparent background) with content scrolling underneath.
-- Heavier/darker materials separate structure (sidebars); lighter ones mark interactive elements. Never stack light translucent on light translucent.
-- Larger surfaces read thicker: stronger blur, deeper shadow. Heavier shadow over busy content, lighter over plain.
-- Modal task: dimming scrim, background pushed back. Parallel panel: translucency and offset, no scrim. Stacked sheets: dim and push back each parent.
-- Text over translucency: higher contrast, slightly heavier weight, small letter-spacing bump, no flat gray. Color goes on a solid layer.
-- Sticky header: fade a blur/gradient mask where content meets floating chrome instead of a 1px divider, only where they overlap.
-- Glass enter/exit animates blur radius and scale together, not opacity alone.
-
-```css
-.toolbar {
-  background: rgba(255, 255, 255, 0.6);
-  backdrop-filter: blur(20px) saturate(180%);
-  border-top: 1px solid rgba(255, 255, 255, 0.4);
-}
-```
-
-For glass surface styling see glassmorphism.
+Translucent chrome, layered sheets and text on translucency follow Apple's material hierarchy (structure vs interactive, thickness by surface size, scrim for modal vs parallel panels, sticky-header masks, glass enter/exit animating blur and scale): read `references/materials-and-accessibility.md`. Glass surface styling: glassmorphism.
 
 ### 14. Multimodal feedback
 
@@ -243,85 +218,9 @@ For glass surface styling see glassmorphism.
 
 ### 15. Reduced motion and accessibility
 
-Tracking is user-produced motion and stays. Reduce momentum flings, bounce and decorative motion; settle with a short opacity/position change instead of a bouncy spring.
+Tracking is user-produced motion and stays. Reduce momentum flings, bounce and decorative motion; settle with a short opacity/position change instead of a bouncy spring. Reduced-transparency and `prefers-contrast` responses, vestibular hazards and the CSS: `references/materials-and-accessibility.md`. Full reduced-motion work: see accessible-animation.
 
-| Signal | Response |
-|---|---|
-| `prefers-reduced-motion: reduce` | Short opacity cross-fades instead of slides/springs/parallax; no overshoot; keep comprehension-aiding opacity/color |
-| `prefers-reduced-transparency: reduce` | Raise background opacity, drop blur |
-| `prefers-contrast: more` | Near-solid backgrounds, contrasting border |
+### References
 
-Also avoid full-viewport moving backgrounds, slow loops near 0.2 Hz (one cycle per 5s) and abrupt brightness jumps (ease theme changes). Make large moving objects semi-transparent in transit; fade big surfaces out during large repositions.
-
-```css
-@media (prefers-reduced-motion: reduce) {
-  .sheet { transition: opacity 200ms ease; transform: none !important; }
-}
-@media (prefers-reduced-transparency: reduce) {
-  .toolbar { background: white; backdrop-filter: none; }
-}
-```
-
-Full reduced-motion work: see accessible-animation.
-
-### 16. Typography
-
-- Tracking is size-specific: negative on large display text (`-0.02em`), slightly positive on small text, body near `0`.
-- Leading scales inversely with size: tight headings, looser body; looser for tall-ascender scripts, tighter for dense UI.
-- Hierarchy from weight + size + leading together; emphasize with weight.
-- Respect user text size: spacing in `rem`/`em`.
-- Default to the system font (optical sizing and tracking tables built in).
-
-```css
-:root { font: 100%/1.5 system-ui, sans-serif; }
-.display {
-  font-size: clamp(2rem, 5vw, 4rem);
-  line-height: 1.05;
-  letter-spacing: -0.02em;
-  font-optical-sizing: auto;
-}
-```
-
-### 17. Design principles
-
-Apple's eight (*Principles of Great Design*):
-
-1. **Purpose** — decide what not to build; every feature spends the user's time, attention and trust.
-2. **Agency** — offer choices; easy undo for slips; confirmation dialogs only for destructive, irreversible actions (overuse trains click-through).
-3. **Responsibility** — ask for permissions at the right moment, only what's needed; anticipate misuse, especially with AI (an allergy-aware recipe app must not suggest a harmful ingredient); add previews, confirmations, disclaimers; cut features whose risk outweighs value.
-4. **Familiarity** — metaphors neither too literal nor too abstract (trash can = delete), honoring their physics; same look = same behavior and place (close is top-left on macOS); break a pattern only when proven better by testing.
-5. **Flexibility** — adapt to platform (iPhone quick touch; desktop deep workflows, precise pointer) and to age, language, expertise, accessibility; allow personalization when no layout fits all.
-6. **Simplicity, not minimalism** — plain language, fewer steps, hierarchy via order, spacing, contrast; adding context can simplify (scrubber showing time remaining); common path first, advanced one level deeper.
-7. **Craft** — every spacing, timing and alignment value is defensible; jittery scroll, misaligned icons, layouts breaking on rotation read as carelessness; keep iterating.
-8. **Delight** — the result of the other seven; choose the target emotion (calm, confident, excited) and reinforce it.
-
-Tactical rules:
-
-- Feedback has four kinds: status, completion, warning, error. Validate inline, not on submit.
-- Wayfinding: every screen answers where am I, where can I go, what's there, how do I get out.
-- Proximity implies relationship; place controls near and mirroring what they change. Needing a label signals weak mapping.
-- Specific labels ("Progress", "Library") beat generic ones ("Home").
-
-### 18. Process
-
-- Prototype interactively; a working demo sets the bar for the final build.
-- Design interaction and visuals together.
-- Test with real people in context; review motion in slow motion / frame by frame.
-
-## Common Mistakes
-
-| Mistake | Fix |
-|---|---|
-| Hand-rolling a bottom sheet | Vaul |
-| Mixing track and release phases | Track 1:1, release with a velocity-seeded spring |
-| Feedback only on `click` / gesture end | Pointer-down, continuous |
-| CSS variable on parent moves children | `transform` on the element |
-| `setState` per `pointermove` | Motion values / direct style writes |
-| Single spring on a 2D distance | Independent X and Y springs |
-| Slow snap-back | Fast spring |
-| Symmetric hold/cancel timing | `linear` hold, fast `ease-out` cancel |
-| Dismiss axis differs from entry axis | Reverse the entrance |
-| 500ms Vaul curve on a small floating drawer | 200ms override |
-| Button inside drawer starts a drag | `data-vaul-no-drag` |
-| Native scroll fights the drag | `touch-action` |
-| Testing only with a trackpad | Real phone via local IP |
+- `references/materials-and-accessibility.md` — read for translucent materials and depth, and the reduced-motion / reduced-transparency / contrast signal table with CSS.
+- `references/typography-principles-process.md` — read for Apple typography (tracking, leading, optical sizing), Apple's eight design principles with tactical rules, and prototyping/testing process.

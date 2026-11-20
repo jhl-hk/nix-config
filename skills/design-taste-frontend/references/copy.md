@@ -18,8 +18,7 @@ before the first sentence:
 - `copy-tells.md`: what gives model copy away and the fix for each, what over-correction breeds, and
   what is not a tell.
 
-Where they differ, this file wins: nothing invented, nothing bracketed or left open on the page, no
-captions, the h1 names the category, buttons are a verb and an object.
+Where they differ, this file wins.
 
 **copy-lint.** `bun <skill>/scripts/copy-lint.mjs index.html --kind <kind>` counts the countable
 tells in well under a second a page (no browser). FAIL: residue (a `[NEED]`, a template token,
@@ -29,7 +28,8 @@ one. WARN: a device over its budget, a strip of figures, a default-cast name, a 
 response-time promise worded twice, proof figures, exclamation marks, puffery, a stale year: fix it or
 keep it and say why in the report. Several pages at once also print their first headings side by side
 and the heading phrases they share. `--json` for scripts; exit 1 on a FAIL. The gate runs it on the
-page as a static check: its FAILs block like the checker's (ids `copy-*`), its WARNs do not.
+page as a static check: its FAILs block like the checker's (ids `copy-*`), its WARNs do not. A draft
+kept in a `.md` file lints the same way as the page (the voice card and part labels are skipped).
 
 ## Five rules
 

@@ -10,10 +10,12 @@
  *     <img class="hero__art" src="art.svg" alt="" />
  *   </section>
  *
- * CSS prerequisite: each split line wrapper needs overflow:hidden for the mask reveal:
- *   .hero__title .line { overflow: hidden; }
+ * CSS prerequisites:
+ *   .hero__title .line { overflow: hidden; }   // split line wrapper masks the reveal
+ *   .hero__eyebrow, .hero__title, .hero__sub, .hero__actions, .hero__art { visibility: hidden; }
+ *                                              // no flash before fonts load; JS reveals them
  *
- * Install:  npm i gsap @gsap/react
+ * Install:  bun add gsap
  */
 
 import gsap from "gsap";
@@ -25,11 +27,15 @@ export function playHeroIntro(root = document) {
   const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
   const q = gsap.utils.selector(root);
 
-  // Reduced motion: reveal everything instantly, no animation.
+  // Reduced motion: no movement, a short opacity fade only.
   if (reduceMotion) {
-    gsap.set(q(".hero__eyebrow, .hero__sub, .hero__actions, .hero__art"), { autoAlpha: 1 });
-    gsap.set(q(".hero__title"), { autoAlpha: 1 });
-    return Promise.resolve();
+    return Promise.resolve(
+      gsap.fromTo(
+        q(".hero__eyebrow, .hero__title, .hero__sub, .hero__actions, .hero__art"),
+        { autoAlpha: 0 },
+        { autoAlpha: 1, duration: 0.2, ease: "power4.out" },
+      ),
+    );
   }
 
   // Wait for fonts so SplitText computes correct line breaks.
@@ -41,20 +47,21 @@ export function playHeroIntro(root = document) {
       autoSplit: true, // GSAP 3.13+: re-split on resize/font swap
     });
 
-    // Hidden start state (prevents flash of unstyled content).
-    gsap.set(q(".hero__eyebrow, .hero__sub, .hero__actions, .hero__art"), { autoAlpha: 0 });
-    gsap.set(titleEl, { autoAlpha: 1 });
+    // Containers whose children animate become visible now; the rest fade in via
+    // .from(autoAlpha: 0) up to the CSS opacity (1). Do not gsap.set them to
+    // autoAlpha 0 first: .from() would then tween 0 → 0 and they never appear.
+    gsap.set([titleEl, ...q(".hero__actions")], { autoAlpha: 1 });
 
     const tl = gsap.timeline({
       defaults: { ease: "power3.out", duration: 0.8 },
       onComplete: () => split.revert(), // restore clean DOM once done (optional)
     });
 
-    tl.from(".hero__eyebrow", { y: 16, autoAlpha: 0, duration: 0.5 })
-      .from(split.lines, { yPercent: 110, stagger: 0.12, duration: 0.9, ease: "power4.out" }, "-=0.2")
-      .from(".hero__sub", { y: 20, autoAlpha: 0 }, "-=0.6")
-      .from(".hero__actions .btn", { y: 12, autoAlpha: 0, stagger: 0.1, duration: 0.5 }, "-=0.4")
-      .from(".hero__art", { scale: 0.92, autoAlpha: 0, ease: "back.out(1.4)", duration: 1.1 }, "<0.1");
+    tl.from(q(".hero__eyebrow"), { y: 16, autoAlpha: 0, duration: 0.5 })
+      .from(split.lines, { yPercent: 110, stagger: 0.06, duration: 0.9, ease: "power4.out" }, "-=0.2")
+      .from(q(".hero__sub"), { y: 20, autoAlpha: 0 }, "-=0.6")
+      .from(q(".hero__actions .btn"), { y: 12, autoAlpha: 0, stagger: 0.06, duration: 0.5 }, "-=0.4")
+      .from(q(".hero__art"), { scale: 0.92, autoAlpha: 0, ease: "back.out(1.4)", duration: 1.1 }, "<0.1");
 
     return tl;
   });

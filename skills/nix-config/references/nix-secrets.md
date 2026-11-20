@@ -128,7 +128,7 @@ The only ciphertext file. Top-level keys:
 | `omni` | `modules/hosts/darwin/omni`, `home/jhl/common/optional/k8s/omni.nix` |
 | `rd_llm`, `openai`, `openclaw` | no consumer in nix-config |
 
-Key paths are `<area>/<name>` (e.g. `llm/api_key`, `wakatime/api_key`). `hosts/common/optional/darwin/npmrc.nix` declares `npm/jianyuelab_token`, which does not exist; no host imports it.
+Key paths are `<area>/<name>` (e.g. `llm/api_key`, `wakatime/api_key`). `hosts/common/optional/darwin/npmrc.nix` declares `npm/jianyuelab_token`, which does not exist yet; it asserts on the key and no host imports it.
 
 ## Consuming secrets: system scope
 
@@ -163,7 +163,7 @@ sops.templates."name" = {
 - **Paths are symlinks.** A template `path` → `/run/secrets/rendered/<name>`; `/run/secrets` → `/run/secrets.d/N` (swapped atomically). `owner`/`mode` apply to the target (`stat -L`). Writes through the link (`npm login`, `npm config set`, `git config -f`) are wiped next activation; change the YAML.
 - **`/run` is volatile.** Darwin's launchd daemon re-creates secrets after boot; until then links dangle.
 - **Order:** the ciphertext must be pushed and locked before a host imports the consumer; `validateSopsFiles` checks at evaluation time (`opening file ... No such file or directory`).
-- **Assertion guard:** `lib.hasInfix "<key>:" (builtins.readFile sopsFile)` turns an unfilled key into an evaluation error naming it (sops leaves key names in cleartext). Pattern: `modules/hosts/darwin/omni/default.nix`.
+- **Assertion guard:** `builtins.pathExists sopsFile && lib.hasInfix "<key>:" (builtins.readFile sopsFile)` turns an unfilled key into an evaluation error naming it (sops leaves key names in cleartext). For a nested key match the parent and its indentation, `"tea:\n    token:"`; a bare `token:` or `api_key:` is already satisfied by other sections. Patterns: `modules/hosts/darwin/omni/default.nix`, `hosts/common/core/darwin/forgejo.nix`, `hosts/common/optional/common/llm.nix`.
 - **Key file first:** `~/.config/sops/age/keys.txt` must exist before the first rebuild that declares a secret.
 - **System and home trees cannot reference each other:** `/run/secrets/<path>` defaults in home modules (`llm.apiKeyFile`, `wakatime.apiKeyFile`, `cloudflare.apiTokenFile`) are kept in step with the system `sops.secrets` names by hand.
 

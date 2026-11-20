@@ -6,9 +6,13 @@ recipe in `sections-library.md`. The kind and what it may carry: `SKILL.md` (The
 
 ## 1. Plan in screens
 
-Write the plan before building: line 1 the kind, line 2 the deal, then one line per section: its
-id, its one idea, its picture, its screens (1 or 2, from the content height: `layout-v4.md`
-section 2) and, on tech, the section that holds the effect, the scene or a moment.
+Write the plan before building (step 3): line 1 the kind, line 2 the deal (section 2) with one
+sentence on why the palette fits the trade, then one line per section: its id, its one idea, its
+picture and its kind (object, use, parts, world, slot, diagram, type; three object lines at most,
+below), its screens (1 or 2, from the content height: `layout-v4.md` section 2), which section
+holds a moment and why it moves, and on tech the section that holds the effect or the scene. Pick
+the photographs now (`photos.md`): their count, stand-ins included, sets a place's length. Then
+read `cards.md` and the recipe of every id you use in `sections-library.md`.
 
 - **Every section shows the real thing:** a photograph, a portrait, real icons, the client's UI, a
   diagram card or (tech only) the effect. A section without a picture is allowed only for a price
@@ -83,14 +87,23 @@ bun -e "for(const l of process.argv.slice(1)){const o=l.split('|');console.log(o
 ```
 
 The hero comes from `assets/layout/deal.mjs` and the pairing from `start.mjs` (`layout-v4.md`),
-never from this line; a place takes the place hero. Write the results on plan line 2 and in the
-comment at the top of `<body>`, and build exactly those. Deal one part again only when its recipe's
+never from this line; a place takes the place hero, printed, never dealt. Which `--has` and which
+heroes a kind may be dealt: `layout-v4.md`, The eleven heroes. Write the results on plan line 2 and in the
+comment at the top of `<body>`, and build exactly those (a short page drops what it has no section
+for: section 4). Deal one part again only when its recipe's
 "use" does not fit. With no photograph to show, these dealt parts do not fit, and each is dealt
 again from its own list without them, never drawn: `nav-cards` (and any nav panel of photograph
 cards) to `nav-split` with no panel, or `nav-centre`; `close-photo` to the head row of `close-word`
 without the name (the h2 and one line on the left, the main button on the right, both on the
 `.wrap` lines); `media-band` to `space` (a game without art keeps it: a photograph of its setting is the layer); a place's hero to the `statement` hero on `.ground-brand`.
 Write the change and its reason on plan line 2.
+
+- **Palette and pairing:** take the first palette and the first pairing `start.mjs deal` prints;
+  the next only when the first clashes with the client's own logo or photographs, or the pairing
+  fails `hero-lines`, said on plan line 2. The client's own colours go through `start.mjs brand`
+  (section 4, Look). Never violet: deal again. Keep the `:root` block as printed.
+- **Tech only:** the lit ground (`<html data-ground>`: `sand|sky|sage`, dealt through the one-liner
+  above), the CSS grounds (`backgrounds.md`) and the one effect (`effects-usage.md`).
 
 - **Nav** (one fixed, opaque bar on the `.wrap`; `system.md`): `nav-mega` (link columns and one
   picture card in the panel), `nav-cards` (three or four picture cards), `nav-centre` (the words in
@@ -233,7 +246,7 @@ either only when the brief asks for 3D or a render (below).
      battery, warranty). One fact, one place, one wording.
   7. **Buttons step on hover and press on click.** The motion layer does it (`motion.md`,
      Button); no page CSS sets a `.btn`'s `transform` or `transition`. A feature card that leads
-     somewhere is a linked card (it lifts 2px, its picture zooms 1.03).
+     somewhere is a linked card (the hover layer, `motion.md`).
 - **No photographs: the product is shown, never hidden, in photographs** (pages carried by renders
   and their props read as random 3D objects). A picture the brief gives (a cut-out, a CAD view, its own
   render) goes on the hero's stage. Else **stand-ins**: `photos.mjs pick --product-without-photos`
@@ -388,9 +401,9 @@ from an effect; text beside one picture in every section, with nothing answering
   band, never outline, pale, rotated or on a photograph. One a page; the footer's name set wide is
   then capped at `12vw` (about 170px at 1440) or left out.
 - **Hover you can see:** every photograph that leads somewhere is a link (a room to its booking, a
-  goods photograph to its card, the place to its story) and zooms 1.03 inside its frame while its
-  card lifts 2px; the head row's link carries the arrow; the nav words draw their underline
-  (`motion.md`). Each section after the hero holds at least one such link.
+  goods photograph to its card, the place to its story) and takes the hover layer with its card;
+  the head row's link carries the arrow; the nav words draw their underline (`motion.md`). Each
+  section after the hero holds at least one such link.
 - **One main action a screen:** a transaction (Book a room, Order a cake) is the nav's button and
   the hero's, as on any page, and nowhere else but the booking or close and the phone bar. Get
   directions is never repeated: the hero's one button and the phone bar's (and the nav's button on a desktop: two on a
@@ -533,9 +546,8 @@ Each starts hero, visit; the rest in this order, 4 to 6 screens:
   trade's group first), display 400, text 400 and 500: a serif head with a plain sans for a bakery,
   restaurant or guesthouse; one plain sans in two weights for a shop, bike shop, florist or studio;
   a soft sans for a cafe or a yoga studio. Sizes in `layout-v4.md` section 5.
-- **Motion:** the hover layer only (`motion.md`), and it must show: the nav words and links draw
-  their underline, a linked photograph zooms 1.03 inside its frame while its card lifts 2px,
-  buttons step and press, arrows move 3px. On load the hero enters once (`motion.md`); on scroll only
+- **Motion:** the hover layer only (`motion.md`), and it must show on the nav words and links, the
+  linked photographs and their cards, the buttons and the arrows. On load the hero enters once (`motion.md`); on scroll only
   the dealt moment's own section moves (`moments.md`); nothing else moves by itself.
 
 ### The short page (under 8 photographs)

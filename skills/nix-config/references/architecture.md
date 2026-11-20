@@ -1,10 +1,9 @@
 # Architecture
 
-Flake outputs, the `lib.custom` helpers and their two plumbing paths, the platform-sibling pattern, auto-discovery, the inheritance chain, option merge order, and the agent tooling modules. `hostSpec` fields: `hostspec.md`. Secrets: `nix-secrets.md`.
+`hostSpec` fields: `hostspec.md`. Secrets: `nix-secrets.md`. Where a new file goes: `recipes.md` § Decision tree.
 
 ## Contents
 
-- [Where do new modules go?](#where-do-new-modules-go)
 - [flake.nix inputs and outputs](#flakenix-inputs-and-outputs)
 - [The two lib plumbing paths](#the-two-lib-plumbing-paths)
 - [lib/default.nix](#libdefaultnix)
@@ -13,20 +12,6 @@ Flake outputs, the `lib.custom` helpers and their two plumbing paths, the platfo
 - [Inheritance chain](#inheritance-chain)
 - [Option merge order](#option-merge-order)
 - [Agent tooling](#agent-tooling)
-
-## Where do new modules go?
-
-| Intent | Directory |
-|---|---|
-| Home-manager option | `modules/home/<name>.nix` |
-| Cross-platform system option | `modules/hosts/common/<name>.nix` |
-| macOS-only system option | `modules/hosts/darwin/<name>/default.nix` |
-| NixOS-only system option | `modules/hosts/nixos/<name>/default.nix` |
-| Schema evaluated by every system scope and by `evalHostSpec` | `modules/common/` (holds only `host-spec.nix`; HM does not import it) |
-
-`modules/hosts/nixos/` means NixOS, not Linux. Standalone hosts never import it; something for every Linux machine goes in `home/jhl/common/core/linux.nix`.
-
-Drop the file; `scanPaths` in the local `default.nix` picks it up. These define options; enabling stays per host or per user.
 
 ## flake.nix inputs and outputs
 
@@ -146,7 +131,7 @@ A `homeManagerConfiguration` without `lib` defaults to `pkgs.lib` and fails at t
 
 ## lib/default.nix
 
-- **`relativeToRoot = lib.path.append ../.`** — takes a **string** (`"hosts/common/core"`) and returns a path under the flake root. A path literal errors.
+- **`relativeToRoot = lib.path.append ../.`** — takes a **string** (`"hosts/common/core"`) and returns a path under the flake root. A path literal errors. Call form: `map lib.custom.relativeToRoot [ "hosts/common/core" ]`.
 - **`scanPaths path`** — immediate children that are directories or `.nix` files other than `default.nix` (it is called from a `default.nix`; including itself would recurse).
 - **`evalHostSpec`** — `evalModules` over `modules/common/host-spec.nix` plus the given modules; returns the `hostSpec` attrset for the standalone lane.
 

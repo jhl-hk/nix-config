@@ -1,5 +1,7 @@
 # Full examples and variants
 
+Next.js App Router only, except the View Transitions CSS.
+
 ## Working folder layout
 
 ```
@@ -20,7 +22,7 @@ Track direction by comparing route depth or a route order map, then feed it to v
 ```tsx
 // app/page-transition.tsx
 'use client';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { usePathname } from 'next/navigation';
 import { useRef } from 'react';
 
@@ -39,12 +41,12 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
       variants={{
         initial: (d: number) => ({ opacity: 0, x: 40 * d }),
         animate: { opacity: 1, x: 0 },
-        exit: (d: number) => ({ opacity: 0, x: -40 * d }),
+        exit: (d: number) => ({ opacity: 0, x: -40 * d, transition: { duration: 0.24, ease: [0.23, 1, 0.32, 1] } }),
       }}
       initial="initial"
       animate="animate"
       exit="exit"
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
     >
       {children}
     </motion.div>
@@ -59,7 +61,7 @@ Omit `mode="wait"` so old and new overlap. Stack them absolutely to avoid layout
 ```tsx
 // app/template.tsx
 'use client';
-import { AnimatePresence, motion } from 'framer-motion';
+import { AnimatePresence, motion } from 'motion/react';
 import { usePathname } from 'next/navigation';
 import { FrozenRouter } from './frozen-router';
 
@@ -110,7 +112,7 @@ With `next-view-transitions`, use its `<Link>` and the morph happens on navigati
 ```tsx
 // app/work/loading.tsx
 'use client';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 export default function Loading() {
   return (
     <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
@@ -122,18 +124,26 @@ export default function Loading() {
 
 ## Reduced-motion
 
+Fewer and gentler, not zero (accessible-animation Tier 2): drop the slide, keep a short opacity crossfade, exit still ~20% faster.
+
 ```tsx
 'use client';
-import { useReducedMotion, motion } from 'framer-motion';
+import { useReducedMotion, motion } from 'motion/react';
+
+const ease = [0.23, 1, 0.32, 1] as const; // animate's --ease-out
 
 export function PageTransition({ children }: { children: React.ReactNode }) {
   const reduce = useReducedMotion();
   return (
     <motion.div
-      initial={reduce ? false : { opacity: 0, y: 12 }}
+      initial={reduce ? { opacity: 0 } : { opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={reduce ? { opacity: 1 } : { opacity: 0, y: -12 }}
-      transition={{ duration: reduce ? 0 : 0.3 }}
+      exit={
+        reduce
+          ? { opacity: 0, transition: { duration: 0.12, ease } }
+          : { opacity: 0, y: -12, transition: { duration: 0.24, ease } }
+      }
+      transition={{ duration: reduce ? 0.15 : 0.3, ease }}
     >
       {children}
     </motion.div>
@@ -141,12 +151,12 @@ export function PageTransition({ children }: { children: React.ReactNode }) {
 }
 ```
 
-For the View Transitions API, gate with CSS:
+For the View Transitions API, gate with CSS: replace any slide with the `fade` keyframes from SKILL.md, ≤200ms:
 
 ```css
 @media (prefers-reduced-motion: reduce) {
-  ::view-transition-old(root),
-  ::view-transition-new(root) { animation: none; }
+  ::view-transition-old(root) { animation: fade 0.12s both reverse; }
+  ::view-transition-new(root) { animation: fade 0.15s both; }
 }
 ```
 
@@ -159,18 +169,15 @@ The internal context import has shifted across Next versions, e.g.:
 import { LayoutRouterContext } from 'next/dist/shared/lib/app-router-context.shared-runtime';
 ```
 
-If an upgrade breaks the import, search `node_modules/next/dist/shared/lib/` for `app-router-context` and update the path. Because it is internal, pin awareness of this in any upgrade checklist.
+If an upgrade breaks the import, search `node_modules/next/dist/shared/lib/` for `app-router-context` and update the path.
 
 ## Framer Motion vs View Transitions decision
 
 | Factor | Framer Motion | View Transitions API |
 |---|---|---|
-| Browser support | Broad (JS lib) | Uneven; needs fallback |
+| Browser support | Broad (JS lib) | Same-document: Baseline since Oct 2025. Cross-document (`@view-transition`): not Baseline (Chromium 126+, Safari 18.2+). Keep a fallback |
 | Orchestration/stagger | Excellent | Limited |
 | Interruptible exits | Yes | Limited |
 | Shared element morph | Manual (layoutId) | Native, simple |
 | Bundle cost | Adds library | Minimal/native |
 | Setup complexity | Medium (FrozenRouter) | Low (next-view-transitions) |
-
----
-Freeze the outgoing route and exit transitions finally fire as intended. Built by **[iart.ai](https://iart.ai/?utm_source=github&utm_medium=readme&utm_campaign=web-animation-skills&utm_content=skill_footer&utm_term=page-transition-animation)** — the AI motion agent for editable, on-brand motion graphics.

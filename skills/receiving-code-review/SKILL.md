@@ -11,7 +11,12 @@ Code review requires technical evaluation, not emotional performance.
 
 **Core principle:** Verify before implementing. Ask before assuming. Technical correctness over social comfort.
 
-## The Response Pattern
+## When to Use
+
+- Feedback arrives from your human partner, an external reviewer, or a reviewer subagent.
+- Before implementing any suggestion, most of all when it is unclear or looks wrong for this codebase.
+
+## Quick Reference
 
 ```
 WHEN receiving code review feedback:
@@ -23,19 +28,6 @@ WHEN receiving code review feedback:
 5. RESPOND: Technical acknowledgment or reasoned pushback
 6. IMPLEMENT: One item at a time, test each
 ```
-
-## Forbidden responses
-
-**Never:**
-- "You're absolutely right!" / "Great point!" / "Excellent feedback!" (performative)
-- "Thanks for catching that!" / "Thanks for [anything]" — any gratitude expression. Actions speak; the code shows you heard the feedback. About to write "Thanks"? Delete it and state the fix.
-- "Let me implement that now" (before verification)
-
-**Instead:**
-- Restate the technical requirement
-- Ask clarifying questions
-- Push back with technical reasoning if wrong
-- Just start working (actions > words)
 
 ## Handling Unclear Feedback
 
@@ -61,17 +53,12 @@ You understand 1,2,3,6. Unclear on 4,5.
 ### From your human partner
 - **Trusted** - implement after understanding
 - **Still ask** if scope unclear
-- **No performative agreement**
 - **Skip to action** or technical acknowledgment
 
-### From External Reviewers
+### From external reviewers
 ```
 BEFORE implementing:
-  1. Check: Technically correct for THIS codebase?
-  2. Check: Breaks existing functionality?
-  3. Check: Reason for current implementation?
-  4. Check: Works on all platforms/versions?
-  5. Check: Does reviewer understand full context?
+  Check the item against "When To Push Back" below — be skeptical, but check carefully
 
 IF suggestion seems wrong:
   Push back with technical reasoning
@@ -83,8 +70,6 @@ IF conflicts with your human partner's prior decisions:
   Stop and discuss with your human partner first
 ```
 
-**your human partner's rule:** "External feedback - be skeptical, but check carefully"
-
 ## YAGNI Check for "Professional" Features
 
 ```
@@ -95,7 +80,12 @@ IF reviewer suggests "implementing properly":
   IF used: Then implement properly
 ```
 
-**your human partner's rule:** "You and reviewer both report to me. If we don't need this feature, don't add it."
+You and the reviewer both serve your human partner: a feature nobody needs does not get added.
+
+```
+Reviewer: "Implement proper metrics tracking with database, date filters, CSV export"
+✅ "Grepped codebase - nothing calls this endpoint. Remove it (YAGNI)? Or is there usage I'm missing?"
+```
 
 ## Implementation Order
 
@@ -106,18 +96,18 @@ FOR multi-item feedback:
      - Blocking issues (breaks, security)
      - Simple fixes (typos, imports)
      - Complex fixes (refactoring, logic)
-  3. Test each fix individually
-  4. Verify no regressions
+  3. Verify no regressions
 ```
 
 ## When To Push Back
 
-Push back when:
-- Suggestion breaks existing functionality
-- Reviewer lacks full context
+Push back when the suggestion:
+- Is technically incorrect for THIS codebase or stack
+- Breaks existing functionality
+- Ignores a reason for the current implementation (legacy/compatibility)
+- Doesn't work on all platforms/versions you support
+- Comes from a reviewer who lacks the full context
 - Violates YAGNI (unused feature)
-- Technically incorrect for this stack
-- Legacy/compatibility reasons exist
 - Conflicts with your human partner's architectural decisions
 
 **How to push back:**
@@ -126,15 +116,7 @@ Push back when:
 - Reference working tests/code
 - Involve your human partner if architectural
 
-**If you're uncomfortable pushing back out loud:** Name that tension, then tell your partner about the issue you've seen. They'll appreciate your honesty.
-
-## Acknowledging correct feedback
-
-```
-✅ "Fixed. [Brief description of what changed]"
-✅ "Good catch - [specific issue]. Fixed in [location]."
-✅ [Just fix it and show in the code]
-```
+**If you're uncomfortable pushing back out loud:** name that tension, then tell your partner about the issue you've seen.
 
 ## Gracefully Correcting Your Pushback
 
@@ -150,24 +132,23 @@ If you pushed back and were wrong:
 
 State the correction factually and move on.
 
-## Real Examples
+## Common Mistakes
 
-**Performative Agreement (Bad):**
+**Forbidden responses — never:**
+- "You're absolutely right!" / "Great point!" / "Excellent feedback!" / "Good catch!" (performative)
+- "Thanks for catching that!" / "Thanks for [anything]" — any gratitude expression. Actions speak; the code shows you heard the feedback. About to write "Thanks"? Delete it and state the fix.
+- "Let me implement that now" (before verification)
+
+**Instead:**
+- Restate the technical requirement
+- Ask clarifying questions
+- Push back with technical reasoning if wrong
+- Acknowledge correct feedback with the fix: "Fixed. [Brief description of what changed]" — or just fix it and let the code show it
+
 ```
 Reviewer: "Remove legacy code"
 ❌ "You're absolutely right! Let me remove that..."
-```
-
-**Technical Verification (Good):**
-```
-Reviewer: "Remove legacy code"
 ✅ "Checking... build target is 10.15+, this API needs 13+. Need legacy for backward compat. Current impl has wrong bundle ID - fix it or drop pre-13 support?"
-```
-
-**YAGNI (Good):**
-```
-Reviewer: "Implement proper metrics tracking with database, date filters, CSV export"
-✅ "Grepped codebase - nothing calls this endpoint. Remove it (YAGNI)? Or is there usage I'm missing?"
 ```
 
 ## GitHub thread replies (GitHub only)

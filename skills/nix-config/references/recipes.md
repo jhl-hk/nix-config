@@ -1,6 +1,6 @@
 # Recipes — Adding Modules, Services, Packages, Hosts
 
-Templates for every "add X" task. Pick the row in the decision tree, then follow that recipe. Mistakes that apply to all recipes are in SKILL.md § Common Mistakes.
+Mistakes that apply to every recipe: CLAUDE.md and SKILL.md § Common Mistakes.
 
 ## Contents
 
@@ -53,6 +53,8 @@ Match the intent to exactly one row before touching files.
 | Agent skill | `skills/<name>/SKILL.md` | 11 |
 
 Optional file vs `modules/` module: an optional file is plain config a machine either wants or doesn't. Use a module once two machines need the feature with different inputs.
+
+`modules/hosts/nixos/` means NixOS, not Linux: standalone hosts never import it, so something for every Linux machine goes in `home/jhl/common/core/linux.nix`. `modules/common/` holds only `host-spec.nix`, the schema evaluated by every system scope and by `evalHostSpec`; home-manager does not import it. A system option module may be `modules/hosts/<platform>/<name>/default.nix` or a single `<name>.nix`; `scanPaths` picks up either. Modules define options; enabling stays per host or per user.
 
 ## Recipe 1: drop-in optional system feature
 
@@ -359,46 +361,15 @@ Activate:
 
 ## Recipe 8: system-scope secret
 
-Macs and NixOS. `hosts/common/core/sops.nix` imports the sops-nix module and sets `sops.age.keyFile`; it declares no secrets. Declare the secret in its consumer:
+Macs and NixOS. Declare `sops.secrets."<area>/<name>"` in the consuming module (`hosts/common/core/sops.nix` imports sops-nix and sets `sops.age.keyFile`; it declares no secrets), use `sops.templates` when the secret is one substring of a larger file, and add an evaluation-time `lib.hasInfix` guard naming the key. Code, the symlink and volatility gotchas, failure visibility and the hand-off (YAML key path and file, then stop): `nix-secrets.md` § Consuming secrets: system scope, § Failure visibility and § What agents must not do.
 
-```nix
-{ config, inputs, ... }:
-{
-  sops.secrets."npm/jianyuelab_token" = {
-    sopsFile = "${inputs.nix-secrets}/secrets/shared.yaml";
-    owner = config.hostSpec.username;
-    mode  = "0400";
-  };
-}
-```
+Worked examples:
 
-For a secret embedded in a larger file, use a template:
+- `hosts/common/core/darwin/forgejo.nix`: `tea/token`, `pathExists` plus nested-key guard, an assertion message that shows the `just sops-edit shared` YAML.
+- `hosts/common/core/darwin/ssh-shared-key.nix`: `ssh/id_shared` with `path` set to `~/.ssh/id_shared`.
+- `hosts/common/optional/common/llm.nix`: two keys, each guarded by its parent section.
 
-```nix
-sops.templates."npmrc" = {
-  content = ''
-    @jianyuelab:registry=https://npm.pkg.github.com
-    //npm.pkg.github.com/:_authToken=${config.sops.placeholder."npm/jianyuelab_token"}
-  '';
-  owner = config.hostSpec.username;
-  mode  = "0600";
-  path  = "${config.hostSpec.home}/.npmrc";
-};
-```
-
-Worked example: `hosts/common/optional/darwin/npmrc.nix`.
-
-Add an evaluation-time guard naming the key (pattern: `modules/hosts/darwin/omni/default.nix`, `hosts/common/optional/common/llm.nix`):
-
-```nix
-assertions = [{
-  assertion = builtins.pathExists sopsFile
-    && lib.hasInfix "npm:\n    jianyuelab_token:" (builtins.readFile sopsFile);
-  message = "shared.yaml has no npm.jianyuelab_token; run just sops-edit shared";
-}];
-```
-
-Hand-off: tell the user the YAML key path and file, then stop. Secret handling rules, consumption patterns and failure visibility: `nix-secrets.md`.
+No imported module uses `sops.templates`. `hosts/common/optional/darwin/npmrc.nix` is the template example (`~/.npmrc` with the token placeholder, guarded like `forgejo.nix`). Its key `npm/jianyuelab_token` does not exist yet and no host imports it; importing it fails evaluation until the key is added.
 
 ## Recipe 8b: home-manager secret (standalone lane)
 
@@ -417,9 +388,9 @@ sops.secrets = {
 <consumer>.keyFile = lib.mkForce (config.sops.secrets."<area>/<name>".path);
 ```
 
-- Decrypts as the user with `~/.config/sops/age/keys.txt` into `$XDG_RUNTIME_DIR`; links under `~/.config/sops-nix/secrets/`.
+- Decryption target, links and the `sops-nix.service` user service: `nix-secrets.md` § Consuming secrets: home-manager scope.
 - Every consumer option with a `/run/secrets` default needs a `mkForce` repoint here (`llm.apiKeyFile`, `llm.providers.JianyueLab.apiKeyFile`, `cloudflare.apiTokenFile`, `wakatime.apiKeyFile` today).
-- systemd user services that read a secret order after `sops-nix.service` (see `forgejo-login` in the same file).
+- systemd user services that read a secret order after `sops-nix.service`; example: `forgejo-login` in the same file.
 - Never import it on a Mac or NixOS host; the system lane already provides the secrets.
 
 ## Recipe 9: add a user

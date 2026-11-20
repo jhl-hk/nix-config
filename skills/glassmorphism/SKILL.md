@@ -26,19 +26,7 @@ Glass is four properties together — frost, translucency, a lit edge, layered d
 3. **Edge** — hairline border *brighter* than the fill, ideally lit top-left → dim bottom-right.
 4. **Depth** — layered `box-shadow`: ambient drop plus `inset` top highlight and bottom shade.
 
-```css
-.glass {
-  background: rgba(255, 255, 255, 0.12);
-  backdrop-filter: blur(16px) saturate(160%);
-  -webkit-backdrop-filter: blur(16px) saturate(160%); /* Safari needs the prefix */
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  box-shadow:
-    0 8px 32px rgba(0, 0, 0, 0.25),          /* float */
-    inset 0 1px 0 rgba(255, 255, 255, 0.35), /* top highlight */
-    inset 0 -1px 0 rgba(0, 0, 0, 0.12);      /* bottom shade */
-}
-```
+Full base-card CSS: `references/glass-recipes.md` §1.
 
 | Tier | Blur | Alpha |
 |---|---|---|
@@ -70,23 +58,25 @@ Draw a masked 1px ring with a lit corner via `::before`; dither gradient banding
 
 ### Motion: animate the glass, not the geometry
 
-Animate frost deepening, highlight brightening, the panel lifting:
+Animate frost deepening, highlight brightening, the panel lifting. Hover is the tens-per-day tier: keep it ≤200ms and gate it to real pointers (curve tokens: animate).
 
 ```css
 .glass {
-  transition: backdrop-filter .4s ease, background .4s ease,
-              box-shadow .4s ease, transform .4s cubic-bezier(.16,1,.3,1);
+  transition: backdrop-filter .2s ease, background .2s ease,
+              box-shadow .2s ease, transform .2s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
 }
-.glass:hover {
-  backdrop-filter: blur(24px) saturate(180%);
-  background: rgba(255,255,255,.18);
-  transform: translateY(-4px);
-  box-shadow: 0 16px 48px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.5);
+@media (hover: hover) and (pointer: fine) {
+  .glass:hover {
+    backdrop-filter: blur(24px) saturate(180%);
+    background: rgba(255,255,255,.18);
+    transform: translateY(-4px);
+    box-shadow: 0 16px 48px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.5);
+  }
 }
 ```
 
-- **Entrance** (frost resolving from clear): a `[data-enter]` transition with `@starting-style { backdrop-filter: blur(0); opacity: 0; transform: translateY(16px) }`.
-- **Specular sweep**: skewed white gradient across the surface on hover or as a slow ambient loop.
+- **Entrance** (frost resolving from clear): a `[data-enter]` transition on `var(--ease-out)` with `@starting-style { backdrop-filter: blur(0); opacity: 0; transform: translateY(16px) }`.
+- **Specular sweep**: skewed white gradient across the surface on hover or as a slow ambient loop; move it with `transform`, never `left`.
 - Animating blur *radius* re-blurs the backdrop every frame. If hover janks, animate `transform`/`box-shadow`/`background` and keep the blur delta small or snap it.
 
 ### Liquid glass (SVG refraction)
@@ -114,67 +104,42 @@ Heavy: use on **one** hero element, not a grid.
 ### Performance
 
 - Each glass element re-samples and blurs everything behind it; a dozen on screen tanks scroll FPS. Limit the count.
-- Promote heavy glass (`transform: translateZ(0)` or `will-change: transform`); remove `will-change` after animating.
+- Promote heavy glass (`transform: translateZ(0)` or `will-change: transform`); remove `will-change` after animating (left on, it wastes memory).
 - Don't stack `backdrop-filter` elements: nested blur re-blurs the blur (quadratic cost).
-- Radii >40px over large areas are worst case; cap radius and panel size.
+- Blur radii >40px over large areas are the worst case; cap the blur radius and panel size.
 
 ### Accessibility
 
-```css
-@media (prefers-reduced-transparency: reduce) {
-  .glass { background: #1a1a2e; backdrop-filter: none; -webkit-backdrop-filter: none; }
-  .glass::after { display: none; }            /* drop grain */
-}
-@media (prefers-reduced-motion: reduce) {
-  .glass { transition: none; }
-  .liquid { filter: none; }                   /* stop the refraction churn */
-}
-@supports not (backdrop-filter: blur(1px)) {
-  .glass { background: rgba(30,30,50,.85); }  /* opaque-enough fallback */
-}
-```
+- `prefers-reduced-transparency: reduce` → solid opaque panel, no `backdrop-filter` (prefixed too), grain dropped.
+- `prefers-reduced-motion: reduce` → no glass transitions; sweep and refraction stopped (`.liquid { filter: none }`).
+- `@supports not (backdrop-filter: blur(1px))` → opaque-enough fallback background.
+- Contrast over photos can drop below WCAG: put a semi-opaque scrim or darkening gradient *under* the text, optionally `text-shadow: 0 1px 2px rgba(0,0,0,.4)`, and verify ≥ 4.5:1 body / ≥ 3:1 large against the *brightest* backdrop region.
 
-Contrast over photos can drop below WCAG: put a semi-opaque scrim or darkening gradient *under* the text, optionally `text-shadow: 0 1px 2px rgba(0,0,0,.4)`, and verify ≥ 4.5:1 body / ≥ 3:1 large against the *brightest* backdrop region.
+CSS for all three fallbacks: `references/glass-recipes.md` §7.
 
 ### Standalone deliverable
 
-One HTML file: a busy backdrop (photo or gradient — without it the demo lies), glass markup, CSS (frost + edge + grain + shadows), any inline SVG filter. `?state=hover` forces a state; `?t=N` freezes CSS animations and the refraction:
+One HTML file: a busy backdrop (photo or gradient — without it the demo lies), glass markup, CSS (frost + edge + grain + shadows), any inline SVG filter. Glass verifies by *state* (rest / hover / enter) and *time* (sweep and refraction loop). Freeze frames with the harness in animate (`references/standalone-harness.md`): `?state=hover` with CSS keyed off `:root[data-state="hover"] .glass { /* hover values */ }`, and `?t=N` freezing the CSS sweep and the SVG refraction (SMIL clock) together. Screenshot `?state=hover` and a loop frame such as `?t=2`.
 
-```html
-<script>
-  const p = new URLSearchParams(location.search);
-  const state = p.get("state");
-  if (state) document.documentElement.dataset.state = state;   // CSS keys off :root[data-state="hover"]
-  const t = p.get("t");
-  if (t !== null) {
-    document.getAnimations().forEach(a => { a.currentTime = parseFloat(t)*1000; a.pause(); }); // freeze CSS sweep
-    const svg = document.querySelector("svg");
-    svg?.pauseAnimations?.(); svg?.setCurrentTime?.(parseFloat(t));                            // freeze refraction
-  }
-  window.__ready = true;
-</script>
-```
+For the fallbacks, emulate the media feature (reduced transparency, reduced motion) or use the harness's `?reduce=1` class toggle that mirrors the media query, and screenshot.
 
-```bash
-bunx playwright screenshot --wait-for-timeout=500 "file://$PWD/glass.html?state=hover" hover.png
-bunx playwright screenshot --wait-for-timeout=500 "file://$PWD/glass.html?t=2"          loop.png
-```
+Confirm:
 
-For the fallback, emulate the media feature or add a `?reduced=1` query toggling a class that mirrors the media query, and screenshot.
-
-Confirm: no console errors; blur and bright edge visible, shadow floats it, no banding; text ≥ 4.5:1 over the brightest backdrop; freezes deterministic; reduced transparency → solid panel, reduced motion → refraction/sweep stopped, `@supports` fallback present; glass count limited, blur not animated on a janky path, refraction on one element.
+- No console errors.
+- Blur and bright edge visible, shadow floats it, no banding.
+- Text ≥ 4.5:1 over the brightest backdrop.
+- Freezes deterministic.
+- Reduced transparency → solid panel; reduced motion → refraction/sweep stopped; `@supports` fallback present.
+- Glass count limited, blur not animated on a janky path, refraction on one element.
 
 ### References
 
-- `references/glass-recipes.md` — read for full recipes: base card tiers, masked specular ring, grain, hover/enter/scroll motion, specular sweep, liquid-glass filter tuning, performance rules, fallbacks, contrast defenses, freeze harness.
+- `references/glass-recipes.md` — read for full recipes: base card tiers, masked specular ring, grain, hover/enter/scroll motion, specular sweep, liquid-glass filter tuning, fallback CSS (reduced transparency, reduced motion, `@supports`).
 
 ## Common Mistakes
 
 | Mistake | Fix |
 |---|---|
 | Flat box | Backdrop is a plain color; add image/gradient |
-| No blur in Safari | Add `-webkit-backdrop-filter` |
 | Refraction molten | `scale` ≤ 30 |
-| Hover jank | Don't animate blur radius; animate transform/shadow/background |
-| Stacked glass panels | Never nest `backdrop-filter` |
 | Unreadable text over photo | Scrim under text, verify contrast |

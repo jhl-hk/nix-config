@@ -29,7 +29,7 @@ configs, media queries. Never "use a nicer easing":
 ​```css
 /* target */
 .dropdown {
-  transition: transform 200ms var(--ease-out), opacity 200ms var(--ease-out);
+  transition: transform 200ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), opacity 200ms var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
   transform-origin: var(--transform-origin);
 }
 ​```
@@ -68,6 +68,6 @@ imitate (token names, file placement, prop patterns):
 ## Notes for the plan author
 
 - One plan per finding. If two findings share every file and the same fix pattern (e.g. the same easing token swap across components), they may merge into one plan.
-- Pull every value from [AUDIT.md](AUDIT.md) — never approximate from memory.
+- Pull curves, durations and spring configs from animate and every other value from [AUDIT.md](AUDIT.md) — never approximate from memory.
 - The feel check is not optional. Motion can be mechanically correct and still feel wrong; give the executor (or the human reviewing the executor's diff) concrete things to watch for, using AUDIT.md "Debugging feel" (slow motion, frame-by-frame, real device for gestures).
 - After writing plans, create or update `plans/README.md` with: a table of plans (number, title, severity, status), the recommended execution order, and any dependencies between plans.

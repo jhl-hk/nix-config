@@ -1,6 +1,6 @@
 ---
 name: writing-plans
-description: Use when you have a spec or requirements for a multi-step task, before touching code
+description: Use when you have a spec or requirements for a multi-step task, before touching code. Not for an unshaped idea; use brainstorming.
 ---
 
 # Writing Plans
@@ -19,7 +19,7 @@ A spec covering several independent subsystems should have been split during bra
 
 Before defining tasks, map which files are created or modified and what each is responsible for. This locks in the decomposition.
 
-- One clear responsibility per file, with well-defined interfaces. Small, focused files are easier to reason about and edit reliably.
+- One clear responsibility per file, with well-defined interfaces (why small, focused files: see brainstorming, "Design for isolation").
 - Files that change together live together. Split by responsibility, not by technical layer.
 - In existing codebases follow established patterns. Do not restructure large files unilaterally, but splitting a file you are modifying that has grown unwieldy is reasonable.
 
@@ -38,7 +38,7 @@ Every plan starts with:
 ```markdown
 # [Feature Name] Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use subagent-driven-development (recommended) or executing-plans to implement this plan task by task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use subagent-driven-development (default; executing-plans only when inline execution is requested) to implement this plan task by task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** [One sentence describing what this builds]
 
@@ -65,9 +65,9 @@ include this section.]
 ### Task N: [Component Name]
 
 **Files:**
-- Create: `exact/path/to/file.py`
-- Modify: `exact/path/to/existing.py:123-145`
-- Test: `tests/exact/path/to/test.py`
+- Create: `src/exact/path/to/file.ts`
+- Modify: `src/exact/path/to/existing.ts:123-145`
+- Test: `src/exact/path/to/file.test.ts`
 
 **Interfaces:**
 - Consumes: [what this task uses from earlier tasks — exact signatures]
@@ -77,33 +77,37 @@ include this section.]
 
 - [ ] **Step 1: Write the failing test**
 
-```python
-def test_specific_behavior():
-    result = function(input)
-    assert result == expected
+```ts
+import { expect, test } from "bun:test";
+import { fn } from "./file";
+
+test("specific behavior", () => {
+  expect(fn(input)).toBe(expected);
+});
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `pytest tests/path/test.py::test_name -v`
-Expected: FAIL with "function not defined"
+Run: `bun test src/exact/path/to/file.test.ts -t "specific behavior"`
+Expected: FAIL with "Export named 'fn' not found"
 
 - [ ] **Step 3: Write minimal implementation**
 
-```python
-def function(input):
-    return expected
+```ts
+export function fn(input: Input): Output {
+  return expected;
+}
 ```
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `pytest tests/path/test.py::test_name -v`
+Run: `bun test src/exact/path/to/file.test.ts -t "specific behavior"`
 Expected: PASS
 
 - [ ] **Step 5: Commit**
 
 ```bash
-git add tests/path/test.py src/path/file.py
+git add src/exact/path/to/file.test.ts src/exact/path/to/file.ts
 git commit -m "feat: add specific feature"
 ```
 ````
@@ -131,12 +135,6 @@ Fix inline; no second review pass.
 
 ## Execution handoff
 
-After saving, offer the choice:
+After saving, execute with subagent-driven-development by default: **REQUIRED SUB-SKILL:** Use subagent-driven-development (fresh subagent per task, a task review after each, a final whole-branch review).
 
-> "Plan complete and saved to `docs/plans/<filename>.md`. Two execution options:
-> **1. Subagent-driven (recommended)** — a fresh subagent per task, review between tasks, fast iteration.
-> **2. Inline execution** — execute tasks in this session with checkpoints.
-> Which approach?"
-
-- Subagent-driven → **REQUIRED SUB-SKILL:** Use subagent-driven-development (fresh subagent per task, two-stage review).
-- Inline → **REQUIRED SUB-SKILL:** Use executing-plans (batch execution with checkpoints).
+Use executing-plans (inline, in this session) only if the user asks for inline execution or the harness has no subagents.

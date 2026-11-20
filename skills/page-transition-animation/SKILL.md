@@ -1,6 +1,6 @@
 ---
 name: page-transition-animation
-description: Use when animating page or route transitions, adding a crossfade between pages, using the View Transitions API (startViewTransition, ::view-transition-old/new, view-transition-name, @view-transition), animating route changes in Next.js App Router (template.tsx, next-view-transitions), or when AnimatePresence exit doesn't fire on navigation / the old page disappears instantly / the exiting page flashes the new route's content. Not for swapping views inside one component; use choreograph or micro-interaction. Not for GSAP Flip layout moves; use gsap-web.
+description: Use when animating page or route transitions, adding a crossfade between pages, using the View Transitions API (startViewTransition, ::view-transition-old/new, view-transition-name, @view-transition), animating route changes in Next.js App Router (template.tsx, next-view-transitions) or Astro (ClientRouter, astro:transitions, transition:name, transition:animate), or when AnimatePresence exit doesn't fire on navigation / the old page disappears instantly / the exiting page flashes the new route's content. Not for swapping views inside one component; use choreograph or micro-interaction. Not for GSAP Flip layout moves; use gsap-web.
 version: 0.1.0
 ---
 
@@ -33,8 +33,6 @@ In the Next.js App Router, navigation unmounts the old route and mounts the new 
 | Before | After |
 |---|---|
 | `AnimatePresence` inside the page | In `app/template.tsx` (remounts per navigation; `layout.tsx` persists and never remounts) |
-| No key | `key={pathname}` from `usePathname()` |
-| Exiting page shows new route content | Wrap children in `FrozenRouter` |
 | `document.startViewTransition(...)` unguarded | `if (document.startViewTransition)` fallback |
 
 ## Quick Reference
@@ -52,12 +50,12 @@ In the Next.js App Router, navigation unmounts the old route and mounts the new 
 
 ## Implementation
 
-### A: template.tsx + keyed AnimatePresence + FrozenRouter
+### A: template.tsx + keyed AnimatePresence + FrozenRouter (Next.js App Router only)
 
 ```tsx
 // app/template.tsx
 'use client';
-import { AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'motion/react';
 import { usePathname } from 'next/navigation';
 import { FrozenRouter } from './frozen-router';
 import { PageTransition } from './page-transition';
@@ -77,15 +75,15 @@ export default function Template({ children }: { children: React.ReactNode }) {
 ```tsx
 // app/page-transition.tsx
 'use client';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 
 export function PageTransition({ children }: { children: React.ReactNode }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 12 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -12 }}
-      transition={{ duration: 0.3, ease: [0.22, 1, 0.36, 1] }}
+      exit={{ opacity: 0, y: -12, transition: { duration: 0.24, ease: [0.23, 1, 0.32, 1] } }}
+      transition={{ duration: 0.3, ease: [0.23, 1, 0.32, 1] }}
     >
       {children}
     </motion.div>
@@ -119,9 +117,11 @@ export function FrozenRouter({ children }: { children: React.ReactNode }) {
 - `initial={false}` skips the enter animation on first load (optional).
 - `LayoutRouterContext` is a Next.js internal; its import path can change between versions — the first thing to fix after an upgrade.
 
-### B: native View Transitions API
+### B: native View Transitions API (any framework)
 
 The browser captures before/after snapshots; no per-element exit components.
+
+**Astro** (the default stack) needs no router code. Cross-document, zero JS: the `@view-transition` rule below. SPA-style: add `<ClientRouter />` (`import { ClientRouter } from "astro:transitions"`) to the shared `<head>`; pair elements with `transition:name="cover-1"`, pick a per-element animation with `transition:animate="fade"` (default) / `"slide"` / `"initial"` / `"none"`, and keep islands across pages with `transition:persist`. `<ClientRouter />` supplies a fallback for browsers without the API, and under `prefers-reduced-motion` it disables every view-transition animation (a plain swap).
 
 ```css
 /* globals.css */
@@ -142,7 +142,7 @@ if (document.startViewTransition) {
 }
 ```
 
-`next-view-transitions` wires this into App Router client navigation:
+Next.js only: `next-view-transitions` wires this into App Router client navigation:
 
 ```tsx
 // app/layout.tsx
@@ -162,7 +162,7 @@ import { Link } from 'next-view-transitions';
 <Link href="/about">About</Link>;
 ```
 
-Browser support is uneven; always keep the guard.
+Same-document view transitions (`startViewTransition`) are Baseline since October 2025 (Firefox 144); cross-document ones (`@view-transition`) are not Baseline (Chromium 126+, Safari 18.2+). Keep the guard for older browsers.
 
 ### Debug checklist (exit still won't fire)
 
@@ -176,25 +176,9 @@ Browser support is uneven; always keep the guard.
 
 ### Standalone prototype
 
-To prove the transition shape (curve, direction, crossfade) before wiring the router, ship one HTML file: two view stubs and a toggle, animated with `motion`/React from CDN in an inline module or `document.startViewTransition` + `::view-transition-*` CSS. Don't stand up Next to eyeball a fade.
+To prove the transition shape (curve, direction, crossfade) before wiring the router, ship one HTML file: two view stubs and a toggle, animated with `motion`/React from CDN in an inline module or `document.startViewTransition` + `::view-transition-*` CSS. Don't stand up Next to eyeball a fade. Freeze frames with the harness in animate (`references/standalone-harness.md`); pin a phase with `?view=b` (destination) or `?phase=exit` (outgoing tree mid-animation). View Transitions snapshots are transient: screenshot the end state.
 
-Pin a phase with `?view=b` (destination) or `?phase=exit` (outgoing tree mid-animation):
-
-```html
-<script>
-  const p = new URLSearchParams(location.search);
-  document.documentElement.dataset.view = p.get("view") || "a";   // CSS/React keys off this
-  // Framer Motion: set the controlled key/route from ?view; for mode="wait" the resolved end is the new page
-  // View Transitions: screenshot the END state (snapshots are transient); or pause via emulate slow animations
-  window.__ready = true;
-</script>
-```
-
-```bash
-bunx playwright screenshot --wait-for-timeout=500 "file://$PWD/transition.html?view=b" dest.png
-```
-
-Screenshot `?view=a`, `?phase=exit`, `?view=b` and confirm: no console errors, `startViewTransition` guarded; exit actually runs, direction matches the brief; no content flash, double mount or FOUC; reduced motion drops slide to a short crossfade; entrances ease-out, exits ease-in, ~0.2–0.4s.
+Screenshot `?view=a`, `?phase=exit`, `?view=b` and confirm: no console errors, `startViewTransition` guarded; exit actually runs, direction matches the brief; no content flash, double mount or FOUC; reduced motion drops slide to a short crossfade; entrances and exits ease-out, exits ~20% faster (animate), ~0.2–0.4s.
 
 ### References
 
@@ -204,9 +188,4 @@ Screenshot `?view=a`, `?phase=exit`, `?view=b` and confirm: no console errors, `
 
 | Mistake | Fix |
 |---|---|
-| Per-route animation in `layout.tsx` | `template.tsx` |
-| No FrozenRouter | Exiting page flashes new content or skips exit |
-| No `key={pathname}` | Exit never triggers |
 | Slow exits under `mode="wait"` | Navigation feels laggy; keep ~0.2–0.4s |
-| Unguarded `startViewTransition` | Feature-detect and fall back |
-| Missing `'use client'` | Add to every transition file |

@@ -1,6 +1,6 @@
 ---
 name: accessible-animation
-description: Use when respecting prefers-reduced-motion, making animations accessible, fixing vestibular or motion-sickness reports, writing a useReducedMotion hook, gating GSAP (gsap.matchMedia), Framer Motion (MotionConfig reducedMotion), Lenis smooth scroll, CSS keyframes or canvas/WebGL for reduced motion, or meeting WCAG 2.3.3 / C39 / 2.2.2 for animation. Not for reduced-transparency glass fallbacks; use glassmorphism. Not for auditing every animation in a codebase; use improve-animations.
+description: Use when respecting prefers-reduced-motion, making animations accessible, fixing vestibular or motion-sickness reports, writing a useReducedMotion hook, gating GSAP (gsap.matchMedia), Framer Motion (MotionConfig reducedMotion), Lenis smooth scroll, CSS keyframes or canvas/WebGL for reduced motion, or meeting WCAG 2.3.3 / C39 / 2.2.2 for animation. Not for reduced-transparency glass fallbacks; use glassmorphism. Not for auditing every animation in a codebase; use improve-animations. Not for choosing easing or duration; use animate.
 version: 0.1.0
 ---
 
@@ -20,28 +20,24 @@ The OS setting: macOS Settings > Accessibility > Display > Reduce motion; Window
 
 ## Core Pattern
 
-Sort every animation into a tier:
+Sort every animation into a tier: **1 — Remove** (vestibular triggers), **2 — Soften**, **3 — Keep**.
 
-| Tier | Motion | Reduced behavior |
-|---|---|---|
-| **1 — Remove** (vestibular triggers) | Parallax; large-area slides/translates; scale/zoom of large elements; 3D rotation and spin; auto-playing carousels and marquees; smooth-scroll hijacking (Lenis/Locomotive); scroll-jacked pinned scenes; motion paths; anything moving much of the screen or implying depth/self-motion | Remove |
-| **2 — Soften** | Small slides, pop-ins | Short opacity fade ≤200ms; strip displacement, keep the fact of a transition (600ms slide-in → 150ms cross-fade) |
-| **3 — Keep** | Opacity fades, color/background, focus-ring transitions, loading indicators, motion essential to meaning | Keep (shorten if long) |
-
-## Quick Reference
-
-| Motion type | Tier | Reduced behavior |
+| Motion | Tier | Reduced behavior |
 |---|---|---|
 | Parallax / depth | 1 | Remove (`transform: none`) |
-| Large slide / translate | 1 | Remove or replace with fade |
-| Scale / zoom (large) | 1 | Remove |
-| Spin / 3D rotate | 1 | Remove (`animation: none`) |
-| Auto carousel / marquee | 1 | Stop + provide pause control (2.2.2) |
-| Smooth-scroll (Lenis) | 1 | Don't instantiate |
-| Small slide / pop-in | 2 | Cross-fade ≤200ms |
+| Large-area slide / translate | 1 | Remove or replace with fade |
+| Scale / zoom of large elements | 1 | Remove |
+| Spin / 3D rotation | 1 | Remove (`animation: none`) |
+| Auto-playing carousel / marquee | 1 | Stop + provide pause control (2.2.2) |
+| Smooth-scroll hijacking (Lenis/Locomotive) | 1 | Don't instantiate |
+| Scroll-jacked pinned scenes, motion paths, anything moving much of the screen or implying depth/self-motion | 1 | Remove |
+| Small slide / pop-in | 2 | Short opacity fade ≤200ms: strip displacement, keep the fact of a transition (600ms slide-in → 150ms cross-fade) |
 | Opacity fade | 3 | Keep (shorten if long) |
-| Color / focus-ring transition | 3 | Keep |
-| Loading spinner | 3 | Keep (essential feedback) |
+| Color / background / focus-ring transition | 3 | Keep |
+| Loading indicator | 3 | Keep (essential feedback) |
+| Motion essential to meaning | 3 | Keep |
+
+## Quick Reference
 
 WCAG:
 
@@ -134,7 +130,8 @@ mm.add({
   }
 });
 
-// Lenis — do not instantiate when reduced.
+// Lenis — do not instantiate when reduced. With GSAP/ScrollTrigger on the page,
+// drive Lenis from gsap.ticker as in gsap-web instead of this rAF loop.
 import Lenis from 'lenis';
 let lenis = null;
 if (!prefersReducedMotion()) {
@@ -171,7 +168,7 @@ export function useReducedMotion() {
 
 ```jsx
 // Framer Motion has its own useReducedMotion(); the hook above also works.
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 function Card() {
   const reduced = useReducedMotion();
   return (
@@ -188,38 +185,19 @@ SSR: initialize to `false` (motion) and re-sync in `useEffect`; the OS value is 
 
 ### Standalone demo
 
-One HTML file with full motion AND tiered overrides. Screenshot **both** paths. `?reduce=1` forces the JS path; emulate the preference for the CSS layer:
-
-```html
-<script>
-  const q = new URLSearchParams(location.search);
-  const reduce = q.get("reduce") === "1"
-    || window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-  // build motion conditionally on `reduce` (Tier-1 removed, Tier-2 softened, Tier-3 kept)
-  const t = q.get("t");
-  if (t !== null) { tl.pause(); tl.seek(parseFloat(t)); }      // GSAP; CSS: el.style.animationDelay=(-t)+"s"; playState="paused"
-  window.__ready = true;
-</script>
-```
-
-```bash
-bunx playwright screenshot --wait-for-timeout=500 "file://$PWD/demo.html?t=0.6" normal.png
-bunx playwright screenshot --reduced-motion=reduce --wait-for-timeout=500 "file://$PWD/demo.html?t=0.6&reduce=1" reduced.png
-```
+One HTML file with full motion AND tiered overrides; build motion conditionally on `reduce` (Tier 1 removed, Tier 2 softened, Tier 3 kept). Freeze frames with the harness in animate (`references/standalone-harness.md`). Screenshot **both** paths at the same mid-animation `?t=`: `?reduce=1` forces the JS path; the harness's `emulateMedia` script emulates the preference for the CSS layer.
 
 Confirm mid-animation in both: Tier 1 gone, Tier 2 a short fade, Tier 3 kept; no teleporting; >5s auto-motion has a pause control; reduced fades ≤200ms.
 
 ### References
 
-- `references/patterns.md` — read for GSAP `matchMedia` teardown, Framer Motion `MotionConfig`, Lenis start/stop on live toggle, an `animateWithMotionPreference` wrapper, marquee with pause control, a tier-classification audit checklist.
+- `references/patterns.md` — read for GSAP `matchMedia` teardown, Framer Motion `MotionConfig`, Lenis start/stop on live toggle, a `createMotionController` wrapper (picks full/reduced variants, live-reactive), marquee with pause control, a tier-classification audit checklist.
 
 ## Common Mistakes
 
 | Mistake | Fix |
 |---|---|
-| `animation-duration: 0s` | `0.01ms` so `animationend`/`transitionend` still fire |
 | Global `*` reset alone | Over-removes Tier 3; layer intentional overrides |
-| No `animation-iteration-count: 1` | Infinite spins keep running at near-zero duration |
 | JS/canvas/WebGL ungated | `matchMedia`, or the loop never stops |
 | No `change` listener | Page keeps stale state after OS toggle |
 | `matchMedia` during SSR render | Default to motion, sync in an effect |

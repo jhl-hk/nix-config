@@ -49,7 +49,7 @@ checker or a reviewer catches. A place page follows `sections.md` section 4 wher
 # Navigation
 
 All four share the bar in `system.md`: fixed, opaque, 72px (56 on a phone), a 1px hairline, the
-same at every depth; a panel opens after 150ms of hover with a fade and a 6px drop, a click on the
+same at every depth; a panel opens on hover (timing and drop: `motion.md`, Nav), a click on the
 word goes to its section, never `preventDefault`. system.js adds the phone sheet, Esc and
 `aria-expanded`; never write a second handler.
 
@@ -310,7 +310,7 @@ system.js; four different fragments or diagrams, real app icons where it names a
 service: a photograph of each feature fills the panel.
 
 **Motion.** Tech: the first card's fragment or diagram loops (`data-ui-loop`); the others hold still
-and play while the pointer rests on their card. Linked cards lift 2px.
+and play while the pointer rests on their card. Linked cards take the hover layer (`motion.md`).
 
 **Mistakes.** A card that moves on scroll; panels out of line; a fourth line of text; the kit's
 sample text; noun titles ("Peace of mind"); three boxes deep; a widget floating dead centre; a
@@ -1099,8 +1099,8 @@ two open groups beside `tall-small`: a class at the wheel tall, a glazed bowl sm
 its class), the place (`trio`: the workshop, a shelf of drying pots, a hand trimming a foot ring,
 tops on one line), booking (a photograph of the class room beside the form), footer.closing
 (`footer-visit`, the name capped at 12vw, the one credits line, `data-tz="Europe/Berlin"`).
-Fourteen photographs, all the studio's own; no effect; the hero's entrance and one dealt moment; every linked photograph zooms
-1.03 under the pointer.
+Fourteen photographs, all the studio's own; no effect; the hero's entrance and one dealt moment; every linked photograph
+takes the hover layer (`motion.md`).
 
 ## Service
 

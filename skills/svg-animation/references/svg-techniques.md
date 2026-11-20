@@ -17,11 +17,12 @@ const path = document.querySelector("#sig");
 const len = path.getTotalLength();           // returns user units of the path geometry
 path.style.strokeDasharray = len;
 path.style.strokeDashoffset = len;
-requestAnimationFrame(() => {                 // next frame so the transition has a start value
-  path.style.transition = "stroke-dashoffset 1.6s ease";
-  path.style.strokeDashoffset = "0";
-});
+path.getBoundingClientRect();                 // force a style flush so the transition has a start value
+path.style.transition = "stroke-dashoffset 1.6s var(--ease-in-out, cubic-bezier(0.77, 0, 0.175, 1))";
+path.style.strokeDashoffset = "0";
 ```
+
+A single `requestAnimationFrame` is not enough: its callback runs before that frame's style recalc, so the start value and the transition can coalesce into one style change and nothing animates. The forced flush is deterministic (a double `requestAnimationFrame` also works).
 
 - `getTotalLength()` measures the path's own coordinate system, ignoring CSS transforms/scaling — which is what you want for dasharray.
 - It only works on geometry elements (`path, line, polyline, polygon, circle, ellipse, rect`). For `<text>` draw-on you must convert text to paths first.
@@ -34,7 +35,7 @@ requestAnimationFrame(() => {                 // next frame so the transition ha
 
 ```svg
 <path d="..." pathLength="1" fill="none" stroke="#111"
-      style="stroke-dasharray:1; stroke-dashoffset:1; animation:draw 1.4s ease forwards"/>
+      style="stroke-dasharray:1; stroke-dashoffset:1; animation:draw 1.4s var(--ease-in-out, cubic-bezier(0.77, 0, 0.175, 1)) forwards"/>
 ```
 ```css
 @keyframes draw { to { stroke-dashoffset: 0; } }
@@ -97,8 +98,8 @@ Drive `lerp(t)` with any tween/`requestAnimationFrame`, or inside Framer Motion:
 ```jsx
 import { motion, useMotionValue, useTransform, animate } from "motion/react";
 const progress = useMotionValue(0);
-const d = useTransform(progress, [0, 1], [0, 1], { clamp: false });
-const path = useTransform(d, (v) => interpolate(A, B)(v));
+const lerp = interpolate(A, B);                 // build once; interpolate() is expensive per frame
+const path = useTransform(progress, lerp);       // unclamped, so spring overshoot still maps
 // animate(progress, 1, { duration: 0.6 }) then <motion.path d={path} />
 ```
 
@@ -116,7 +117,7 @@ When you control both shapes, give them identical structure and animate transfor
 </svg>
 ```
 ```css
-.menu line { stroke:#111; stroke-width:2; transition: transform .25s ease, opacity .2s ease;
+.menu line { stroke:#111; stroke-width:2; transition: transform .25s var(--ease-in-out, cubic-bezier(0.77, 0, 0.175, 1)), opacity .2s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
   transform-origin: center; transform-box: fill-box; }
 .menu.open .top { transform: translateY(6px) rotate(45deg); }
 .menu.open .mid { opacity: 0; }
@@ -165,9 +166,8 @@ Self-contained inside the SVG; use `rotate="auto"` and `<mpath href="#id"/>`. Be
 
 | Axis | SMIL | CSS | JS (GSAP/WAAPI) |
 |------|------|-----|-----------------|
-| Bundle cost | none (inline) | none | library (GSAP ~JS) |
+| Bundle cost | none (inline) | none | library download (GSAP core + plugin, or Flubber) |
 | Works in `<img>` SVG | yes | yes (internal) | no |
-| Reach (legacy IE/Edge) | no | partial | yes |
 | Scroll/scrub sync | hard | hard | easy |
 | Morph mismatched paths | no | no | yes (MorphSVG/Flubber) |
 | Timeline orchestration | limited | limited | full |
@@ -209,6 +209,3 @@ If multiple inlined SVGs share gradient/filter ids, id collisions make the LAST 
 ```
 
 For looping decorative SVG (spinners, ambient gradients), pause or hide them under reduced-motion; for functional icon toggles, keep the state change but drop the easing duration.
-
----
-Pick the right method per shape and SVG draws, morphs, and travels smoothly. Built by **[iart.ai](https://iart.ai/?utm_source=github&utm_medium=readme&utm_campaign=web-animation-skills&utm_content=skill_footer&utm_term=svg-animation)** — the AI motion agent for editable, on-brand motion graphics.

@@ -13,3 +13,6 @@
 - Native tool examples `EnterWorktree` / `WorktreeCreate` (Claude Code) removed.
 - Setup: `npm install` → `bun install`, Swift added; baseline tests reordered (`bun test` first, `swift test` added).
 - Rationalizations table removed; its points folded into Step 0, 1a, the safety check and Step 3.
+- Worktree on a new branch is the default without asking; work in place only on user request. Description covers bug fixes.
+- "Native tools first, git as fallback" stated once (core principle + 1a/1b headings); the Overview, Step 1 and 1a/1b restatements removed.
+- Description notes that subagent-driven-development and executing-plans require this skill at setup.

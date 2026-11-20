@@ -3,18 +3,12 @@
 # short-lived artifacts: task briefs, implementer reports, review packages,
 # and the progress ledger. Print the plan directory's absolute path.
 #
-# One directory per plan (.temp/sdd/<plan-basename>/) so a follow-up
-# plan in the same working tree can never read or overwrite another plan's
-# artifacts. A stale ledger misread as current progress makes controllers
-# skip whole task sequences — plan-scoping removes that failure structurally.
-#
-# The workspace lives in the project's scratch directory (.temp/), so
-# subagents can write their report files there. A self-ignoring .gitignore at
-# .temp/sdd/ keeps every plan's workspace out of `git status` and out of
-# accidental commits even where .temp/ is not ignored yet.
-#
-# Single source of truth for the workspace location, so task-brief and
-# review-package cannot drift to different directories.
+# One directory per plan (.temp/sdd/<plan-basename>/), so no plan reads
+# another plan's stale ledger as its own progress. It sits in the project's
+# scratch directory so subagents can write their reports there; a
+# self-ignoring .gitignore at .temp/sdd/ keeps it out of `git status` even
+# where .temp/ is not ignored. task-brief and review-package resolve the
+# location here.
 #
 # Usage: sdd-workspace PLAN_FILE
 set -euo pipefail

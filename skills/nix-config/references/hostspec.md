@@ -117,20 +117,7 @@ Always `or { }` when indexing the secrets-sourced trees.
 
 ### In a home-manager module
 
-`hostSpec` is a function argument here, not `config`:
-
-```nix
-{ config, hostSpec, ... }:
-{
-  programs.git.settings.user = {
-    name  = hostSpec.userFullName;
-    email = hostSpec.email.user;
-    signingKey = "~/.ssh/${config.sshKeys.primary}.pub";
-  };
-}
-```
-
-Note the mix: `hostSpec` from the argument, `config.sshKeys` from the HM option declared in `modules/home/ssh-keys.nix`.
+`hostSpec` is a function argument here, not `config`. Example: `recipes.md` Recipe 5a (`programs.git`), which mixes `hostSpec` from the argument with `config.sshKeys` from the HM option declared in `modules/home/ssh-keys.nix`.
 
 ## When to add a new option
 

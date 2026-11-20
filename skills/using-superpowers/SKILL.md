@@ -3,15 +3,19 @@ name: using-superpowers
 description: Use at the start of a session or task to decide which skills to load, and whenever unsure whether a skill applies.
 ---
 
-If you were dispatched as a subagent for a specific task, skip this skill.
+# Using Skills
+
+## Overview
+
+Check for applicable skills before acting; load them and follow them. If you were dispatched as a subagent for a specific task, skip this skill.
 
 ## The rule
 
 Before any response or action — including clarifying questions, exploring the codebase, or checking files — load every skill that might apply. If it turns out not to fit, drop it.
 
-Before entering plan mode, load brainstorming if you have not already.
-
 Then say "Using [skill] to [purpose]" and follow the skill exactly. If it has a checklist, put each item on the todo list.
+
+In harnesses that have a plan mode (Claude Code, for example), load brainstorming before entering it if you have not already.
 
 ## Priority
 

@@ -132,6 +132,8 @@ LLMs respond to the same persuasion principles as humans. Understanding this psy
 | Collaborative | Unity + Commitment | Authority, Liking |
 | Reference | Clarity only | All persuasion |
 
+Pick by skill type and name the behavior you are changing first; don't combine all seven.
+
 ## Why This Works: The Psychology
 
 **Bright-line rules reduce rationalization:**
@@ -171,17 +173,5 @@ LLMs respond to the same persuasion principles as humans. Understanding this psy
 - Empirical foundation for influence research
 
 **Meincke, L., Shapiro, D., Duckworth, A. L., Mollick, E., Mollick, L., & Cialdini, R. (2025).** Call Me A Jerk: Persuading AI to Comply with Objectionable Requests. University of Pennsylvania.
-- Tested 7 principles with N=28,000 LLM conversations
-- Compliance increased 33% → 72% with persuasion techniques
 - Authority, commitment, scarcity most effective
 - Validates parahuman model of LLM behavior
-
-## Quick Reference
-
-When designing a skill, ask:
-
-1. **What type is it?** (Discipline vs. guidance vs. reference)
-2. **What behavior am I trying to change?**
-3. **Which principle(s) apply?** (Usually authority + commitment for discipline)
-4. **Am I combining too many?** (Don't use all seven)
-5. **Is this ethical?** (Serves user's genuine interests?)

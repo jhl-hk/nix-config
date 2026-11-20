@@ -5,7 +5,7 @@ description: Use when completing tasks, implementing major features, or before m
 
 # Requesting Code Review
 
-Dispatch a code reviewer subagent to catch issues before they cascade. The reviewer gets precisely crafted context — never your session's history. Reviewing the diff inline yourself burns the context you need to keep driving the work; with a subagent, the diff and the evaluation live in its context and only the findings come back.
+Dispatch a code reviewer subagent with crafted context (why: see subagent-driven-development). The diff and its evaluation stay in the reviewer's context; only the findings come back.
 
 **Core principle:** Review early, review often.
 
@@ -23,9 +23,9 @@ Dispatch a code reviewer subagent to catch issues before they cascade. The revie
 
 ## How to request
 
-**1. Get git SHAs:**
+**1. Get git SHAs.** BASE is the commit the reviewed work started from: the one you recorded before starting it, or else the branch's merge base. Never `HEAD~1`: it silently drops all but the last commit of multi-commit work.
 ```bash
-BASE_SHA=$(git rev-parse HEAD~1)  # or origin/main
+BASE_SHA=$(git merge-base origin/main HEAD)   # or the commit you recorded before starting
 HEAD_SHA=$(git rev-parse HEAD)
 ```
 
@@ -39,7 +39,7 @@ HEAD_SHA=$(git rev-parse HEAD)
 - Fix Critical issues immediately; never ignore them.
 - Fix Important issues before proceeding.
 - Note Minor issues for later.
-- Don't argue with valid technical feedback. If the reviewer is wrong, push back with technical reasoning, show code or tests that prove it works, or request clarification.
+- Evaluate and answer each finding per receiving-code-review (verify before implementing; push back with technical reasoning when the reviewer is wrong).
 
 Never skip review because "it's simple".
 
@@ -50,7 +50,7 @@ Never skip review because "it's simple".
 
 You: Let me request code review before proceeding.
 
-BASE_SHA=$(git log --oneline | grep "Task 1" | head -1 | awk '{print $1}')
+BASE_SHA=a7981ec   # recorded before starting Task 2
 HEAD_SHA=$(git rev-parse HEAD)
 
 [Dispatch code reviewer subagent]
@@ -64,7 +64,7 @@ HEAD_SHA=$(git rev-parse HEAD)
   Issues:
     Important: Missing progress indicators
     Minor: Magic number (100) for reporting interval
-  Assessment: Ready to proceed
+  Ready to merge? With fixes
 
 You: [Fix progress indicators]
 [Continue to Task 3]

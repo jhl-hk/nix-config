@@ -275,7 +275,7 @@ Regenerate the sidecar whenever you regenerate root `DESIGN.md`. If the user onl
       { "name": "ambient-low", "value": "0 4px 24px rgba(0,0,0,0.12)", "purpose": "Diffuse hover glow under accent elements." }
     ],
     "motion": [
-      { "name": "ease-standard", "value": "cubic-bezier(0.4, 0, 0.2, 1)", "purpose": "Default easing for state transitions." }
+      { "name": "ease-out", "value": "cubic-bezier(0.23, 1, 0.32, 1)", "purpose": "Default easing for state transitions." }
     ],
     "breakpoints": [
       { "name": "sm", "value": "640px" }

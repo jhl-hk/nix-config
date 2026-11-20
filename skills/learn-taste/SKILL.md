@@ -8,7 +8,13 @@ disable-model-invocation: true
 
 ## Overview
 
-Every design correction is taste the agent didn't have; unwritten, it repeats next session. Collect the corrections, generalize each to a rule with its reason, and write it into the project's agent instructions file (`AGENTS.md`) where every harness reads it. Never change component code; never add a rule the user didn't express.
+Every design correction is taste the agent didn't have; unwritten, it repeats next session. Collect the corrections, generalize each to a rule with its reason, and write it into the project's agent instructions file (`AGENTS.md`) where every harness reads it.
+
+## When to Use
+
+- The user explicitly asks to turn this session's (or named sessions') design corrections into lasting rules, or to prune existing design rules.
+
+Not for: making a one-off design fix (just make it), or generating a DESIGN.md from existing code or tokens (use impeccable `document`).
 
 ## Hard Rules
 
@@ -42,21 +48,21 @@ Skip what isn't taste: functional bugs, content specific to one screen ("the hea
 
 ### Phase 2: Filter
 
-Walk every correction through this tree:
+Walk every correction through this decision:
 
-```
-Would a fresh agent building a DIFFERENT component in this repo make the same mistake?
-├── No (a one-off: this campaign's color, this page's layout) → Skipped
-└── Yes
-    ├── Does an existing rule cover it? Check AGENTS.md (and any file it points to), DESIGN.md, project skills.
-    │   ├── Yes, and it says the same thing → The rule failed. Rewrite it stricter
-    │   │   (a number, a token, "never") instead of adding a duplicate.
-    │   ├── Yes, and it contradicts → Conflict. Show both; the user picks.
-    │   └── No → continue
-    ├── Can a violation be found by matching code? → Check candidate.
-    │   Keep a one-line rule too, so the why is recorded somewhere.
-    └── Did the user say it applies everywhere, not just here? → Ask where their global rules live.
-        Otherwise it's a project rule.
+```mermaid
+flowchart TD
+    fresh{"Would a fresh agent building a DIFFERENT component in this repo make the same mistake?"}
+    fresh -->|"No: a one-off, like this campaign's color or this page's layout"| skip["Skipped"]
+    fresh -->|Yes| existing{"Does an existing rule cover it? Check AGENTS.md and any file it points to, DESIGN.md, project skills"}
+    existing -->|"Yes, says the same thing"| stricter["The rule failed: rewrite it stricter (a number, a token, never) instead of adding a duplicate"]
+    existing -->|"Yes, contradicts"| conflict["Conflict: show both; the user picks"]
+    existing -->|No| matchable{"Can a violation be found by matching code?"}
+    matchable -->|Yes| check["Check candidate, plus a one-line rule so the why is recorded"]
+    matchable -->|No| scope
+    check --> scope{"Did the user say it applies everywhere, not just here?"}
+    scope -->|Yes| global["Ask where their global rules live"]
+    scope -->|No| project["Project rule"]
 ```
 
 ### Phase 3: Generalize and find the why
@@ -81,21 +87,17 @@ Then the why. Use the user's reason, in their words, when they gave one. Otherwi
 
 Rules go in the project's agent instructions file: `AGENTS.md` at the repo root. If the project keeps its agent instructions in another file that every agent it uses already reads, use that one instead; never a harness-specific path.
 
-```
-Check candidate?
-├── Yes → lint rule, token restriction, or test, plus a one-line rule in AGENTS.md
-└── No
-    ├── Is the "Design rules" section over ~40 lines, OR one aspect's rules relevant to only some tasks
-    │   (motion rules don't matter when building a settings form)?
-    │   └── Yes → move it to DESIGN.md (or a project skill) and leave in AGENTS.md:
-    │       `Before building or changing UI, read DESIGN.md.`
-    └── Default → AGENTS.md › "## Design rules", under the matching subsection:
-        Surfaces · Color · Typography · Spacing & layout · Motion · Interaction · Copy
-```
+| Candidate | Where it goes |
+| --- | --- |
+| Check candidate | Lint rule, token restriction, or test, plus a one-line rule in AGENTS.md |
+| "Design rules" section over ~40 lines, or one aspect's rules relevant to only some tasks (motion rules don't matter when building a settings form) | Move that part to DESIGN.md (or a project skill) and leave in AGENTS.md: `Before building or changing UI, read DESIGN.md.` |
+| Anything else | AGENTS.md › `## Design rules`, under the matching subsection: Surfaces · Color · Typography · Spacing & layout · Motion · Interaction · Copy |
 
 Create the file, section, or subsection if missing. A rule in a file no agent loads changes nothing: anything moved out of AGENTS.md keeps a pointer there.
 
-Entry format:
+DESIGN.md's format belongs to impeccable `document` (the google-labs DESIGN.md spec: token frontmatter, then up to eight canonical sections in a fixed order). Never add a section of your own. If DESIGN.md is missing, create it with impeccable `document` first. Write each moved rule into its canonical section: as a Named Rule (`**The <Name> Rule.** <rule>`) under Colors, Typography, or Elevation & Depth; everything else (spacing, shapes, motion, interaction, copy) as a **Do** / **Don't** bullet in Do's and Don'ts. Keep the why and the provenance comment under each rule. If `.impeccable/design.json` exists, refresh it with impeccable `document` (sidecar only) afterwards; it copies DESIGN.md's rules.
+
+AGENTS.md entry format:
 
 ```md
 ### Surfaces
@@ -107,13 +109,13 @@ Entry format:
 
 The comment holds the date and the user's words. When a later correction conflicts, it shows which rule is newer and what the user actually said.
 
-### Phase 5: Report and stop
+### Phase 5: Report
 
-Present the report below, then stop.
+Present the report below (Hard Rule 3).
 
 ### Phase 6: Write on approval
 
-Write only the approved items. Show the resulting diff of AGENTS.md (and DESIGN.md, skill, or config file if touched). For a check, implement it and run it across the codebase. If it flags existing code, report the count and ask whether to make it a warning or fix the violations. Never fix them without asking, because that changes component code.
+Write only the approved items. Show the resulting diff of AGENTS.md (and DESIGN.md, skill, or config file if touched). For a check, implement it and run it across the codebase. Never change component code without asking: if the check flags existing code, report the count and ask whether to make it a warning or fix the violations.
 
 ## Required Output Format
 
@@ -151,4 +153,4 @@ If the session had no taste corrections, say so in one line. That's a good resul
 | learn-taste | Current session, full workflow, stop at the report |
 | learn-taste `<sessions>` | Also read the named or most recent N session transcripts |
 | `write all` / `write 1, 3` | Write the approved items from the last report |
-| learn-taste prune | Read the design rules (AGENTS.md and any DESIGN.md it points to) and propose merges for duplicates, fixes for contradictions, and stricter wording for vague rules. Same propose-then-stop rule |
+| learn-taste prune | Read the design rules (AGENTS.md and any DESIGN.md it points to) and propose merges for duplicates, fixes for contradictions, and stricter wording for vague rules (Hard Rule 3) |

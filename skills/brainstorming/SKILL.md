@@ -5,9 +5,11 @@ description: Use before building or changing anything — a new feature, compone
 
 # Brainstorming Ideas Into Designs
 
+## Overview
+
 Turn an idea into an approved design through dialogue: classify how much process the request needs, understand the context, refine the idea, present a design, get approval.
 
-**Hard gate:** no implementation skill, code, scaffolding or other implementation action until the user has approved what you intend. This holds on every path; the ceremony scales with the task, the approval gate never does.
+**Hard gate:** no implementation skill, code, scaffolding or other implementation action until the user has approved what you intend. This holds on every path, however simple the task: a todo list, a one-function utility or a config change still gets a design (maybe two sentences) and approval. What scales with the task is the artifact, never the approval. Present, then stop until you hear an explicit yes; presenting and starting in the same breath skips the gate.
 
 ## Three paths
 
@@ -17,21 +19,7 @@ Before your first question, classify the request and say so ("this looks bounded
 - **Bounded** — a well-scoped change to code that already exists in this repo: a new flag, a small endpoint, a one-file fix. Bounded means the flow you are changing is already here to read; if there is no existing flow, it is not bounded. Ask the questions that matter, present a short design in chat, and stop. Implementation starts only after the user says yes. No spec file, no plan document.
 - **Architectural** — new projects, new subsystems, changes to how components fit together or to interfaces others depend on. Full process: questions, approaches, sectioned design, written spec, then the writing-plans skill.
 
-In doubt, take the heavier path. The ratchet is one-way: hidden complexity found mid-task upgrades the path (stop, say so, step up); nothing downgrades.
-
-"Too simple to need approval" does not exist. A todo list, a one-function utility, a config change: the design may be two sentences, but present it and get approval. What scales with simplicity is the artifact, never the approval.
-
-## Red flags
-
-| Thought | Reality |
-|---|---|
-| "This is too simple to need a design" | Simple means a short design, not none. Two sentences, then approval. |
-| "I'll call it bounded and skip the spec" | Reaching for a label to skip work is the doubt — take the heavier path. |
-| "The design is obvious — I'll start while they read it" | The gate is the approval, not the design's length. Present, then stop until you hear yes. |
-| "I understand this kind of app, so it's bounded" | Bounded measures the repo, not your familiarity. A new project has no existing flow. |
-| "The spike works, so I'll keep the code" | A spike's output is an answer. Keeping the code is a new request — classify it. |
-| "It grew, but I'm almost done" | Hidden complexity upgrades the path mid-task. Stop and say so. |
-| "They approved the spike, so the follow-up is approved too" | Each task gets its own classification and approval. |
+In doubt, take the heavier path; reaching for a lighter label to skip work is itself the doubt. The ratchet is one-way: hidden complexity found mid-task upgrades the path (stop, say so, step up, even when almost done); nothing downgrades.
 
 ## Checklist
 
@@ -48,7 +36,7 @@ Classify, announce the path, then put each item of that path on the todo list an
 1. Explore project context — files, docs, recent commits.
 2. Ask clarifying questions — one at a time, only the ones that matter.
 3. Present a short design in chat — approach, files touched, testing.
-4. Get approval — stop and wait for an explicit yes. Presenting and starting in the same breath skips the gate.
+4. Get approval — stop and wait for an explicit yes.
 5. Implement — normal development workflow (test-driven-development applies); no plan document.
 
 **Architectural**
@@ -63,32 +51,6 @@ Classify, announce the path, then put each item of that path on the todo list an
 9. **REQUIRED SUB-SKILL:** Use writing-plans. It is the only skill you load after an architectural brainstorm — no implementation skill.
 
 Bounded ends in implementation through the normal workflow; spike ends in a reported recommendation.
-
-## Process flow
-
-```mermaid
-flowchart TD
-    classify{"Classify: spike / bounded / architectural"}
-    classify -->|spike| probe["Present question + probe (2-3 sentences)"]
-    classify -->|bounded| bq["Ask clarifying questions"]
-    classify -->|architectural| ctx["Explore project context"]
-    bq --> short["Present short design in chat"]
-    probe --> approve{"Human approves?"}
-    short --> approve
-    approve -->|spike: yes| report(["Investigate; report recommendation"])
-    approve -->|bounded: yes| impl(["Implement via normal workflow (no plan doc)"])
-    ctx --> aq["Ask clarifying questions"]
-    aq --> appr["Propose 2-3 approaches"]
-    appr --> sections["Present design sections"]
-    sections --> dok{"User approves design?"}
-    dok -->|no, revise| sections
-    dok -->|yes| doc["Write design doc"]
-    doc --> selfrev["Spec self-review (fix inline)"]
-    selfrev --> uok{"User reviews spec?"}
-    uok -->|changes requested| doc
-    uok -->|approved| plans(["Load writing-plans"])
-    hidden["Hidden complexity? Upgrade path"] --> classify
-```
 
 ## The process
 
@@ -140,8 +102,14 @@ A browser tab for mockups, diagrams and visual options — a tool, not a mode. A
 
 > "This next part might be easier if I show you — I can put together mockups, diagrams, and comparisons in a browser tab as we go. It's still new and can be token-intensive. Want me to? I'll open it for you."
 
-Wait for the answer. If accepted, start the server with `--open`. If declined, continue in text and do not offer again unless the user raises it.
+Wait for the answer. If accepted, read `visual-companion.md` in this skill's directory first, then start the server as it describes (`scripts/start-server.sh --project-dir <project root> --open`). If declined, continue in text and do not offer again unless the user raises it.
 
-**Decide per question:** would the user understand this better by seeing it than reading it? Browser for mockups, wireframes, layout comparisons, architecture diagrams. Terminal for requirements, conceptual choices, trade-off lists, scope decisions. "What does personality mean here?" is conceptual; "Which wizard layout works better?" is visual.
+**Decide per question:** would the user understand this better by seeing it than reading it? Browser for visual content: mockups and wireframes, navigation and component designs, architecture and data-flow diagrams, side-by-side comparisons (layouts, colour schemes, design directions), look-and-feel polish (spacing, visual hierarchy), state machines, flowcharts and entity relationships. Terminal for answers in words: requirements and scope, conceptual A/B/C choices, trade-off lists and comparison tables, technical decisions (API design, data modelling, approach selection), clarifying questions. A question about a UI topic is not automatically visual: "What does personality mean here?" and "What kind of wizard do you want?" are conceptual; "Which wizard layout works better?" is visual.
 
-Once accepted, read `visual-companion.md` in this skill's directory before continuing.
+## Common Mistakes
+
+| Thought | Reality |
+|---|---|
+| "I understand this kind of app, so it's bounded" | Bounded measures the repo, not your familiarity. A new project has no existing flow. |
+| "The spike works, so I'll keep the code" | A spike's output is an answer. Keeping the code is a new request — classify it. |
+| "They approved the spike, so the follow-up is approved too" | Each task gets its own classification and approval. |

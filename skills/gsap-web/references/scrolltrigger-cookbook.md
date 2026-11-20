@@ -90,16 +90,17 @@ To snap to timeline labels: build a labeled timeline and use `snap: "labelsDirec
 Instead of creating one ScrollTrigger per card (expensive at scale), batch them:
 
 ```js
+gsap.set(".card", { autoAlpha: 0, y: 40 }); // hidden start state, avoids a flash before the trigger
+
 ScrollTrigger.batch(".card", {
   start: "top 85%",
+  once: true, // scroll reveals fire once
   onEnter: (els) =>
-    gsap.from(els, { autoAlpha: 0, y: 40, stagger: 0.12, overwrite: true }),
-  onLeaveBack: (els) =>
-    gsap.to(els, { autoAlpha: 0, y: 40, stagger: 0.12, overwrite: true }),
+    gsap.to(els, { autoAlpha: 1, y: 0, stagger: 0.06, overwrite: true }),
 });
 ```
 
-Set the initial hidden state to avoid a flash before JS runs: `gsap.set(".card", { autoAlpha: 0 })`.
+Animate *to* the visible state: a `gsap.from({ autoAlpha: 0 })` after that `set` tweens 0 → 0 and the cards never appear. Replaying on every scroll pass (drop `once`, add `onLeaveBack: (els) => gsap.to(els, { autoAlpha: 0, y: 40, stagger: 0.06, overwrite: true })`) is opt-in.
 
 ## 5. Parallax layers
 
@@ -154,7 +155,7 @@ function Section() {
   const root = useRef(null);
   useGSAP(() => {
     gsap.from(".item", {
-      autoAlpha: 0, y: 40, stagger: 0.1,
+      autoAlpha: 0, y: 40, stagger: 0.06,
       scrollTrigger: { trigger: ".item", start: "top 80%" },
     });
   }, { scope: root }); // auto-reverts on unmount

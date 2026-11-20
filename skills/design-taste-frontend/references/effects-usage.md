@@ -15,6 +15,8 @@ On other, photographs, type and flat colour carry the page.
 
 ## What each kind gets
 
+Diagram cards and CSS grounds per kind: the Implementation table in `SKILL.md`.
+
 | | tech | product, service (other) | place |
 |---|---|---|---|
 | Lead picture | the client's UI (hardware: its photographs or CAD render, else stand-in photographs of its kind, never an effect or an order form alone; a game: its name and its art, else its name over a stand-in photograph of its setting; a render only when the brief asks for 3D) | its photographs; a product without them: stand-in photographs of its kind (a render only when the brief asks for 3D) | its photographs (a remote place: its region's landscape) |
@@ -22,9 +24,7 @@ On other, photographs, type and flat colour carry the page.
 | Card panel grounds | one card group, still, from the effect's family; with a big scene the lit ground (`data-ground`), no `data-fx` | the client's photograph | none |
 | Moments | 1 or 2 a page, two at most in all: in sections, one of them may sit in the hero | 1 or 2 in sections, photo- or type-led (`moments.md`) | 1 or 2 in sections, photo- or type-led (`moments.md`) |
 | Big scene | 0 or 1 (it is the effect) | none | none |
-| Diagram cards | 0 to 2, pulsing | 0 or 1, still | none |
 | Loops | one timed loop, one per card group | none | none |
-| CSS grounds | 0 to 2 (`backgrounds.md`) | flat tokens | flat tokens |
 
 **The subject before the effect.** An effect never stands where the product, the device or the game's world should be. Hardware with no photographs or client renders takes stand-in photographs of the same kind of machine at work; a game with no art sets its name large over stand-in photographs of its setting, full bleed in the world section (`photos.md`, Live search; `sections.md`, Product and Gaming). When the brief asks for 3D, a product render (`effects-objects.md`, Product renders) is the picture. The page's one effect may then sit behind it as the stage's ground (every render placement is transparent over its frame); it counts as the beat and shares the four contexts with it. It never replaces the picture and never sits beside it as a second focal visual.
 

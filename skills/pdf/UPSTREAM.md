@@ -8,4 +8,6 @@
 
 ## Local changes
 
-None yet.
+- Links `REFERENCE.md` / `FORMS.md` → `reference.md` / `forms.md` (the actual file names; uppercase breaks on case-sensitive filesystems).
+- `forms.md`: `python scripts/check_fillable_fields` → `scripts/check_fillable_fields.py`.
+- Description: added `Not for Word, spreadsheet or slide files; use docx / xlsx / pptx.`

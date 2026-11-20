@@ -37,7 +37,7 @@ Dispatch a subagent:
 
     Read the diff file once — it contains the commit list, a stat summary,
     and the full diff with surrounding context, and it is your view of the
-    change. The diff's context lines ARE the changed files: do not Read a
+    change. The diff's context lines ARE the changed files: do not read a
     changed file separately unless a hunk you must judge is cut off
     mid-function — and say so in your report. Do not re-run git commands.
     If the diff file is missing, fetch the diff yourself:

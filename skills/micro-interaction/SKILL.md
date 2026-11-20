@@ -1,6 +1,6 @@
 ---
 name: micro-interaction
-description: Use when adding or fixing component-level UI feedback — hover/press/focus effects, toggles and switches, a like/heart button, toast or snackbar enter/exit, drawer/modal/tooltip/accordion open and close, list add/remove/reorder, shared-element layout transitions (layout, layoutId), loading → success → error states — with Framer Motion (motion/react) or CSS (@starting-style, transition-behavior: allow-discrete). Not for several elements sequenced together; use choreograph. Not for route changes; use page-transition-animation. Not for drag, swipe or sheet gestures; use apple-design.
+description: Use when adding or fixing component-level UI feedback — hover/press/focus effects, toggles and switches, a like/heart button, toast or snackbar enter/exit, drawer/modal/tooltip/accordion open and close, list add/remove/reorder, shared-element layout transitions (layout, layoutId), loading → success → error states — with Framer Motion (motion/react) or CSS (@starting-style, transition-behavior: allow-discrete). Not for several elements sequenced together; use choreograph. Not for route changes; use page-transition-animation. Not for drag, swipe or sheet gestures; use apple-design. Not for choosing easing/duration; use animate.
 version: 0.1.0
 ---
 
@@ -32,7 +32,7 @@ Choosing easing and duration from scratch: animate. Reduced-motion tiering: acce
 
 | Need | Approach |
 |------|----------|
-| Press feedback | `whileTap={{ scale: 0.96 }}` spring 400/30 |
+| Press feedback | `whileTap={{ scale: 0.96 }}` spring `duration: 0.3, bounce: 0` |
 | Enter/exit | `AnimatePresence` + `initial/animate/exit` |
 | Reorder / resize | `layout` prop (spring) |
 | Magic move | shared `layoutId` |
@@ -42,10 +42,10 @@ Choosing easing and duration from scratch: animate. Reduced-motion tiering: acce
 
 Defaults:
 
-- Duration **100–250ms**; over ~400ms feels laggy for a click response.
+- Duration **100–250ms**; over 300ms feels laggy for a click response.
 - Press feedback is instant: `scale: 0.96` with a fast spring.
-- Enter slightly slower (ease-out), exit faster (ease-in).
-- Easing: entrance `cubic-bezier(0.16, 1, 0.3, 1)`; tasteful overshoot `cubic-bezier(0.34, 1.56, 0.64, 1)`; standard move `cubic-bezier(0.4, 0, 0.2, 1)`.
+- Enter slightly slower, exit ~20% faster; both ease-out (animate).
+- Easing: animate's tokens — entrance `--ease-out`, toggle/press-release overshoot `--ease-overshoot`.
 - Reduced motion: keep opacity changes, drop large movement.
 
 ## Implementation
@@ -61,11 +61,9 @@ import { motion } from "motion/react";
   whileHover={{ scale: 1.03 }}
   whileTap={{ scale: 0.96 }}
   whileFocus={{ boxShadow: "0 0 0 3px rgba(59,130,246,.5)" }}
-  transition={{ type: "spring", stiffness: 400, damping: 30 }}
+  transition={{ type: "spring", duration: 0.3, bounce: 0 }}
 />
 ```
-
-Higher `stiffness` = faster; higher `damping` = less bounce. `stiffness: 400, damping: 30` is a snappy UI default; `damping: 12` for visible bounce.
 
 Exit animations need `AnimatePresence` around conditionally rendered children, each with a stable `key`:
 
@@ -78,8 +76,8 @@ import { AnimatePresence, motion } from "motion/react";
       key="panel"
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 8 }}
-      transition={{ duration: 0.2, ease: [0.16, 1, 0.3, 1] }}
+      exit={{ opacity: 0, y: 8, transition: { duration: 0.16, ease: [0.23, 1, 0.32, 1] } }}
+      transition={{ duration: 0.2, ease: [0.23, 1, 0.32, 1] }} /* animate's --ease-out */
     />
   )}
 </AnimatePresence>
@@ -88,7 +86,7 @@ import { AnimatePresence, motion } from "motion/react";
 `layout` animates any position/size change with transforms — reordering, expanding cards, grid ↔ list:
 
 ```jsx
-<motion.li layout transition={{ type: "spring", stiffness: 500, damping: 40 }} />
+<motion.li layout transition={{ type: "spring", duration: 0.35, bounce: 0 }} />
 ```
 
 Two elements with the same `layoutId` animate as one when one mounts and the other unmounts:
@@ -104,7 +102,7 @@ Two elements with the same `layoutId` animate as one when one mounts and the oth
 
 ```css
 .toast {
-  transition: opacity 0.2s ease, transform 0.2s ease;
+  transition: opacity 0.2s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1)), transform 0.2s var(--ease-out, cubic-bezier(0.23, 1, 0.32, 1));
   transition-behavior: allow-discrete; /* animate to/from display:none */
 }
 .toast[hidden] { display: none; }
@@ -118,37 +116,20 @@ Two elements with the same `layoutId` animate as one when one mounts and the oth
 
 ### Standalone demo
 
-A self-contained interaction demo is one HTML file that opens in a browser: pure CSS as-is, or React + `motion` from `esm.sh` in one inline module. No bundler.
+A self-contained interaction demo is one HTML file that opens in a browser: pure CSS as-is, or React + `motion` from `esm.sh` in one inline module. No bundler. Freeze frames with the harness in animate (`references/standalone-harness.md`).
 
-A micro-interaction's frames are its states (idle / hover / pressed / open). `?state=open` applies the target state on load:
-
-```html
-<script>
-  const s = new URLSearchParams(location.search).get("state");
-  if (s) document.documentElement.dataset.state = s;   // CSS keys off [data-state="open"]
-  // Framer Motion: set the controlled prop from `s` (e.g. const [open]=useState(s==="open"))
-  // CSS @keyframes loop: el.style.animationDelay=(-N)+"s"; el.style.animationPlayState="paused";
-  window.__ready = true;
-</script>
-```
-
-```bash
-bunx playwright screenshot --wait-for-timeout=400 "file://$PWD/demo.html?state=open" open.png
-```
+A micro-interaction's frames are its states (idle / hover / pressed / open); force each with `?state=`.
 
 Before finishing, screenshot each state and confirm: no console errors and CDN resolves; `?state=` lands a settled state; press feedback reads instant and exits run before unmount; reduced motion drops movement but keeps feedback; durations in the 100–250ms band.
 
 ### References
 
-- `references/framer-motion-recipes.md` — read for variants + stagger, `AnimatePresence` modes, `layout`/`layoutId`, `Reorder` drag-to-sort, drag constraints, gesture composition, `useReducedMotion`.
-- `references/css-recipes.md` — read for `@starting-style`, `allow-discrete`, popover/dialog exits, keyframe spinners/toggles, `@property`, reduced-motion patterns.
+- `references/framer-motion-recipes.md` — read for variants + stagger, `AnimatePresence` modes, toast stack, `layout`/`layoutId`, `Reorder` drag-to-sort, drag constraints, gesture composition, performance notes.
+- `references/css-recipes.md` — read for `@starting-style`, `allow-discrete`, popover/dialog exits, press/hover/focus feedback, keyframe spinners/toggles, `@property`, `interpolate-size` accordions.
 
 ## Common Mistakes
 
 | Mistake | Fix |
 |---|---|
 | `layout` element distorts `border-radius` and text during scale | Add `layout` to direct children that should counter-scale; animate `borderRadius`/`boxShadow` as motion values; or `layout="position"` |
-| Exit never runs | `AnimatePresence` wrapper + stable `key` |
-| Toast holds space after exit | `mode="popLayout"` |
-| Click response over ~400ms | Stay in 100–250ms |
-| FOUC / jank in the demo | Check screenshots per state |
+| Click response over 300ms | Stay in 100–250ms |

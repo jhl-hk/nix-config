@@ -23,18 +23,10 @@ Write before implementing:
 
 Choose the material for its meaning: shared-element or FLIP for continuity, bounded blur or shadow for depth, masks and clip paths for reveal, colour or texture for energy. One strong material idea is enough; do not stack techniques.
 
-## Timing and easing (canonical)
+## Timing and easing
 
-| Duration | Use |
-|---|---|
-| 100–150 ms | immediate feedback |
-| 150–300 ms | routine state change |
-| 300–500 ms | layout, overlay or view transition |
-| 500–800 ms | a deliberately authored focal entrance |
+Durations, curves and springs come from the animate skill (**REQUIRED BACKGROUND:** animate). A deliberately authored focal entrance may run 500–800 ms.
 
-- Easing: exponential ease-out, `cubic-bezier(0.16, 1, 0.3, 1)`.
-- No bounce or elastic curves.
-- Exit faster than entrance.
 - Content is visible in the default state, so a failed script hides nothing.
 - Every web animation has a `prefers-reduced-motion` path that reduces movement but keeps meaningful feedback. Detail: `accessible-animation` skill.
 - Nonessential loops stop when offscreen or hidden.

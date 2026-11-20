@@ -79,9 +79,12 @@ Dispatch a subagent:
 
     ## Calibration
 
-    Categorize issues by actual severity. Not everything is Critical.
+    Categorize issues by actual severity: nitpicks are never Critical.
     Acknowledge what was done well before listing issues — accurate praise
-    helps the implementer trust the rest of the feedback.
+    helps the implementer trust the rest of the feedback. Judge only code
+    you actually read; never say "looks good" without checking. Be
+    specific ("improve error handling" is not a finding) and always give
+    a clear verdict.
 
     If you find significant deviations from the plan, flag them specifically
     so the implementer can confirm whether the deviation was intentional.
@@ -118,22 +121,6 @@ Dispatch a subagent:
     **Ready to merge?** [Yes | No | With fixes]
 
     **Reasoning:** [1-2 sentence technical assessment]
-
-    ## Critical Rules
-
-    **DO:**
-    - Categorize by actual severity
-    - Be specific (file:line, not vague)
-    - Explain WHY each issue matters
-    - Acknowledge strengths
-    - Give a clear verdict
-
-    **DON'T:**
-    - Say "looks good" without checking
-    - Mark nitpicks as Critical
-    - Give feedback on code you didn't actually read
-    - Be vague ("improve error handling")
-    - Avoid giving a clear verdict
 ```
 
 **Placeholders:**
@@ -154,7 +141,7 @@ Dispatch a subagent:
 
 ### Issues
 
-#### Important
+#### Important (Should Fix)
 1. **Missing help text in CLI wrapper**
    - File: index-conversations:1-31
    - Issue: No --help flag, users won't discover --concurrency
@@ -165,7 +152,7 @@ Dispatch a subagent:
    - Issue: Invalid dates silently return no results
    - Fix: Validate ISO format, throw error with example
 
-#### Minor
+#### Minor (Nice to Have)
 1. **Progress indicators**
    - File: indexer.ts:130
    - Issue: No "X of Y" counter for long operations
@@ -177,7 +164,7 @@ Dispatch a subagent:
 
 ### Assessment
 
-**Ready to merge: With fixes**
+**Ready to merge?** With fixes
 
 **Reasoning:** Core implementation is solid with good architecture and tests. Important issues (help text, date validation) are easily fixed and don't affect core functionality.
 ```
