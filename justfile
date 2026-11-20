@@ -141,13 +141,28 @@ update:
         brew update && brew upgrade
     fi
 
-# Clean up old generations
+# Clean up old generations.
+#
+# Two nix passes: sudo resets HOME, so the root pass never sees the user
+# profiles in ~/.local/state/nix/profiles (home-manager, nix profile).
+#
+# The Macs then run mo clean. Arch runs mo clean (Mole's own install in
+# ~/.local/bin), clears the pacman and AUR caches, and removes orphan
+# packages. NixOS stops at nix.
+
+# Clean up old generations, plus mole/pacman cleanup on macOS and Arch
 clean:
     #!/usr/bin/env bash
     set -euo pipefail
-    sudo nix-collect-garbage -d
+    nix-collect-garbage -d
+    # sudo's secure_path on Arch omits the nix profile; pass the full path.
+    sudo "$(command -v nix-collect-garbage)" -d
     if [ "$(uname -s)" = "Darwin" ]; then
         mo clean
+    elif [ ! -e /etc/NIXOS ]; then
+        mo clean
+        paru -Sc
+        paru -c
     fi
 
 # Format every .nix file

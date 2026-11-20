@@ -78,7 +78,7 @@ The script targets bash 3.2 (`/bin/bash` on a fresh Mac): no `${var^^}`, no `"${
 | Command | Does |
 |---|---|
 | `just update` | `nix flake update`; on Darwin also `brew update && brew upgrade`. |
-| `just clean` | `sudo nix-collect-garbage -d`; on Darwin also `mo clean` (mole). |
+| `just clean` | `nix-collect-garbage -d` as the user (home-manager and profile generations), then `sudo nix-collect-garbage -d`. Darwin: `mo clean`. Arch (non-NixOS Linux): `mo clean`, `paru -Sc`, `paru -c`. |
 | `just fmt` | `nix fmt` (alejandra). |
 | `just check-beta` | Darwin only. Applies the `modules/hosts/darwin/homebrew/mas.nix` rule (`^[0-9]+[A-Z][5-9][0-9]{3}[a-z]?$` on `sw_vers -buildVersion`) and reports whether `masApps` install on the next switch; also prints seed-programme enrollment, which the rule ignores. Keep both regex copies in step. |
 

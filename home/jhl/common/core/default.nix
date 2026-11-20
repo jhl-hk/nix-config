@@ -85,7 +85,7 @@ in {
       # three aliases once the repo moved under nix-src/.
       flakeDir = "${hostSpec.home}/Documents/nix-src/nix-config";
     in {
-      sysnew = "cd ${flakeDir} && just rebuild && cd -";
+      sysnew = "cd ${flakeDir} && just rebuild && git add . && { git diff --cached --quiet || git commit -m \"update(new): $(date +%Y%m%d-%H%M%S)\"; } && cd -";
       sysup = "cd ${flakeDir} && just update && cd -";
       syscl = "cd ${flakeDir} && just clean && cd -";
     };
