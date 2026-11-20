@@ -163,7 +163,14 @@ Full templates and edge cases are in `skills/nix-config/references/recipes.md`.
 - **`onActivation.cleanup = "zap"`**: any Homebrew package not declared in `apps.nix` is uninstalled on the next switch. Anything from a manual `brew install` is temporary.
 - **Always push changes to nix-secrets.** It is a locked remote input, so local edits are invisible to the flake. `just rebuild` runs `update-nix-secrets` for you, but pushing is on you.
 - **The standalone lane decrypts as the user.** `home/jhl/common/optional/sops/standalone.nix` uses home-manager sops-nix: secrets land under `$XDG_RUNTIME_DIR` and `~/.config/sops-nix/secrets/`, not `/run/secrets`. Consumers whose defaults point at `/run/secrets/...` must be repointed there with `lib.mkForce`. Never import it on a Mac or NixOS host.
-- **On the standalone lane, `~/.config/nix/nix.conf` is written by this repo** (via `home/jhl/common/optional/nix/standalone.nix`), because the distro owns `/etc/nix`. Do not import that file on a Mac: there the same file would silently outrank the `nix.conf` nix-darwin generates. Note also that the flake's `nixConfig` substituters are refused for an untrusted user — fixing that means `trusted-users = jhl` in the root-owned `/etc/nix/nix.conf`, which is outside this repo.
+- **On the standalone lane, `~/.config/nix/nix.conf` is written by this repo** (via `home/jhl/common/optional/nix/standalone.nix`), because the distro owns `/etc/nix`. Do not import that file on a Mac: there the same file would silently outrank the `nix.conf` nix-darwin generates. Note also that the flake's `nixConfig` substituters are refused for an untrusted user (`warning: ignoring untrusted substituter`). The fix goes in the root-owned `/etc/nix/nix.conf`, outside this repo. Preferred: trust only the cache, then `sudo systemctl restart nix-daemon`:
+
+  ```
+  extra-substituters = https://nix-community.cachix.org
+  extra-trusted-public-keys = nix-community.cachix.org-1:mB9FSh9qf2dCimDSUo8Zy7bkq5CX+/rkCWyvRCYg3Fs=
+  ```
+
+  The alternative, `trusted-users = root jhl`, silences every warning but makes `jhl` root-equivalent to the daemon.
 
 ## References
 
