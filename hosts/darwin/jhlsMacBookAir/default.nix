@@ -10,6 +10,7 @@
     "hosts/common/optional/darwin/cloudflare.nix"
     "hosts/common/optional/darwin/wakatime.nix"
     "hosts/common/optional/darwin/stay-awake.nix"
+    "hosts/common/optional/darwin/ssh-server.nix"
   ];
 
   hostSpec = {
