@@ -474,14 +474,6 @@ id = "moveToWorkspace.8"
 
 [[hotkeys]]
 binding = "Unassigned"
-id = "switchWorkspace.15"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveToWorkspace.15"
-
-[[hotkeys]]
-binding = "Unassigned"
 id = "switchWorkspaceSlot.1"
 
 [[hotkeys]]
@@ -675,10 +667,6 @@ id = "moveColumnToWorkspace.7"
 [[hotkeys]]
 binding = "Control+Option+9"
 id = "moveColumnToWorkspace.8"
-
-[[hotkeys]]
-binding = "Unassigned"
-id = "moveColumnToWorkspace.15"
 
 [[hotkeys]]
 binding = "Option+Left Bracket"
