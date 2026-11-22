@@ -17,8 +17,10 @@
     isMobile = true;
   };
 
-  # This machine used to set assets/HNDT3.jpg, but that file is not in the
-  # repo (assets/ only has bg.jpeg and idebg.jpg), so it never worked.
-  # Add the image to assets/ and uncomment the line below.
-  # darwinWallpaper = lib.custom.relativeToRoot "assets/HNDT3.jpg";
+  darwinHomebrew = {
+    casks = ["grok-bot"];
+    masApps."MoneyWiz Personal Finance" = 1511185140;
+  };
+
+  # Wallpaper: assets/tokai.png, the darwin default from hosts/common/core/darwin.nix.
 }
