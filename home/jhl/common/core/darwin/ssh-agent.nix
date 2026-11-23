@@ -61,20 +61,16 @@ in {
       chmod 600 "$SSH_AUTH_SOCK"
     }
 
-    # Lazy key loading: only add them the first time they are actually needed
-    ssh() {
-      if $NIX_SSH_ADD -l >/dev/null 2>&1; then
-        command ssh "$@"
-        return
-      fi
+    # Lazy key loading: only add them the first time they are actually needed.
+    # Called by the ssh function in ../vim.nix.
+    _ssh_prepare() {
+      $NIX_SSH_ADD -l >/dev/null 2>&1 && return
 
       local keys=( ${keyList} )
 
       for key in "''${keys[@]}"; do
         [ -f "$key" ] && $NIX_SSH_ADD "$key" 2>/dev/null
       done
-
-      command ssh "$@"
     }
 
     # `ssh -A` into this Mac arrives with SSH_AUTH_SOCK already pointing at the

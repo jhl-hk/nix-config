@@ -1,8 +1,4 @@
-{
-  lib,
-  pkgs,
-  ...
-}:
+{lib, ...}:
 #############################################################
 #
 #  Vim -- ~/.vimrc only; Neovim -- binary and init.lua
@@ -19,15 +15,28 @@
 #  J end of WORD, K previous match, L insert at BOL.
 #  Text objects move with insert: `dlw` is the old `diw`.
 #
+#  Indent: 2 spaces. Filetype plugins that set their own (Python's 4) win.
+#
 #  A ~/.vimrc stops Vim from loading defaults.vim, so it is sourced first.
 #  Neovim has its own defaults and needs no equivalent.
 #
-#  `sshv [ssh options] host` carries the same mappings to machines outside
-#  this flake. It runs `ssh -t` and starts the remote login shell with
-#  VIMINIT set; nothing is written on the remote. VIMINIT replaces the
-#  remote's own config, so it sources that first: init.lua / init.vim for
-#  nvim, ~/.vimrc (or defaults.vim) for vim. Gone under sudo, which drops
-#  the environment.
+#  An interactive `ssh host` (bash and zsh function below) carries the same
+#  mappings and indent to any remote. It runs `ssh -t` and starts the remote
+#  login shell with VIMINIT set. VIMINIT replaces the remote's own config,
+#  so it sources that first: init.lua / init.vim for nvim, ~/.vimrc (or
+#  defaults.vim) for vim. Gone under sudo, which drops the environment.
+#
+#  Anything else goes to the ssh binary unchanged: a remote command, -f -G
+#  -N -O -Q -s -T -V -W, or stdin/stdout not a terminal. Scripts, git,
+#  rsync and scp never see the function.
+#
+#  Under TERM=xterm-ghostty the function first installs the terminfo entry
+#  into the remote's ~/.terminfo, once per user@host:port (cached in
+#  ~/.cache/ssh-terminfo). Where that fails the remote falls back to
+#  TERM=xterm-256color. This replaces Ghostty's own ssh integration, which
+#  would shadow the function (./darwin/ghostty.nix).
+#
+#  `_ssh_prepare`, when defined, runs first (./darwin/ssh-agent.nix).
 #
 #############################################################
 let
@@ -49,7 +58,9 @@ let
 
   maps = lib.concatMap (mode: map (p: "${mode}noremap ${lib.elemAt p 0} ${lib.elemAt p 1}") pairs) ["n" "x" "o"];
 
-  colemak = lib.concatLines maps;
+  shared = ["set expandtab tabstop=2 shiftwidth=2 softtabstop=2"] ++ maps;
+
+  sharedLines = lib.concatLines shared;
 
   # One Ex line. No spaces before `|`: they would become part of the rhs.
   # Double quotes only, so the remote shell can single-quote it.
@@ -66,20 +77,67 @@ let
       ''source $VIMRUNTIME/defaults.vim''
       ''endif''
     ]
-    ++ maps);
+    ++ shared);
 
-  sshv = pkgs.writeShellApplication {
-    name = "sshv";
-    text = ''
-      exec ssh -t "$@" ${lib.escapeShellArg "export VIMINIT='${viminit}'; exec \"$SHELL\" -l"}
-    '';
-  };
+  # Runs in the remote login shell: POSIX sh, bash, zsh or fish.
+  remote = lib.concatStringsSep "; " [
+    ''test "$TERM" = xterm-ghostty && ! infocmp xterm-ghostty >/dev/null 2>&1 && export TERM=xterm-256color''
+    "export VIMINIT='${viminit}'"
+    ''exec "$SHELL" -l''
+  ];
+
+  # Remote side runs as POSIX sh / fish. -o keeps root's entry out of the
+  # system terminfo database.
+  installTerminfo = "infocmp xterm-ghostty >/dev/null 2>&1 && exit 0; command -v tic >/dev/null 2>&1 || exit 1; mkdir -p ~/.terminfo && tic -x -o ~/.terminfo - 2>/dev/null";
+
+  # Valid in both bash and zsh.
+  sshFunction = ''
+    # Succeeds when the arguments are an interactive login: one destination,
+    # no command, no flag from the pass-through list. OpenSSH accepts options
+    # after the destination, hence the outer loop.
+    __ssh_is_login() {
+      local opt n=0 OPTIND
+      while [ $# -gt 0 ]; do
+        OPTIND=1
+        while getopts 46AaCfGgKkMNnqsTtVvXxYyB:b:c:D:E:e:F:I:i:J:L:l:m:O:o:P:p:Q:R:S:W:w: opt; do
+          case $opt in
+            f | G | N | O | Q | s | T | V | W | '?') return 1 ;;
+          esac
+        done
+        shift $((OPTIND - 1))
+        [ $# -gt 0 ] || break
+        n=$((n + 1))
+        shift
+      done
+      [ "$n" -eq 1 ]
+    }
+
+    __ssh_terminfo() {
+      local cache="''${XDG_CACHE_HOME:-$HOME/.cache}/ssh-terminfo" key info
+      key=$(command ssh -G "$@" 2>/dev/null | awk '$1 == "user" { u = $2 } $1 == "hostname" { h = $2 } $1 == "port" { p = $2 } END { print u "@" h ":" p }')
+      grep -qxF "$key" "$cache" 2>/dev/null && return
+      info=$(infocmp -0 -x xterm-ghostty 2>/dev/null) || return
+      if printf '%s\n' "$info" | command ssh -T "$@" ${lib.escapeShellArg installTerminfo}; then
+        mkdir -p "''${cache%/*}" && printf '%s\n' "$key" >>"$cache"
+      fi
+    }
+
+    ssh() {
+      command -v _ssh_prepare >/dev/null 2>&1 && _ssh_prepare
+      if [ ! -t 0 ] || [ ! -t 1 ] || ! __ssh_is_login "$@"; then
+        command ssh "$@"
+        return
+      fi
+      [ "$TERM" = xterm-ghostty ] && __ssh_terminfo "$@"
+      command ssh -t "$@" ${lib.escapeShellArg remote}
+    }
+  '';
 in {
   home.file.".vimrc".text = ''
     unlet! skip_defaults_vim
     source $VIMRUNTIME/defaults.vim
 
-    ${colemak}'';
+    ${sharedLines}'';
 
   programs.neovim = {
     enable = true;
@@ -88,11 +146,9 @@ in {
     extraConfig = ''
       set clipboard=unnamedplus
       set linebreak breakindent
-      ${colemak}'';
+      ${sharedLines}'';
   };
 
-  home.packages = [sshv];
-
-  # Host completion as for ssh. After compinit (570).
-  programs.zsh.initContent = lib.mkOrder 660 "compdef sshv=ssh";
+  programs.bash.initExtra = sshFunction;
+  programs.zsh.initContent = sshFunction;
 }

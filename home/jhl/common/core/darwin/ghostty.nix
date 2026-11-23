@@ -72,6 +72,9 @@
 
     settings = {
       mouse-scroll-multiplier = "precision:3,discrete:3";
+
+      # No ssh-env / ssh-terminfo: their ssh function would shadow the one in
+      # ../vim.nix, which installs the terminfo itself.
     };
   };
 }
