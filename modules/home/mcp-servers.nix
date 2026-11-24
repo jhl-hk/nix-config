@@ -24,6 +24,7 @@
       cloudflare-api.url = "https://mcp.cloudflare.com/mcp";
       uptime.url = "https://status.jianyuelab.net/mcp";
       memory.url = "https://memory.jianyuelab.co/mcp";
+      google-workspace.url = "https://workspacemcp.googleapis.com/mcp/v1";
     };
     description = "Remote MCP servers, keyed by the name each tool shows.";
   };
