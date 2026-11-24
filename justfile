@@ -277,18 +277,22 @@ sops-edit FILE:
 #
 # Skipped outright when no secrets are declared; it does not fake success.
 #
-# Also skipped on the standalone home-manager lane, which has no system scope
-# and therefore no sops.secrets to check (jhlsRogZephyrus, jhlsTokyoDesktop).
+# Skipped on the standalone home-manager lane, which has no system scope and
+# therefore no sops.secrets to check (jhlsRogZephyrus, jhlsTokyoDesktop).
 
 # Confirm every secret declared on this machine really landed in /run/secrets
 check-sops:
     #!/usr/bin/env bash
     set -uo pipefail
-    if [ "$(uname -s)" != "Darwin" ]; then
+    if [ "$(uname -s)" = "Darwin" ]; then
+        attr="darwinConfigurations"
+    elif [ -e /etc/NIXOS ]; then
+        attr="nixosConfigurations"
+    else
         echo "sops: no system scope on this machine (standalone home-manager), skipping"
         exit 0
     fi
-    manifest=$(nix eval --raw ".#darwinConfigurations.$(uname -n).config.sops.secrets" \
+    manifest=$(nix eval --raw ".#$attr.$(uname -n).config.sops.secrets" \
                  --apply 's: builtins.concatStringsSep "\n" (builtins.attrNames s)' 2>/dev/null)
     if [ -z "$manifest" ]; then
         echo "sops: this machine declares no secrets, skipping"
@@ -317,10 +321,10 @@ verify-sops EXPECT="sops-pipeline-ok":
     #!/usr/bin/env bash
     set -uo pipefail
 
-    # The canary exercises sops-nix's *system* path -- postActivation plus the
-    # launchd daemon -- neither of which exists on the standalone lane.
+    # The canary exercises sops-nix's *darwin* system path -- postActivation
+    # plus the launchd daemon. The canary module is darwin-only.
     if [ "$(uname -s)" != "Darwin" ]; then
-        echo "no system sops on this machine (standalone home-manager), nothing to verify"
+        echo "the sops canary is darwin-only (launchd), nothing to verify on this machine"
         exit 0
     fi
 

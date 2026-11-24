@@ -33,7 +33,7 @@ in {
     # Note there is **no** lib here. home-manager's own lib is
     # pkgs.lib.extend hmExtension; passing lib via extraSpecialArgs replaces it
     # wholesale and lib.hm disappears. lib.custom reaches the HM side through
-    # the customLib layer in overlays, which attaches it to pkgs.lib.
+    # specialArgs.lib, which nix-darwin forwards into the lib HM extends.
     extraSpecialArgs = {
       inherit inputs outputs;
       isDarwin = true;

@@ -3,9 +3,10 @@
 #
 #  Bash
 #
-#  The sibling of ./zsh.nix, and on jhlsArchLinux it is the shell that actually
-#  runs: Arch creates users with /bin/bash and nothing in this repo can call
-#  chsh, so until that is changed by hand, every login there lands here.
+#  The sibling of ./zsh.nix, and on the standalone hosts it is the shell that
+#  actually runs: the distro creates users with /bin/bash and nothing in this
+#  repo can call chsh, so until that is changed by hand, every login there
+#  lands here.
 #
 #  Before this file existed that login got **none** of home-manager: no
 #  hm-session-vars.sh, so no EDITOR, no NH_FLAKE, no STARSHIP_CONFIG, no

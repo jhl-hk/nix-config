@@ -9,7 +9,7 @@ description: Use when working in ~/Documents/nix-src/nix-config or ../nix-secret
 
 `/Users/jhl/Documents/nix-src/nix-config` is a public flake for one user (`jhl`) on six machines across three lanes; private data comes from the sibling flake `../nix-secrets`. Hosts are discovered from directories, modules are auto-imported, optionals are cherry-picked, and every module reads machine data from `hostSpec`.
 
-The lane table (host dirs, outputs, machines), the silent failure modes and the secret rules are in this repo's `CLAUDE.md`; this skill does not repeat them. Working from `../nix-secrets`, that file is not loaded: read it first. Every machine also has `home/jhl/<Host>.nix`. Per-lane builders (`mkDarwinHost` aarch64-darwin, `mkNixosHost` and `mkHomeHost` x86_64-linux): `references/architecture.md`.
+The lane table (host dirs, outputs, machines), the silent failure modes and the secret rules are in this repo's `AGENTS.md`; this skill does not repeat them. Working from `../nix-secrets`, that file is not loaded: read it first. Every machine also has `home/jhl/<Host>.nix`. Per-lane builders (`mkDarwinHost` aarch64-darwin, `mkNixosHost` and `mkHomeHost` x86_64-linux): `references/architecture.md`.
 
 ## When to Use
 
@@ -17,7 +17,7 @@ The lane table (host dirs, outputs, machines), the silent failure modes and the 
 - Rebuilding, deploying, checking, or debugging an evaluation/activation failure.
 - Configuring omp, MCP servers, agent instructions or skill deployment through Nix.
 
-Not for: the content of a skill under `skills/` (writing-skills and `skills/README.md`); running `sops` or editing ciphertext (user-operated; CLAUDE.md, `references/nix-secrets.md`).
+Not for: the content of a skill under `skills/` (writing-skills and `skills/README.md`); running `sops` or editing ciphertext (user-operated; AGENTS.md, `references/nix-secrets.md`).
 
 ## Core Pattern
 
@@ -70,7 +70,7 @@ Full catalog and `scripts/rebuild.sh` behaviour: `references/commands.md`.
    - NixOS: `nix eval .#nixosConfigurations.<Host>.config.system.build.toplevel.drvPath`
    - standalone: `nix eval .#homeConfigurations.\"jhl@<Host>\".activationPackage.drvPath`
 
-   Then build and read any generated file, `just fmt`, and `just check` before pushing (CLAUDE.md § Before claiming anything works).
+   Then build and read any generated file, `just fmt`, and `just check` before pushing (AGENTS.md § Testing & QA).
 4. Secret involved → name the YAML key and file, stop, hand off.
 
 | Reference | Read when |
@@ -83,7 +83,7 @@ Full catalog and `scripts/rebuild.sh` behaviour: `references/commands.md`.
 
 ## Common Mistakes
 
-CLAUDE.md § Silent failure modes, § Secrets are user-operated and § Before claiming anything works always apply (the full secret rules: `references/nix-secrets.md` § What agents must not do). The rows below are the rest.
+AGENTS.md § Testing & QA (including its silent failure modes) and the secret rules in § Runtime/Tooling Preferences always apply (the full secret rules: `references/nix-secrets.md` § What agents must not do). The rows below are the rest.
 
 | Mistake | Fix |
 |---|---|

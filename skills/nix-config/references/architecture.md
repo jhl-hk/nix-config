@@ -195,8 +195,9 @@ home/jhl/<host>.nix
   │     ├─ ./${platform}.nix           (case b)
   │     │     darwin.nix → ./darwin/{keyboard,stats,ssh-agent,ghostty,git-homebrew,notchnotch}.nix
   │     │     linux.nix  → fonts and Linux-only settings
-  │     └─ ./git.nix ./nh.nix ./ssh.nix ./zsh.nix … ./agent-instructions.nix ./skills.nix
-  │        ./jyl-memory.nix ./llm.nix ./wakatime.nix
+  │     └─ ./git.nix ./nh.nix ./ssh.nix ./bash.nix ./zsh.nix ./starship.nix ./zoxide.nix
+  │        ./vim.nix ./yazi.nix ./tmux.nix ./agent-instructions.nix ./skills.nix
+  │        ./cloudflare.nix ./jyl-memory.nix ./llm.nix ./wakatime.nix ./typst.nix
   └─ ./common/optional/<cat>/*.nix     (ai, desktop, editors, k8s, nix, shell, sops)
 ```
 
@@ -224,7 +225,7 @@ A plain definition is also 1000 and sorts by module position, which moves when i
 | `home/jhl/common/optional/ai/omp.nix` | omp, the only coding agent configured. Imported by jhlsMacBookPro, SeandeMac-Studio, jhlsRogZephyrus, jhlsTokyoDesktop. Binary: `can1357/tap/omp` brew in `dev-extras.nix` on Macs, distro package on Linux. |
 | `home/jhl/common/core/agent-instructions.nix` | Links `${nix-secrets}/agents/AGENTS.md` to `~/.omp/agent/AGENTS.md` (read-only; edit in nix-secrets). |
 | `home/jhl/common/core/skills.nix` | Links skills to `~/.agents/skills/<name>` (Recipe 11). |
-| `modules/home/mcp-servers.nix` | Option `mcpServers.<name>.url`: shared remote HTTP list (`passport-admin`, `cloudflare-api`, `uptime`, `memory`). |
+| `modules/home/mcp-servers.nix` | Option `mcpServers.<name>.url`: shared remote HTTP list (`passport-admin`, `cloudflare-api`, `uptime`, `memory`, `google-workspace`). |
 | `modules/home/llm.nix` | Options `llm.*`: provider facts (`apiUrl`, `models`, `envVar`, `apiKeyFile`) shared by omp and Zed. |
 | `home/jhl/common/core/llm.nix` | Provider instance; reads `llm/*.json` model lists; exports the key in zsh, via `launchctl setenv` (Darwin) or a systemd user service (Linux). |
 | `home/jhl/common/core/wakatime.nix` | Installs `pkgs.unstable.wakatime-cli`; writes `~/.wakatime.cfg` with `api_key_vault_cmd` reading `wakatime.apiKeyFile`. |

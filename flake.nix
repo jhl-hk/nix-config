@@ -126,9 +126,9 @@
     # it the unstable nixpkgs.lib makes Darwin hosts abort with
     # "nix-darwin 26.05 with Nixpkgs 26.11".
     #
-    # This path only covers the **system scope**. The home-manager scope goes
-    # through the customLib layer in overlays -- see the comment there;
-    # passing lib via extraSpecialArgs would clobber lib.hm.
+    # home-manager extends this same lib: nix-darwin and NixOS forward
+    # specialArgs.lib into the HM module, so lib.custom arrives there too.
+    # Passing lib via extraSpecialArgs would clobber lib.hm.
     mkLib = base:
       base.extend (
         self': _super': {
@@ -287,7 +287,7 @@
     # instead of only type-checking it. The gate to pass before pushing.
     #
     # Each lane is filtered to the system it can build on, so `nix flake check
-    # --all-systems` from either a Mac or the Arch box evaluates all of them and
+    # --all-systems` from either a Mac or a Linux box evaluates all of them and
     # builds the ones that belong to it.
     checks = forAllSystems (
       system:
@@ -305,7 +305,7 @@
         )
         // lib.optionalAttrs (system == "x86_64-linux") (
           lib.mapAttrs' (
-            # "jhl@jhlsArchLinux" -> "home-jhl-at-jhlsArchLinux". The @ is legal
+            # "jhl@jhlsTokyoDesktop" -> "home-jhl-at-jhlsTokyoDesktop". The @ is legal
             # in an attribute name but ends up in a derivation name, where it is
             # not, so flatten it here.
             name: cfg:

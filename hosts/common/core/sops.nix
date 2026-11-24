@@ -26,8 +26,8 @@
 #               it is not silent)
 #    on boot    launchd.daemons.sops-install-secrets (output goes to the
 #               launchd log, invisible in a terminal)
-#  For the end-to-end self-check see
-#  hosts/common/optional/darwin/sops-canary.nix and `just verify-sops`.
+#  For the end-to-end self-check see `just verify-sops`; it restores
+#  hosts/common/optional/darwin/sops-canary.nix from git history.
 #
 #############################################################
 {

@@ -9,8 +9,9 @@
 #  Selected by ./${platform}.nix in common/core/default.nix.
 #
 #  "linux", not "nixos": this is picked for every machine where
-#  hostSpec.isDarwin is false, which now includes jhlsArchLinux -- nix running
-#  on top of Arch, with no NixOS anywhere. Anything genuinely NixOS-only would
+#  hostSpec.isDarwin is false, which includes the standalone hosts
+#  (jhlsRogZephyrus, jhlsTokyoDesktop) -- nix on a plain distro, with no
+#  NixOS anywhere. Anything genuinely NixOS-only would
 #  belong in the system lane (hosts/common/core/nixos.nix), not here.
 #
 #  Do not rename it. common/core/default.nix interpolates the filename from
@@ -46,7 +47,7 @@
   # in ./zsh.nix next to the LS_COLORS the completion menu parses.
   #
   # These two were in the hand-written ~/.bashrc that ./bash.nix replaces on
-  # jhlsArchLinux. Declared here so the replacement is not a downgrade.
+  # the standalone hosts. Declared here so the replacement is not a downgrade.
   home.shellAliases = {
     ls = "ls --color=auto";
     grep = "grep --color=auto";

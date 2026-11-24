@@ -1,6 +1,6 @@
 # Recipes — Adding Modules, Services, Packages, Hosts
 
-Mistakes that apply to every recipe: CLAUDE.md and SKILL.md § Common Mistakes.
+Mistakes that apply to every recipe: AGENTS.md and SKILL.md § Common Mistakes.
 
 ## Contents
 

@@ -8,7 +8,7 @@
 # in the rebuild-pre and rebuild-post hooks, so running the script directly
 # skips the secrets pull, the intent-to-add, and the sops check.
 #
-# -- Two lanes ---------------------------------------------------------------
+# -- Three lanes -------------------------------------------------------------
 #
 # The lane is chosen by uname, because it is a fact about the machine you are
 # standing on, not something worth a flag:

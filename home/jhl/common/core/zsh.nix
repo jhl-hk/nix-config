@@ -4,7 +4,7 @@
 #  Zsh
 #
 #  The cross-platform half. The Homebrew / JAVA_HOME / per-user-profile PATH
-#  lines moved to ./darwin.nix when jhlsArchLinux arrived -- none of those paths
+#  lines moved to ./darwin.nix when the standalone lane arrived -- none of those paths
 #  exist on Linux, and /etc/profiles/per-user is a nix-darwin arrangement, not a
 #  home-manager one.
 #

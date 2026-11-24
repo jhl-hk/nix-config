@@ -8,15 +8,17 @@
 #
 #  hostSpec -- the data bus
 #
-#  The repo's single cross-platform data channel. All three scopes
-#  (NixOS / nix-darwin / home-manager) import this file, so the same data
-#  reads the same everywhere.
+#  The repo's single cross-platform data channel. The system scopes
+#  (NixOS / nix-darwin) import this file as a module; home-manager receives
+#  the evaluated value as the `hostSpec` argument (extraSpecialArgs), and the
+#  standalone lane builds it with lib.custom.evalHostSpec.
 #
 #  Who writes to it:
-#    hosts/common/core/default.nix  -- identity and topology, inherited from inputs.nix-secrets
-#    hosts/<platform>/<host>/       -- hostName and this machine's switches
+#    hosts/common/core/host-spec.nix  -- identity and topology, inherited from inputs.nix-secrets
+#    hosts/<lane>/<host>/             -- hostName and this machine's switches
 #
-#  Who reads it: every module, always through config.hostSpec.<x>.
+#  Who reads it: system modules through config.hostSpec.<x>; home modules
+#  through the hostSpec argument.
 #  Module code must **never** reference inputs.nix-secrets directly -- that
 #  indirection is exactly what makes secrets swappable, auditable, or
 #  stubbable in one place.
