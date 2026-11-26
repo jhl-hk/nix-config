@@ -27,8 +27,9 @@
 #  defaults.vim) for vim. Gone under sudo, which drops the environment.
 #
 #  Anything else goes to the ssh binary unchanged: a remote command, -f -G
-#  -N -O -Q -s -T -V -W, or stdin/stdout not a terminal. Scripts, git,
-#  rsync and scp never see the function.
+#  -N -O -Q -s -T -V -W, stdin/stdout not a terminal, or a host whose
+#  resolved config sets `Tag noshell` (network gear with a vendor CLI, no
+#  POSIX shell). Scripts, git, rsync and scp never see the function.
 #
 #  Under TERM=xterm-ghostty the function first installs the terminfo entry
 #  into the remote's ~/.terminfo, once per user@host:port (cached in
@@ -124,7 +125,8 @@ let
 
     ssh() {
       command -v _ssh_prepare >/dev/null 2>&1 && _ssh_prepare
-      if [ ! -t 0 ] || [ ! -t 1 ] || ! __ssh_is_login "$@"; then
+      if [ ! -t 0 ] || [ ! -t 1 ] || ! __ssh_is_login "$@" ||
+        command ssh -G "$@" 2>/dev/null | grep -qx 'tag noshell'; then
         command ssh "$@"
         return
       fi
