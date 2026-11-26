@@ -25,6 +25,9 @@
 
     # No system sops on this lane; decrypts as the user instead.
     ./common/optional/sops/standalone.nix
+
+    # Omni + kube client configs from sops. Needs the sops import above.
+    ./common/optional/k8s/omni.nix
   ];
 
   # No id_yk5c on this machine.
