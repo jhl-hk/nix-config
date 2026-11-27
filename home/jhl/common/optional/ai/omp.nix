@@ -84,14 +84,17 @@ let
       separator = "pipe";
       # Only the box composer draws a context line.
       contextLine = "off";
-      leftSegments = ["vim" "model" "mode" "git" "pr" "subagents"];
+      leftSegments = ["vim" "model" "mode" "path" "git" "pr" "subagents"];
       # Most important first: segments that overflow are dropped from the end.
       rightSegments = ["context_pct" "cost" "token_rate" "token_in" "token_out" "cache_hit" "time_spent" "session_name"];
-      segmentOptions.git = {
-        showBranch = true;
-        showStaged = true;
-        showUnstaged = true;
-        showUntracked = false;
+      segmentOptions = {
+        path.maxLength = 60;
+        git = {
+          showBranch = true;
+          showStaged = true;
+          showUnstaged = true;
+          showUntracked = false;
+        };
       };
       sessionAccent = true;
       showHookStatus = true;
