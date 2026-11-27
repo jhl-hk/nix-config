@@ -80,20 +80,31 @@ let
     task.perCallModel = "on";
     defaultThinkingLevel = "auto";
     statusLine = {
-      preset = "nerd";
-      separator = "powerline";
-      contextLine = "annotated";
+      preset = "custom";
+      separator = "pipe";
+      # Only the box composer draws a context line.
+      contextLine = "off";
+      leftSegments = ["vim" "model" "mode" "git" "pr" "subagents"];
+      # Most important first: segments that overflow are dropped from the end.
+      rightSegments = ["context_pct" "cost" "token_rate" "token_in" "token_out" "cache_hit" "time_spent" "session_name"];
+      segmentOptions.git = {
+        showBranch = true;
+        showStaged = true;
+        showUnstaged = true;
+        showUntracked = false;
+      };
       sessionAccent = true;
       showHookStatus = true;
     };
 
-    symbolPreset = "unicode";
-    composer.shape = "claude";
-    # Both slots pinned: omp picks theme.light on a light terminal background,
-    # and its default ("light") would otherwise apply there.
+    # Nerd Font icons: Ghostty bundles them; Maple Mono (Zed's terminal) does
+    # not, so they show as fallback glyphs there.
+    symbolPreset = "nerd";
+    composer.shape = "rail";
+    # omp picks theme.light on a light terminal background.
     theme = {
-      dark = "dark-copper";
-      light = "dark-copper";
+      dark = "dark-poimandres";
+      light = "light-poimandres";
     };
   };
 
